@@ -1,0 +1,19 @@
+.topRightIconRedBg {
+  background-color: red;
+  top: -15px;
+  right: -15px;
+  border-radius: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+}
+.topRightIconGreenBg {
+  background-color: green;
+  top: -15px;
+  right: -15px;
+  border-radius: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+}
+.topRightIcon {
+  padding: 6px;
+}

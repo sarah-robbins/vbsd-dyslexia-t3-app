@@ -1,0 +1,57 @@
+{
+  "name": "vbsd-dyslexia-t3-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "postinstall": "prisma generate",
+    "lint": "next lint",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.11.16",
+    "@mui/material": "^5.13.6",
+    "@mui/x-date-pickers": "^6.9.1",
+    "@next-auth/prisma-adapter": "^1.0.5",
+    "@prisma/client": "^5.0.0",
+    "@reduxjs/toolkit": "^1.9.5",
+    "@t3-oss/env-nextjs": "^0.3.1",
+    "@tanstack/react-query": "^4.29.7",
+    "@trpc/client": "^10.26.0",
+    "@trpc/next": "^10.26.0",
+    "@trpc/react-query": "^10.26.0",
+    "@trpc/server": "^10.26.0",
+    "dayjs": "^1.11.9",
+    "material-ui-popup-state": "^5.0.9",
+    "next": "^13.4.2",
+    "next-auth": "^4.22.1",
+    "primeflex": "^3.3.1",
+    "primeicons": "^6.0.1",
+    "primereact": "^9.5.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-redux": "^8.1.1",
+    "react-router-dom": "^6.14.2",
+    "sass": "^1.63.6",
+    "superjson": "1.12.2",
+    "zod": "^3.21.4"
+  },
+  "devDependencies": {
+    "@types/eslint": "^8.37.0",
+    "@types/node": "^18.16.0",
+    "@types/react": "^18.2.6",
+    "@types/react-dom": "^18.2.4",
+    "@typescript-eslint/eslint-plugin": "^5.59.6",
+    "@typescript-eslint/parser": "^5.59.6",
+    "eslint": "^8.40.0",
+    "eslint-config-next": "^13.4.2",
+    "prisma": "^5.0.0",
+    "typescript": "^5.0.4"
+  },
+  "ct3aMetadata": {
+    "initVersion": "7.14.1"
+  }
+}

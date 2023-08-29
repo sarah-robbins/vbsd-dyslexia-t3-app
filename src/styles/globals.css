@@ -1,0 +1,330 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,300;0,400;0,600;0,800;1,100;1,300;1,400;1,600;1,800&display=swap');
+
+:root {
+  --primary-color: #4caf50 !important;
+  --highlight-text-color: #4caf50 !important;
+  --secondary-color: #d1d1d1;
+  color-scheme: light;
+}
+
+/* Override PrimeReact Components */
+.p-button {
+  background: var(--primary-color) !important;
+  border: 1px solid var(--primary-color) !important;
+}
+.p-button.p-button-text {
+  color: var(--primary-color) !important;
+  background-color: transparent !important;
+}
+
+.p-button:focus {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--primary-color),
+    0 1px 2px 0 rgb(0, 0, 0) !important;
+}
+
+.p-datatable .p-datatable-tbody > tr > td .p-row-toggler:focus,
+.p-datatable .p-datatable-tbody > tr > td .p-row-editor-init:focus,
+.p-datatable .p-datatable-tbody > tr > td .p-row-editor-save:focus,
+.p-datatable .p-datatable-tbody > tr > td .p-row-editor-cancel:focus {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--primary-color),
+    0 1px 2px 0 rgb(0, 0, 0) !important;
+}
+
+/* General */
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: Poppins, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-block-start: 0 !important;
+  margin-block-end: 0 !important;
+}
+
+main {
+  max-width: 100%;
+}
+@media screen and (min-width: 768px) {
+  main {
+    max-width: calc(100% - 4rem);
+  }
+}
+
+.logo-speeddial .p-button:focus {
+  box-shadow: none !important;
+}
+
+.p-fieldset .p-fieldset-legend {
+  box-shadow: 0px 1px 8px rgba(0, 0, 0, 0.08), 0px 3px 4px rgba(0, 0, 0, 0.1),
+    0px 1px 4px -1px rgba(0, 0, 0, 0.1);
+}
+
+.topRightIconBg {
+  background-color: red;
+  top: -10px;
+  right: -10px;
+  border-radius: 50%;
+}
+
+.p-speeddial {
+  position: relative !important;
+  display: flex;
+  z-index: 1;
+}
+
+.p-speeddial .p-button.p-button-icon-only.p-button-rounded {
+  border-radius: 4px;
+}
+
+.p-speeddial .p-button {
+  color: #ffffff;
+  background: transparent !important;
+  border: none !important;
+  padding: 0.75rem 1.25rem;
+}
+
+.p-speeddial-button.p-button.p-button-icon-only {
+  width: 8rem !important;
+  height: 8rem !important;
+}
+
+.logo-speeddial .p-speeddial-action {
+  width: 3.5rem !important;
+  height: 3.5rem !important;
+  background: #666666;
+}
+
+.logo-speeddial .p-speeddial-action-icon.pi {
+  font-size: 1.25rem;
+}
+
+.exclamation-icon.pi {
+  font-size: 1.8rem !important;
+}
+
+/* MENUBAR */
+.p-menubar .p-menubar-button {
+  display: none !important;
+}
+
+.p-menubar {
+  position: inherit;
+}
+
+.p-menubar .p-menubar-root-list {
+  display: flex;
+  align-items: center;
+  position: unset;
+  padding: unset;
+  background: inherit;
+  border: unset;
+  box-shadow: unset;
+  width: unset;
+}
+
+/* SIDEBAR MENU */
+.menu-wrapper {
+  top: 76px;
+}
+
+.p-sidebar-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.p-menu .p-menuitem-link {
+  padding: 0.75rem 0.75rem !important;
+}
+
+.menu-wrapper .p-menu {
+  color: #495057;
+  border: none !important;
+  width: 100% !important;
+}
+
+.menu-wrapper .pi {
+  font-size: 24px !important;
+}
+
+.menu-wrapper .p-menu .p-menuitem-link {
+  padding: 0.75rem 0 !important;
+}
+
+.menu-wrapper .p-menu .p-menuitem-link .p-menuitem-icon {
+  color: #6c757d;
+  margin-right: 1rem !important;
+}
+
+.menu-wrapper .p-sidebar-header {
+  display: none;
+}
+
+@media screen and (min-width: 960px) {
+  /* .p-sidebar-mask {
+    width: auto !important;
+    display: flex !important;
+  } */
+  .menu-mini {
+    width: 57px !important;
+  }
+
+  .menu-standard {
+    width: 200px;
+  }
+
+  .p-sidebar-content {
+    overflow: hidden !important;
+  }
+}
+
+.p-datepicker.p-datepicker-multiple-month .p-datepicker-group {
+  border-right: 1px solid #dee2e6;
+  border-left: none !important;
+}
+.p-datepicker.p-datepicker-multiple-month .p-datepicker-group:last-child {
+  border-right: none;
+  border-left: none;
+}
+
+.meeting-data-table.p-card .p-card-body,
+.meeting-data-table.p-card .p-card-content,
+.meeting-calendar.p-card .p-card-body,
+.meeting-calendar.p-card .p-card-content {
+  padding: 0 !important;
+}
+
+/* .elevate-item {
+  box-shadow: 0 2px 1px -1px rgba(0, 0, 0, 0.2), 0 1px 1px 0 rgba(0, 0, 0, 0.14), 0 1px 3px 0 rgba(0, 0, 0, 0.12);
+} */
+
+.p-card-grey {
+  background-color: #bebebe;
+}
+.p-card .p-card-body {
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  min-height: 100%;
+}
+
+.p-card .p-card-content {
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.p-datepicker {
+  border: none !important;
+}
+
+.MuiPaper-elevation0 {
+  box-shadow: 0 2px 1px -1px rgba(0, 0, 0, 0.2), 0 1px 1px 0 rgba(0, 0, 0, 0.14),
+    0 1px 3px 0 rgba(0, 0, 0, 0.12) !important;
+}
+
+.css-2dum1v-MuiDrawer-docked .MuiDrawer-paper {
+  width: 65px !important;
+}
+
+.css-1t8l2tu-MuiInputBase-input-MuiOutlinedInput-input,
+.MuiInputBase-input.MuiOutlinedInput-input {
+  height: auto;
+}
+
+.mobile-menu-toggle {
+  margin-left: 10px;
+  margin-right: 10px;
+  /* align-self: end; */
+}
+
+.user-button.MuiButtonBase-root.MuiButton-root:hover {
+  background-color: rgba(111, 191, 115, 0.4);
+}
+
+.navbar-avatar.MuiAvatar-root {
+  background-color: transparent;
+  border: 2px solid #fff;
+}
+
+.meeting-status > span {
+  width: 130px;
+}
+
+.meeting-status-chips.MuiChip-root {
+  width: 160px;
+  border-radius: 4px;
+}
+
+.meeting-list-name-select .Mui-focused legend {
+  width: 50px;
+}
+
+.action-icon-checkbox {
+  padding: 0px 0px auto 0px;
+}
+
+.p-datatable .p-datatable-tbody > tr.p-highlight {
+  background: hsl(122.42, 39%, 95%) !important;
+  color: inherit !important;
+}
+
+.p-datatable.p-datatable-striped .p-datatable-tbody > tr.p-row-odd.p-highlight {
+  background: hsl(122.42, 39%, 90%) !important;
+  color: inherit !important;
+}
+
+.p-datatable.p-datatable-striped
+  .p-datatable-tbody
+  > tr.p-row-odd.p-highlight
+  .p-row-toggler {
+  color: inherit !important;
+}
+
+.p-datatable.p-datatable-selectable
+  .p-datatable-tbody
+  > tr.p-selectable-row:focus {
+  outline: 0.15rem solid hsl(122.42, 39%, 80%) !important;
+}
+
+.p-datepicker-today span {
+  background-color: var(--primary-color) !important;
+  color: #fff !important;
+}
+.meeting-day {
+  background-color: var(--secondary-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.p-datepicker:not(.p-disabled) table td span:not(.p-highlight):not(.p-disabled):focus, .p-datepicker table td>span:focus {
+  outline: 0 none;
+  outline-offset: 0;
+  box-shadow: none !important;
+  background-color: var(--primary-color);
+  color: #fff;
+}
+
+.p-datepicker:not(.p-disabled) table td span:not(.p-highlight):not(.p-disabled):hover {
+  background-color: #000;
+  opacity: 0.9;
+}
