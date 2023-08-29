@@ -15,6 +15,8 @@ import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import { api } from '@/utils/api';
 import { Toast } from 'primereact/toast';
+import ListItemText from '@mui/material/ListItemText';
+import Checkbox from '@mui/material/Checkbox';
 
 const MeetingForm: React.FC<Props> = ({
   meetings,
@@ -403,10 +405,17 @@ const MeetingForm: React.FC<Props> = ({
               value={name}
               label="Name"
               required
-              onChange={handleNameChange}>
-              {getStudentsBySchool.map((s) => (
+              onChange={handleNameChange}
+              renderValue={(selected) => selected}>
+              {/* {getStudentsBySchool.map((s) => (
                 <MenuItem key={s.id} value={`${s.first_name} ${s.last_name}`}>
                   {s.last_name}, {s.first_name}
+                </MenuItem>
+              ))} */}
+              {getStudentsBySchool.map((s) => (
+                <MenuItem key={s.id} value={`${s.first_name} ${s.last_name}`}>
+                  <Checkbox checked={name.indexOf(s.id) > -1} />
+                  <ListItemText primary={`${s.last_name}, ${s.first_name}`} />
                 </MenuItem>
               ))}
             </Select>
