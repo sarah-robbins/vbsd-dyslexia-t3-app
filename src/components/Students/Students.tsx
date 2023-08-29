@@ -739,7 +739,7 @@ const Students: React.FC = () => {
         {/* <Column expander={allowExpansion} style={{ width: '5rem' }} /> */}
         {/* <Column body={actionIcons} /> */}
         {/* The following column component should allow a user to check each individual row with a checkbox in the header as well that shows if none are check, all are checked, or an indeterminate amount are checked */}
-        <Column
+        {/* <Column
           header={() => (
             <Checkbox
               ref={selectAllStudentsRef}
@@ -762,13 +762,13 @@ const Students: React.FC = () => {
           )}
           style={{ width: '3rem' }}
           headerStyle={{ width: '3rem' }}
-        />
+        /> */}
         <Column
           body={(rowData) => `${rowData.last_name}, ${rowData.first_name}`}
           header="Name"
           style={{ whiteSpace: 'nowrap' }}
           sortable
-          editor={(options) => nameEditor(options)}
+          // editor={(options) => nameEditor(options)}
           onCellEditComplete={onCellEditComplete}
           ref={inputRef}
           autoFocus
@@ -778,23 +778,23 @@ const Students: React.FC = () => {
           field="school"
           header="School"
           sortable
-          editor={(options) => textEditor(options)}
+          // editor={(options) => textEditor(options)}
+          onCellEditComplete={onCellEditComplete}
+          ref={inputRef}
+          autoFocus
+          tabIndex={-1}
+        />
+        <Column
+          field="grade"
+          header="Grade"
+          sortable
+          // editor={(options) => textEditor(options)}
           onCellEditComplete={onCellEditComplete}
           ref={inputRef}
           autoFocus
           tabIndex={-1}
         />
         {/* <Column
-          field="grade"
-          header="Grade"
-          sortable
-          editor={(options) => textEditor(options)}
-          onCellEditComplete={onCellEditComplete}
-          ref={inputRef}
-          autoFocus
-          tabIndex={-1}
-        /> */}
-        <Column
           field="grade"
           editor={(options) => {
             return ReactDOM.createPortal(
@@ -810,12 +810,12 @@ const Students: React.FC = () => {
               document.body
             );
           }}
-        />
+        /> */}
         <Column
           field="home_room_teacher"
           header="Home Room Teacher"
           sortable
-          editor={(options) => textEditor(options)}
+          // editor={(options) => textEditor(options)}
           onCellEditComplete={onCellEditComplete}
           ref={inputRef}
           autoFocus
@@ -825,7 +825,7 @@ const Students: React.FC = () => {
           field="intervention_program"
           header="Program"
           sortable
-          editor={(options) => textEditor(options)}
+          // editor={(options) => textEditor(options)}
           onCellEditComplete={onCellEditComplete}
           ref={inputRef}
           autoFocus
@@ -836,7 +836,7 @@ const Students: React.FC = () => {
           header="Tutor"
           style={{ whiteSpace: 'nowrap' }}
           sortable
-          editor={(options) => textEditor(options)}
+          // editor={(options) => textEditor(options)}
           onCellEditComplete={onCellEditComplete}
           ref={inputRef}
           autoFocus
@@ -856,14 +856,14 @@ const Students: React.FC = () => {
           field="totalMeetings"
           header="Total Meetings"
           sortable
-          editor={(options) => textEditor(options)}
+          // editor={(options) => textEditor(options)}
           onCellEditComplete={onCellEditComplete}
         />
         <Column
           field="services"
           header="Services"
           sortable
-          editor={(options) => textEditor(options)}
+          // editor={(options) => textEditor(options)}
           onCellEditComplete={onCellEditComplete}
           ref={inputRef}
           autoFocus

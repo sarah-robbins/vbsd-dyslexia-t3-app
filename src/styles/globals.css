@@ -328,3 +328,8 @@ main {
   background-color: #000;
   opacity: 0.9;
 }
+
+.p-speeddial-action:hover {
+  background: var(--primary-color) !important;
+  color: #fff;
+}

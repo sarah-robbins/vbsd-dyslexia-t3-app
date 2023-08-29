@@ -12,13 +12,10 @@ export default function SplashSpeedDial() {
   const items: MenuItem[] = [
     {
       label: 'Add',
-      icon: 'pi pi-pencil',
+      icon: 'pi pi-video',
       command: () => {
-        toast.current.show({
-          severity: 'info',
-          summary: 'Add',
-          detail: 'Data Added',
-        });
+        // add link to https://app.whizzimo.com/#/login
+        window.open('https://app.whizzimo.com/#/login', '_blank');
       },
     },
     {

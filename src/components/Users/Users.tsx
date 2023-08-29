@@ -224,11 +224,11 @@ const Users: React.FC = () => {
         stripedRows
         selection={selectedUsers}
         onSelectionChange={(e) => setSelectedUsers(e.value)}
-        header={header}
+        // header={header}
         tableStyle={{ minWidth: '60rem' }}>
-        <Column body={actionIcons} />
+        {/* <Column body={actionIcons} /> */}
         {/* The following column component should allow a user to check each individual row with a checkbox in the header as well that shows if none are check, all are checked, or an indeterminate amount are checked */}
-        <Column
+        {/* <Column
           header={() => (
             <Checkbox
               ref={selectAllUsersRef}
@@ -251,13 +251,13 @@ const Users: React.FC = () => {
           )}
           style={{ width: '3rem' }}
           headerStyle={{ width: '3rem' }}
-        />
+        /> */}
         <Column
           body={(rowData) => `${rowData.last_name}, ${rowData.first_name}`}
           header="Name"
           style={{ whiteSpace: 'nowrap' }}
           sortable
-          editor={(options) => nameEditor(options)}
+          // editor={(options) => nameEditor(options)}
           onCellEditComplete={onCellEditComplete}
           ref={inputRef}
           autoFocus
@@ -267,7 +267,7 @@ const Users: React.FC = () => {
           field="school"
           header="School"
           sortable
-          editor={(options) => textEditor(options)}
+          // editor={(options) => textEditor(options)}
           onCellEditComplete={onCellEditComplete}
           ref={inputRef}
           autoFocus
@@ -277,7 +277,7 @@ const Users: React.FC = () => {
           field="email"
           header="Email"
           sortable
-          editor={(options) => textEditor(options)}
+          // editor={(options) => textEditor(options)}
           onCellEditComplete={onCellEditComplete}
           ref={inputRef}
           autoFocus
@@ -287,7 +287,7 @@ const Users: React.FC = () => {
           field="phone"
           header="Phone"
           sortable
-          editor={(options) => textEditor(options)}
+          // editor={(options) => textEditor(options)}
           onCellEditComplete={onCellEditComplete}
           ref={inputRef}
           autoFocus
@@ -297,7 +297,7 @@ const Users: React.FC = () => {
           field="role"
           header="Role"
           sortable
-          editor={(options) => textEditor(options)}
+          // editor={(options) => textEditor(options)}
           onCellEditComplete={onCellEditComplete}
           ref={inputRef}
           autoFocus
@@ -307,7 +307,7 @@ const Users: React.FC = () => {
           field="view"
           header="View"
           sortable
-          editor={(options) => textEditor(options)}
+          // editor={(options) => textEditor(options)}
           onCellEditComplete={onCellEditComplete}
           ref={inputRef}
           autoFocus

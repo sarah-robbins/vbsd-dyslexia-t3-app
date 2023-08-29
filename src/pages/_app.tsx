@@ -57,7 +57,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
 
   return (
     <React.StrictMode>
-      \{' '}
+      {' '}
       <ColorModeContext.Provider value={colorMode}>
         <MuiThemeProvider
           theme={mode === 'light' ? darkThemeChosen : lightThemeChosen}>
