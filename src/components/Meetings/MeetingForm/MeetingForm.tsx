@@ -36,33 +36,34 @@ interface Props {
 }
 
 interface Meeting {
+  id: number;
   name: string;
   student_id: string;
-  start: Date;
-  end: Date;
+  start: Dayjs;
+  end: Dayjs;
   meeting_status: string;
   program: string;
   level_lesson: string;
   meeting_notes: string;
   recorded_by: string;
-  recorded_on: Date;
+  recorded_on: Dayjs;
   edited_by: string;
-  edited_on: Date;
+  edited_on: Dayjs;
 }
 
 interface FormValues {
   name: string;
   student_id: string;
-  start: Date;
-  end: Date;
+  start: Dayjs;
+  end: Dayjs;
   meeting_status: string;
   program: string;
   level_lesson: string;
   meeting_notes: string;
   recorded_by: string;
-  recorded_on: Date;
+  recorded_on: Dayjs;
   edited_by: string;
-  edited_on: Date;
+  edited_on: Dayjs;
 }
 
 const MeetingForm: React.FC<Props> = ({
@@ -72,8 +73,8 @@ const MeetingForm: React.FC<Props> = ({
   setSelectedDate,
   getStudentsBySchool = [],
   getDatedMeetings = [],
-  selectedMeetings,
-  setSelectedMeetings,
+  selectedMeetings = [],
+  setSelectedMeetings = [],
 }) => {
   const toast = useRef(null);
 
@@ -181,7 +182,7 @@ const MeetingForm: React.FC<Props> = ({
       setSelectedStatus(meeting_status);
       setFormValues({
         name: name,
-        student_id: 0,
+        student_id: '',
         start: dayjs(start),
         end: dayjs(end),
         meeting_status: meeting_status,
@@ -200,7 +201,7 @@ const MeetingForm: React.FC<Props> = ({
     if (selectedMeetings.length <= 0) {
       setFormValues({
         name: '',
-        student_id: 0,
+        student_id: '',
         start: dayjs(),
         end: dayjs(),
         meeting_status: '',
@@ -225,7 +226,7 @@ const MeetingForm: React.FC<Props> = ({
 
   const [formValues, setFormValues] = useState<FormValues>({
     name: '',
-    student_id: 0,
+    student_id: '',
     start: dayjs(),
     end: dayjs(),
     meeting_status: '',
@@ -271,7 +272,7 @@ const MeetingForm: React.FC<Props> = ({
 
     setFormValues({
       name: '',
-      student_id: 0,
+      student_id: '',
       start: dayjs(),
       end: dayjs(),
       meeting_status: '',
@@ -352,9 +353,9 @@ const MeetingForm: React.FC<Props> = ({
     setEndTime(dayjs());
 
     setFormValues({
-      id: 0,
+      id: '',
       name: '',
-      student_id: 0,
+      student_id: '',
       // start: dayjs(),
       // end: dayjs(),
       meeting_status: '',

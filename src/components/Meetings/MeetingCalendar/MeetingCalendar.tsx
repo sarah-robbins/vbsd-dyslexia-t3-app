@@ -4,6 +4,7 @@ import { Card } from 'primereact/card';
 import dayjs, { type Dayjs } from 'dayjs';
 
 interface Props {
+  date: string | Date | Date[] | null;
   selectedDate: Dayjs;
   meetings: Meeting[];
   setSelectedDate: (date: Dayjs) => void;
@@ -39,9 +40,9 @@ const MeetingCalendar: React.FC<Props> = ({
     return [];
   }, [meetings]);
 
-  interface SelectedDate {
-    value: string;
-  }
+  // interface SelectedDate {
+  //   value: string;
+  // }
   const handleDateChange = (date: Dayjs) => {
     const selected = dayjs(date);
     console.log('!!!!!!!!!!!Selected Date:', typeof selected);
@@ -52,31 +53,34 @@ const MeetingCalendar: React.FC<Props> = ({
     console.log('Meeting Dates:', meetingDates);
   }, [meetingDates]);
 
-  interface CalendarDate {
-    year: string;
-    month: number;
-    day: string;
-  }
-  const dateTemplate = (date: Date) => {
+  // interface CalendarDate {
+  //   year: string;
+  //   month: number;
+  //   day: string;
+  // }
+  const dateTemplate = (date: Dayjs) => {
+    console.log('Date:', typeof date.year);
     const dayFormatted =
-      date.getFullYear() +
+      date.year +
       '-' +
-      (date.getMonth() + 1).toString().padStart(2, '0') +
+      (date.month + 1).toString().padStart(2, '0') +
       '-' +
-      date.getDate().toString().padStart(2, '0');
+      date.day.toString().padStart(2, '0');
+
+    console.log('Day Formatted:', typeof dayFormatted);
 
     if (meetingDates.includes(dayFormatted)) {
-      return <span className="meeting-day">{date.getDate()}</span>;
+      return <span className="meeting-day">{date.day}</span>;
     }
 
-    return date.getDate();
+    return date.day;
   };
 
   return (
     <div className="card flex w-full">
       <Card className="meeting-calendar w-full">
         <Calendar
-          value={selectedDate.format('YYYY-MM-DD')}
+          value={selectedDate}
           onChange={handleDateChange}
           numberOfMonths={3}
           inline
