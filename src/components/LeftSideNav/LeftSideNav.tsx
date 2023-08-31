@@ -111,7 +111,7 @@ const MiniDrawer = styled(MuiDrawer, {
   }),
 }));
 
-const LeftSideNav = (props: unknown) => {
+const LeftSideNav = (props: any) => {
   console.log('props: ', props);
   // const theme = useTheme();
   const { setRouting }: RoutingContextType = React.useContext(routingContext);
