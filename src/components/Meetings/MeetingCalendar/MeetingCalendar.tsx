@@ -11,7 +11,7 @@ interface Props {
 
 interface Meeting {
   name: string;
-  student_id: int;
+  student_id: string;
   start: Date;
   end: Date;
   meeting_status: string;
