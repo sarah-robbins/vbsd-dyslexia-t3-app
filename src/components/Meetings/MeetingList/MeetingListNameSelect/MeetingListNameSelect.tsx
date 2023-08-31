@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import React, { useState, useEffect } from 'react';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';

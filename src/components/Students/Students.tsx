@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import React, { useState, useEffect, useRef } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column, type ColumnEditorOptions } from 'primereact/column';

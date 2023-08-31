@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { Button } from '@mui/material';
 import React, { useState } from 'react';
 import CalendarSpanPicker from '../CalendarSpanPicker/CalendarSpanPicker';

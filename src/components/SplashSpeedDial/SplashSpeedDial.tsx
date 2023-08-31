@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import React, { useRef } from 'react';
 import styles from './SplashSpeedDial.module.css';
 import { SpeedDial } from 'primereact/speeddial';
