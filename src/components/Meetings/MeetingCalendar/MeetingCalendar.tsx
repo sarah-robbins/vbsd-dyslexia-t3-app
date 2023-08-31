@@ -89,7 +89,8 @@ const MeetingCalendar: React.FC<Props> = ({
     return date.day;
   };
 
-  const selectedDateValue = selectedDate.toDate();
+  const selectedDateValue = dayjs(selectedDate).toDate();
+  console.log('selectedDateValue:', selectedDateValue);
 
   return (
     <div className="card flex w-full">

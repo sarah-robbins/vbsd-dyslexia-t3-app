@@ -108,12 +108,14 @@ const MeetingForm: React.FC<Props> = ({
   }
 
   const handleStartTime = (time: TimeValue) => {
-    const timeOnly = dayjs(time).format('HH:mm:ss');
+    const date = new Date(0, 0, 0, time.hour, time.minute, time.second);
+    const timeOnly = dayjs(date).format('HH:mm:ss');
     setStartTime(timeOnly);
   };
 
   const handleEndTime = (time: TimeValue) => {
-    const timeOnly = dayjs(time).format('HH:mm:ss');
+    const date = new Date(0, 0, 0, time.hour, time.minute, time.second);
+    const timeOnly = dayjs(date).format('HH:mm:ss');
     setEndTime(timeOnly);
   };
 
@@ -122,7 +124,9 @@ const MeetingForm: React.FC<Props> = ({
   const startDateTime = `${dayjs(selectedDate).format(
     'YYYY-MM-DD'
   )}T${startTime.toString()}`;
-  const endDateTime = `${dayjs(selectedDate).format('YYYY-MM-DD')}T${endTime}`;
+  const endDateTime = `${dayjs(selectedDate).format(
+    'YYYY-MM-DD'
+  )}T${endTime?.toString()}`;
   console.log('startDateTime:', typeof startDateTime);
   console.log('endDateTime:', typeof endDateTime);
 
