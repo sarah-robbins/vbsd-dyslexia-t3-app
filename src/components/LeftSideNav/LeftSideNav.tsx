@@ -38,7 +38,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import GroupsIcon from '@mui/icons-material/Groups';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import SettingsIcon from '@mui/icons-material/Settings';
-import { routingContext } from '@/context/AllContext';
+import { RoutingContextType, routingContext } from '@/context/AllContext';
 import router from 'next/router';
 
 const drawerWidth = 180;
@@ -114,7 +114,9 @@ const MiniDrawer = styled(MuiDrawer, {
 const LeftSideNav = (props: unknown) => {
   console.log('props: ', props);
   // const theme = useTheme();
-  const { setRouting } = React.useContext(routingContext);
+  const { setRouting }: RoutingContextType = React.useContext(routingContext);
+  console.log('routingContext', routingContext);
+
   const [open, setOpen] = React.useState(false);
   const handleDrawerToggle = () => {
     setOpen(!open);
@@ -225,9 +227,12 @@ const LeftSideNav = (props: unknown) => {
   );
   const { window } = props;
   console.log('props 2: ', props);
+  console.log('window: ', window);
 
   const container =
-    window !== undefined ? () => window().document.body : undefined;
+    typeof window === 'function' && window().document
+      ? () => window().document.body
+      : undefined;
 
   return (
     <>

@@ -97,7 +97,6 @@ const MeetingForm: React.FC<Props> = ({
   const [startTime, setStartTime] = useState<Dayjs>(dayjs());
   const [endTime, setEndTime] = useState<Dayjs>(dayjs());
 
-  console.log('startTime', startTime);
   const handleStartTime = (time: Dayjs) => {
     const timeOnly = time.format('HH:mm:ss');
     setStartTime(timeOnly);
@@ -156,7 +155,6 @@ const MeetingForm: React.FC<Props> = ({
 
   useEffect(() => {
     if (selectedMeetings.length > 0) {
-      console.log('selectedMeetings in the useEffect', selectedMeetings);
       const selectedMeeting = selectedMeetings[0];
       const name = selectedMeeting.name;
       setName(name);
@@ -165,7 +163,6 @@ const MeetingForm: React.FC<Props> = ({
       setStartTime(start);
       setEndTime(end);
       const meeting_status = selectedMeeting.meeting_status;
-      console.log('meeting_status', meeting_status);
       setSelectedStatus(meeting_status);
       setFormValues({
         name: name,
@@ -226,8 +223,6 @@ const MeetingForm: React.FC<Props> = ({
     edited_on: new Date(),
   });
 
-  console.log('formValues', formValues);
-
   /* ------------------- create Meeting ------------------- */
   const createMeetingMutation = api.meetings.createMeeting.useMutation();
 
@@ -245,7 +240,6 @@ const MeetingForm: React.FC<Props> = ({
       recorded_by: 'sarah',
       recorded_on: new Date(),
     };
-    console.log('saved data is: ', newMeeting);
     createMeetingMutation.mutate(newMeeting);
 
     toast.current.show({
@@ -294,7 +288,6 @@ const MeetingForm: React.FC<Props> = ({
       edited_by: 'sarah',
       edited_on: new Date(),
     };
-    console.log('saved data is: ', editedMeeting);
     editMeetingMutation.mutate(editedMeeting);
 
     // setName('');
@@ -328,7 +321,6 @@ const MeetingForm: React.FC<Props> = ({
       'Are you sure you want to delete this meeting?'
     );
     if (!confirm) return;
-    console.log('selectedMeetings[0].id', id);
 
     deleteMeetingMutation.mutate({ id });
 
