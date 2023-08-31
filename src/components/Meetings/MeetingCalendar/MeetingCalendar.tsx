@@ -73,8 +73,6 @@ const MeetingCalendar: React.FC<Props> = ({
   //   day: string;
   // }
   const dateTemplate = (date: CalendarDateTemplateEvent) => {
-    console.log('Date:', typeof date.year);
-    console.log('CalendarDateTemplateEvent:', date);
     const dayFormatted =
       date.year +
       '-' +

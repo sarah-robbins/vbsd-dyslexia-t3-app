@@ -100,7 +100,7 @@ const MeetingForm: React.FC<Props> = ({
     setSelectedDate(date);
   }, [date, setSelectedDate]);
 
-  const [startTime, setStartTime] = useState<Dayjs>(dayjs());
+  const [startTime, setStartTime] = useState<string>();
   const [endTime, setEndTime] = useState<string>();
 
   interface TimeValue {
@@ -108,14 +108,13 @@ const MeetingForm: React.FC<Props> = ({
   }
 
   const handleStartTime = (time: TimeValue) => {
-    const date = new Date(0, 0, 0, time.hour, time.minute, time.second);
-    const timeOnly = dayjs(date).format('HH:mm:ss');
+    const timeOnly = dayjs(time).format('HH:mm:ss');
+    console.log('timeOnly:', timeOnly);
     setStartTime(timeOnly);
   };
 
   const handleEndTime = (time: TimeValue) => {
-    const date = new Date(0, 0, 0, time.hour, time.minute, time.second);
-    const timeOnly = dayjs(date).format('HH:mm:ss');
+    const timeOnly = dayjs(time).format('HH:mm:ss');
     setEndTime(timeOnly);
   };
 
@@ -123,10 +122,8 @@ const MeetingForm: React.FC<Props> = ({
   console.log('!!!!!!!!! endTime:', typeof endTime);
   const startDateTime = `${dayjs(selectedDate).format(
     'YYYY-MM-DD'
-  )}T${startTime.toString()}`;
-  const endDateTime = `${dayjs(selectedDate).format(
-    'YYYY-MM-DD'
-  )}T${endTime?.toString()}`;
+  )}T${startTime}`;
+  const endDateTime = `${dayjs(selectedDate).format('YYYY-MM-DD')}T${endTime}`;
   console.log('startDateTime:', typeof startDateTime);
   console.log('endDateTime:', typeof endDateTime);
 
