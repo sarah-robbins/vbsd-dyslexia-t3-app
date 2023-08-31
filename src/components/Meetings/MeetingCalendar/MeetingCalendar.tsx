@@ -74,20 +74,20 @@ const MeetingCalendar: React.FC<Props> = ({
   //   month: number;
   //   day: string;
   // }
-  const dateTemplate = (e: CalendarDateTemplateEvent) => {
-    const date = dayjs(e.value);
+  const dateTemplate = (date: Dayjs) => {
+    const formattedDate = dayjs(date);
     const dayFormatted =
-      date.year +
+      formattedDate.year +
       '-' +
-      (Number(date.month) + 1).toString().padStart(2, '0') +
+      (Number(formattedDate.month) + 1).toString().padStart(2, '0') +
       '-' +
-      date.day.toString().padStart(2, '0');
+      formattedDate.day.toString().padStart(2, '0');
 
     if (meetingDates.includes(dayFormatted)) {
-      return <span className="meeting-day">{date.date()}</span>;
+      return <span className="meeting-day">{formattedDate.date()}</span>;
     }
 
-    return date.date();
+    return formattedDate.date();
   };
 
   return (
