@@ -7,6 +7,14 @@ import MeetingListNameSelect from './MeetingListNameSelect/MeetingListNameSelect
 import Checkbox from '@mui/material/Checkbox';
 import dayjs from 'dayjs';
 
+interface Props {
+  selectedDate: string;
+  getDatedMeetings: Meeting[];
+  selectedMeetings: Meeting[];
+  meetings: Meeting[];
+  setSelectedMeetings: (meetings: Meeting[]) => void;
+}
+
 interface Meeting {
   id: string;
   name: string;
@@ -24,10 +32,10 @@ interface Meeting {
 }
 
 const MeetingList: React.FC<Props> = ({
-  selectedDate,
+  selectedDate = '',
   getDatedMeetings = [],
   selectedMeetings = [],
-
+  meetings = [],
   setSelectedMeetings = () => {
     meetings;
   },
@@ -44,7 +52,7 @@ const MeetingList: React.FC<Props> = ({
         selectedNames.includes(meeting.name)
       );
       setFilteredMeetings(filteredData);
-      setIsMeetingSelected(true);
+      // setIsMeetingSelected(true);
     }
   }, [getDatedMeetings, selectedNames]);
 

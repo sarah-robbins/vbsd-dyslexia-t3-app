@@ -67,8 +67,6 @@ const MeetingCalendar: React.FC<Props> = ({
       '-' +
       date.day.toString().padStart(2, '0');
 
-    console.log('Day Formatted:', typeof dayFormatted);
-
     if (meetingDates.includes(dayFormatted)) {
       return <span className="meeting-day">{date.day}</span>;
     }

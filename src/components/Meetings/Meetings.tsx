@@ -56,6 +56,7 @@ const Meetings = () => {
           isMeetingSelected={!!selectedMeetings}
         />
         <MeetingList
+          meetings={meetings}
           selectedDate={selectedDate}
           getDatedMeetings={getDatedMeetings}
           selectedMeetings={selectedMeetings}
