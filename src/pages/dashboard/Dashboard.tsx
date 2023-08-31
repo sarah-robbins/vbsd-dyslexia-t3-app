@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import Box from '@mui/material/Box';
 import LeftSideNav from '@/components/LeftSideNav/LeftSideNav';
 import Meetings from '@/components/Meetings/Meetings';

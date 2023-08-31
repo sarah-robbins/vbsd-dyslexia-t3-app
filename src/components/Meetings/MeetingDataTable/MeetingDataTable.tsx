@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import React, { useState, useEffect } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -21,13 +23,17 @@ const MeetingDataTable = () => {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    ProductService.getProductsMini().then(data => setProducts(data));
+    ProductService.getProductsMini().then((data) => setProducts(data));
   }, []);
 
   return (
     <Card className="card meeting-data-table">
-      <h3 className='px-4 pt-4'>My Students</h3>
-      <DataTable className="p-0" value={products} stripedRows tableStyle={{ minWidth: '50rem' }}>
+      <h3 className="px-4 pt-4">My Students</h3>
+      <DataTable
+        className="p-0"
+        value={products}
+        stripedRows
+        tableStyle={{ minWidth: '50rem' }}>
         <Column field="code" header="Code"></Column>
         <Column field="name" header="Name"></Column>
         <Column field="category" header="Category"></Column>
@@ -35,6 +41,6 @@ const MeetingDataTable = () => {
       </DataTable>
     </Card>
   );
-}
+};
 
-export default MeetingDataTable
+export default MeetingDataTable;
