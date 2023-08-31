@@ -153,8 +153,8 @@ const MeetingForm: React.FC<Props> = ({
 
   const options = [...statusOptions];
 
-  if (status && !options.includes(status)) {
-    options.push(status);
+  if (status && !options.some((opt) => opt === status)) {
+    options.push(opt);
   }
 
   const [selectedStatus, setSelectedStatus] = useState<unknown>(options[0]);
