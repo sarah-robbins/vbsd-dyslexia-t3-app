@@ -63,7 +63,7 @@ const MeetingCalendar: React.FC<Props> = ({
     const dayFormatted =
       date.year +
       '-' +
-      (date.month + 1).toString().padStart(2, '0') +
+      (Number(date.month) + 1).toString().padStart(2, '0') +
       '-' +
       date.day.toString().padStart(2, '0');
 
