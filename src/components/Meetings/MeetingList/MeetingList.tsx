@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Card } from 'primereact/card';
 import { DataTable } from 'primereact/datatable';

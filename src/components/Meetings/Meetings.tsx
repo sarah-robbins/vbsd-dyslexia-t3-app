@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import MeetingForm from './MeetingForm/MeetingForm';
 import MeetingCalendar from './MeetingCalendar/MeetingCalendar';

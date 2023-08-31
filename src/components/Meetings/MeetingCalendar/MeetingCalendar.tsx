@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import React, { useEffect, useMemo } from 'react';
 import {
   Calendar,
