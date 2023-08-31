@@ -89,11 +89,13 @@ const MeetingCalendar: React.FC<Props> = ({
     return date.day;
   };
 
+  const selectedDateValue = selectedDate.toDate();
+
   return (
     <div className="card flex w-full">
       <Card className="meeting-calendar w-full">
         <Calendar
-          value={selectedDate}
+          value={selectedDateValue}
           onChange={handleDateChange}
           numberOfMonths={3}
           inline
