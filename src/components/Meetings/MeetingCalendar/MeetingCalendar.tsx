@@ -1,12 +1,27 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Calendar, type CalendarChangeEvent } from 'primereact/calendar';
 import { Card } from 'primereact/card';
-import dayjs from 'dayjs';
+import dayjs, { type Dayjs } from 'dayjs';
 
 interface Props {
-  selectedDate: Date;
-  meetings: any[];
-  setSelectedDate: (date: Date) => void;
+  selectedDate: Dayjs;
+  meetings: Meeting[];
+  setSelectedDate: (date: Dayjs) => void;
+}
+
+interface Meeting {
+  name: string;
+  student_id: int;
+  start: Date;
+  end: Date;
+  meeting_status: string;
+  program: string;
+  level_lesson: string;
+  meeting_notes: string;
+  recorded_by: string;
+  recorded_on: Date;
+  edited_by: string;
+  edited_on: Date;
 }
 
 const MeetingCalendar: React.FC<Props> = ({
@@ -29,7 +44,7 @@ const MeetingCalendar: React.FC<Props> = ({
   }
   const handleDateChange = (date: SelectedDate) => {
     const selected = dayjs(date.value);
-    console.log('!!!!!!!!!!!Selected Date:', selected);
+    console.log('!!!!!!!!!!!Selected Date:', typeof selected);
     setSelectedDate(selected);
   };
 

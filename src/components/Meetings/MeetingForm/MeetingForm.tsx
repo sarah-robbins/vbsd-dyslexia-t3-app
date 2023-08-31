@@ -23,10 +23,10 @@ import Checkbox from '@mui/material/Checkbox';
 /* -------------------------------------------------------------------------- */
 
 interface Props {
-  meetings: any[];
-  setMeetings: (meetings: any[]) => void;
-  selectedMeetings: any[];
-  setSelectedMeetings: (meeting: any[]) => void;
+  meetings: Meeting[];
+  setMeetings: (meetings: Meeting[]) => void;
+  selectedMeetings: Meeting[];
+  setSelectedMeetings: (meeting: Meeting[]) => void;
   getDatedMeetings: any[];
   selectedDate: Dayjs;
   setSelectedDate: (date: Dayjs) => void;
@@ -99,7 +99,7 @@ const MeetingForm: React.FC<Props> = ({
     setSelectedDate(date);
   }, [date, setSelectedDate]);
 
-  const [startTime, setStartTime] = useState<string>();
+  const [startTime, setStartTime] = useState<Dayjs>(dayjs());
   const [endTime, setEndTime] = useState<string>();
 
   interface TimeValue {
@@ -107,12 +107,12 @@ const MeetingForm: React.FC<Props> = ({
   }
 
   const handleStartTime = (time: TimeValue) => {
-    const timeOnly = time.format('HH:mm:ss');
+    const timeOnly = dayjs(time).format('HH:mm:ss');
     setStartTime(timeOnly);
   };
 
   const handleEndTime = (time: TimeValue) => {
-    const timeOnly = time.format('HH:mm:ss');
+    const timeOnly = dayjs(time).format('HH:mm:ss');
     setEndTime(timeOnly);
   };
 
@@ -120,13 +120,13 @@ const MeetingForm: React.FC<Props> = ({
   console.log('!!!!!!!!! endTime:', typeof endTime);
   const startDateTime = `${dayjs(selectedDate).format(
     'YYYY-MM-DD'
-  )}T${startTime}`;
+  )}T${startTime.toString()}`;
   const endDateTime = `${dayjs(selectedDate).format('YYYY-MM-DD')}T${endTime}`;
   console.log('startDateTime:', typeof startDateTime);
   console.log('endDateTime:', typeof endDateTime);
 
-  const start = new Date(startDateTime);
-  const end = new Date(endDateTime);
+  const start = dayjs(startDateTime);
+  const end = dayjs(endDateTime);
 
   /* -------------------------------------------------------------------------- */
   /*                               Status Options                               */
@@ -147,7 +147,7 @@ const MeetingForm: React.FC<Props> = ({
     'Tutor Absent',
   ];
 
-  const { status } = statusOptions || {};
+  const status = statusOptions || {};
 
   const options = [...statusOptions];
 
@@ -155,7 +155,7 @@ const MeetingForm: React.FC<Props> = ({
     options.push(status);
   }
 
-  const [selectedStatus, setSelectedStatus] = useState(options[0]);
+  const [selectedStatus, setSelectedStatus] = useState<unknown>(options[0]);
 
   const handleStatusChange = (event: SelectChangeEvent) => {
     const status = event.target.value; // selected id
@@ -176,22 +176,22 @@ const MeetingForm: React.FC<Props> = ({
       const start = dayjs(selectedMeeting.start);
       const end = dayjs(selectedMeeting.end);
       setStartTime(start);
-      setEndTime(end);
+      setEndTime(end.toString());
       const meeting_status = selectedMeeting.meeting_status;
       setSelectedStatus(meeting_status);
       setFormValues({
         name: name,
         student_id: 0,
-        start: new Date(start),
-        end: new Date(end),
+        start: dayjs(start),
+        end: dayjs(end),
         meeting_status: meeting_status,
         program: '',
         level_lesson: '',
         meeting_notes: selectedMeeting.meeting_notes || '',
         recorded_by: '',
-        recorded_on: new Date(),
+        recorded_on: dayjs(),
         edited_by: '',
-        edited_on: new Date(),
+        edited_on: dayjs(),
       });
     }
   }, [selectedMeetings]);
@@ -201,16 +201,16 @@ const MeetingForm: React.FC<Props> = ({
       setFormValues({
         name: '',
         student_id: 0,
-        start: new Date(),
-        end: new Date(),
+        start: dayjs(),
+        end: dayjs(),
         meeting_status: '',
         program: '',
         level_lesson: '',
         meeting_notes: '',
         recorded_by: '',
-        recorded_on: new Date(),
+        recorded_on: dayjs(),
         edited_by: '',
-        edited_on: new Date(),
+        edited_on: dayjs(),
       });
       setName('');
       setSelectedStatus('');
@@ -226,16 +226,16 @@ const MeetingForm: React.FC<Props> = ({
   const [formValues, setFormValues] = useState<FormValues>({
     name: '',
     student_id: 0,
-    start: new Date(),
-    end: new Date(),
+    start: dayjs(),
+    end: dayjs(),
     meeting_status: '',
     program: '',
     level_lesson: '',
     meeting_notes: '',
     recorded_by: '',
-    recorded_on: new Date(),
+    recorded_on: dayjs(),
     edited_by: '',
-    edited_on: new Date(),
+    edited_on: dayjs(),
   });
 
   /* ------------------- create Meeting ------------------- */
@@ -253,7 +253,7 @@ const MeetingForm: React.FC<Props> = ({
       level_lesson: formValues.level_lesson,
       meeting_notes: formValues.meeting_notes,
       recorded_by: 'sarah',
-      recorded_on: new Date(),
+      recorded_on: dayjs(),
     };
     createMeetingMutation.mutate(newMeeting);
 
@@ -272,16 +272,16 @@ const MeetingForm: React.FC<Props> = ({
     setFormValues({
       name: '',
       student_id: 0,
-      start: new Date(),
-      end: new Date(),
+      start: dayjs(),
+      end: dayjs(),
       meeting_status: '',
       program: '',
       level_lesson: '',
       meeting_notes: '',
       recorded_by: '',
-      recorded_on: new Date(),
+      recorded_on: dayjs(),
       edited_by: '',
-      edited_on: new Date(),
+      edited_on: dayjs(),
     });
   };
 
@@ -301,7 +301,7 @@ const MeetingForm: React.FC<Props> = ({
       level_lesson: formValues.level_lesson,
       meeting_notes: formValues.meeting_notes || '',
       edited_by: 'sarah',
-      edited_on: new Date(),
+      edited_on: dayjs(),
     };
     editMeetingMutation.mutate(editedMeeting);
 
@@ -313,16 +313,16 @@ const MeetingForm: React.FC<Props> = ({
     // setFormValues({
     //   name: '',
     //   student_id: 0,
-    //   start: new Date(),
-    //   end: new Date(),
+    //   start: dayjs(),
+    //   end: dayjs(),
     //   meeting_status: '',
     //   program: '',
     //   level_lesson: '',
     //   meeting_notes: '',
     //   recorded_by: '',
-    //   recorded_on: new Date(),
+    //   recorded_on: dayjs(),
     //   edited_by: '',
-    //   edited_on: new Date(),
+    //   edited_on: dayjs(),
     // });
   };
 
@@ -355,16 +355,16 @@ const MeetingForm: React.FC<Props> = ({
       id: 0,
       name: '',
       student_id: 0,
-      // start: new Date(),
-      // end: new Date(),
+      // start: dayjs(),
+      // end: dayjs(),
       meeting_status: '',
       program: '',
       level_lesson: '',
       meeting_notes: '',
       recorded_by: '',
-      recorded_on: new Date(),
+      recorded_on: dayjs(),
       edited_by: '',
-      edited_on: new Date(),
+      edited_on: dayjs(),
     });
 
     setSelectedMeetings([]);
