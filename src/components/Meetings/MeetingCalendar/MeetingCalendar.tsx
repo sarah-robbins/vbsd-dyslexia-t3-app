@@ -1,5 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Calendar, type CalendarChangeEvent } from 'primereact/calendar';
+import {
+  Calendar,
+  CalendarDateTemplateEvent,
+  type CalendarChangeEvent,
+} from 'primereact/calendar';
 import { Card } from 'primereact/card';
 import dayjs, { type Dayjs } from 'dayjs';
 
@@ -43,9 +47,11 @@ const MeetingCalendar: React.FC<Props> = ({
   // interface SelectedDate {
   //   value: string;
   // }
-  const handleDateChange = (date: Dayjs) => {
-    const selected = dayjs(date);
-    console.log('!!!!!!!!!!!Selected Date:', typeof selected);
+
+  const selectedDateValue = dayjs(selectedDate).toDate();
+
+  const handleDateChange = (e: CalendarChangeEvent) => {
+    const selected = dayjs(e.value);
     setSelectedDate(selected);
   };
 
@@ -58,8 +64,8 @@ const MeetingCalendar: React.FC<Props> = ({
   //   month: number;
   //   day: string;
   // }
-  const dateTemplate = (date: Dayjs) => {
-    console.log('Date:', typeof date.year);
+  const dateTemplate = (e: CalendarDateTemplateEvent) => {
+    const date = dayjs(e.value);
     const dayFormatted =
       date.year +
       '-' +
@@ -78,7 +84,7 @@ const MeetingCalendar: React.FC<Props> = ({
     <div className="card flex w-full">
       <Card className="meeting-calendar w-full">
         <Calendar
-          value={selectedDate}
+          value={selectedDateValue}
           onChange={handleDateChange}
           numberOfMonths={3}
           inline
