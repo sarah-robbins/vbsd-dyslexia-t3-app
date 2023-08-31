@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   Calendar,
-  CalendarDateTemplateEvent,
+  type CalendarDateTemplateEvent,
   type CalendarChangeEvent,
 } from 'primereact/calendar';
 import { Card } from 'primereact/card';
@@ -48,20 +48,8 @@ const MeetingCalendar: React.FC<Props> = ({
   //   value: string;
   // }
 
-  const selectedDateValue = dayjs(selectedDate).toDate();
-
   const handleDateChange = (e: CalendarChangeEvent) => {
-    let selected: Dayjs;
-
-    if (Array.isArray(e.value)) {
-      // Handle multiple dates selected
-
-      selected = dayjs(e.value[0]); // Just use first date
-    } else {
-      // Handle single date selected
-      selected = dayjs(e.value);
-    }
-
+    const selected = dayjs(e.value);
     setSelectedDate(selected);
   };
 
@@ -74,27 +62,28 @@ const MeetingCalendar: React.FC<Props> = ({
   //   month: number;
   //   day: string;
   // }
-  const dateTemplate = (date: Dayjs) => {
-    const formattedDate = dayjs(date);
+  const dateTemplate = (date: CalendarDateTemplateEvent) => {
+    console.log('Date:', typeof date.year);
+    console.log('CalendarDateTemplateEvent:', date);
     const dayFormatted =
-      formattedDate.year +
+      date.year +
       '-' +
-      (Number(formattedDate.month) + 1).toString().padStart(2, '0') +
+      (Number(date.month) + 1).toString().padStart(2, '0') +
       '-' +
-      formattedDate.day.toString().padStart(2, '0');
+      date.day.toString().padStart(2, '0');
 
     if (meetingDates.includes(dayFormatted)) {
-      return <span className="meeting-day">{formattedDate.date()}</span>;
+      return <span className="meeting-day">{date.day}</span>;
     }
 
-    return formattedDate.date();
+    return date.day;
   };
 
   return (
     <div className="card flex w-full">
       <Card className="meeting-calendar w-full">
         <Calendar
-          value={selectedDateValue}
+          value={selectedDate}
           onChange={handleDateChange}
           numberOfMonths={3}
           inline
