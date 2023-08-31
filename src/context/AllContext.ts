@@ -5,5 +5,6 @@ import { createContext } from 'react';
 export interface RoutingContextType {
   setRouting: (path: string) => void;
 }
+const defaultContext = {} as RoutingContextType;
 
-export const routingContext = createContext<RoutingContextType | null>(null);
+export const routingContext = createContext<RoutingContextType>(defaultContext);
