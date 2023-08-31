@@ -49,7 +49,17 @@ const MeetingCalendar: React.FC<Props> = ({
   // }
 
   const handleDateChange = (e: CalendarChangeEvent) => {
-    const selected = dayjs(e.value);
+    let selected: Dayjs;
+
+    if (Array.isArray(e.value)) {
+      // Handle multiple dates
+
+      selected = dayjs(e.value[0]); // Use first date
+    } else {
+      // Handle single date
+      selected = dayjs(e.value);
+    }
+
     setSelectedDate(selected);
   };
 
