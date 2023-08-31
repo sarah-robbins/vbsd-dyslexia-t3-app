@@ -107,13 +107,13 @@ const MeetingForm: React.FC<Props> = ({
     timeOnly: string;
   }
 
-  const handleStartTime = (time: TimeValue) => {
+  const handleStartTime = (time: Dayjs) => {
     const timeOnly = dayjs(time).format('HH:mm:ss');
     console.log('timeOnly:', timeOnly);
     setStartTime(timeOnly);
   };
 
-  const handleEndTime = (time: TimeValue) => {
+  const handleEndTime = (time: Dayjs) => {
     const timeOnly = dayjs(time).format('HH:mm:ss');
     setEndTime(timeOnly);
   };
