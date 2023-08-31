@@ -24,8 +24,12 @@ const MeetingCalendar: React.FC<Props> = ({
     return [];
   }, [meetings]);
 
-  const handleDateChange = (date: Date | string) => {
+  interface SelectedDate {
+    value: string;
+  }
+  const handleDateChange = (date: SelectedDate) => {
     const selected = dayjs(date.value);
+    console.log('!!!!!!!!!!!Selected Date:', selected);
     setSelectedDate(selected);
   };
 

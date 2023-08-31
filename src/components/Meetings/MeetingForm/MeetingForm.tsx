@@ -107,8 +107,10 @@ const MeetingForm: React.FC<Props> = ({
     setEndTime(timeOnly);
   };
 
-  const startDateTime = `${selectedDate.format('YYYY-MM-DD')}T${startTime}`;
-  const endDateTime = `${selectedDate.format('YYYY-MM-DD')}T${endTime}`;
+  const startDateTime = `${dayjs(selectedDate).format(
+    'YYYY-MM-DD'
+  )}T${startTime}`;
+  const endDateTime = `${dayjs(selectedDate).format('YYYY-MM-DD')}T${endTime}`;
 
   const start = new Date(startDateTime);
   const end = new Date(endDateTime);
