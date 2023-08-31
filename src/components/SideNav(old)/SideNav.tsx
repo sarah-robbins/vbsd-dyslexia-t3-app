@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import React, { useState, useEffect, useRef } from 'react';
@@ -13,16 +15,16 @@ const sidebarNavLinks = [
   },
   {
     label: 'Delete',
-    icon: 'pi pi-fw pi-trash'
+    icon: 'pi pi-fw pi-trash',
   },
   {
-    separator: true
+    separator: true,
   },
   {
     label: 'Export',
-    icon: 'pi pi-fw pi-external-link'
-  }
-]
+    icon: 'pi pi-fw pi-external-link',
+  },
+];
 const SideNav = () => {
   // const [visible, setVisible] = useState<boolean>(false);
   // const hoverOnSidebar = console.log('Hovered on Sidebar!')
@@ -47,8 +49,8 @@ const SideNav = () => {
     type: 'mouseenter',
     listener: () => {
       setHover(true);
-      toggleHoverClass
-    }
+      toggleHoverClass;
+    },
   });
 
   const [bindMouseLeaveListener, unbindMouseLeaveListener] = useEventListener({
@@ -56,8 +58,8 @@ const SideNav = () => {
     type: 'mouseleave',
     listener: () => {
       setHover(false);
-      toggleHoverClass
-    }
+      toggleHoverClass;
+    },
   });
 
   useEffect(() => {
@@ -68,24 +70,35 @@ const SideNav = () => {
       unbindMouseEnterListener();
       unbindMouseLeaveListener();
     };
-  }, [bindMouseEnterListener, bindMouseLeaveListener, unbindMouseEnterListener, unbindMouseLeaveListener]);
-
+  }, [
+    bindMouseEnterListener,
+    bindMouseLeaveListener,
+    unbindMouseEnterListener,
+    unbindMouseLeaveListener,
+  ]);
 
   return (
     <div className="card flex justify-content-center">
-      <Sidebar visible={true} onHide={() => false} modal={false} id='testId' className={`${hover ? "menu-standard" : "menu-mini"} menu-wrapper h-full`}>
-        <div ref={elementRef} className='p-3'>
-          { hover ? hover : !hover }
-          <i className='pi pi-bars pb-2' />
-          <Menu model={sidebarNavLinks} className='m-0 p-0' />
+      <Sidebar
+        visible={true}
+        onHide={() => false}
+        modal={false}
+        id="testId"
+        className={`${
+          hover ? 'menu-standard' : 'menu-mini'
+        } menu-wrapper h-full`}>
+        <div ref={elementRef} className="p-3">
+          {hover ? hover : !hover}
+          <i className="pi pi-bars pb-2" />
+          <Menu model={sidebarNavLinks} className="m-0 p-0" />
         </div>
-        </Sidebar>
-        {/* <Button icon="pi pi-arrow-right" onClick={() => hoverOnSidebar()} />
+      </Sidebar>
+      {/* <Button icon="pi pi-arrow-right" onClick={() => hoverOnSidebar()} />
         <div ref={elementRef} className="border-round border-2 border-dashed surface-border text-xl p-5 w-15rem text-center">
           {hover}
         </div> */}
     </div>
-  )
-}
+  );
+};
 
-export default SideNav
+export default SideNav;
