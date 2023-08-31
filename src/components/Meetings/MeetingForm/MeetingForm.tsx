@@ -18,6 +18,53 @@ import { Toast } from 'primereact/toast';
 import ListItemText from '@mui/material/ListItemText';
 import Checkbox from '@mui/material/Checkbox';
 
+/* -------------------------------------------------------------------------- */
+/*                         Interfacing for TypeScript                         */
+/* -------------------------------------------------------------------------- */
+
+interface Props {
+  meetings: any[];
+  setMeetings: (meetings: any[]) => void;
+  selectedMeetings: any[];
+  setSelectedMeetings: (meeting: any[]) => void;
+  getDatedMeetings: any[];
+  selectedDate: Dayjs;
+  setSelectedDate: (date: Dayjs) => void;
+  getStudentsBySchool: unknown[];
+  selectedMeeting: Meeting | null;
+  isMeetingSelected: boolean;
+}
+
+interface Meeting {
+  name: string;
+  student_id: int;
+  start: Date;
+  end: Date;
+  meeting_status: string;
+  program: string;
+  level_lesson: string;
+  meeting_notes: string;
+  recorded_by: string;
+  recorded_on: Date;
+  edited_by: string;
+  edited_on: Date;
+}
+
+interface FormValues {
+  name: string;
+  student_id: int;
+  start: Date;
+  end: Date;
+  meeting_status: string;
+  program: string;
+  level_lesson: string;
+  meeting_notes: string;
+  recorded_by: string;
+  recorded_on: Date;
+  edited_by: string;
+  edited_on: Date;
+}
+
 const MeetingForm: React.FC<Props> = ({
   meetings,
   setMeetings,
@@ -29,48 +76,6 @@ const MeetingForm: React.FC<Props> = ({
   setSelectedMeetings,
 }) => {
   const toast = useRef(null);
-
-  /* -------------------------------------------------------------------------- */
-  /*                         Interfacing for TypeScript                         */
-  /* -------------------------------------------------------------------------- */
-
-  interface Props {
-    selectedDate: Dayjs;
-    setSelectedDate: (date: Dayjs) => void;
-    getStudentsBySchool: unknown[];
-    selectedMeeting: Meeting | null;
-    isMeetingSelected: boolean;
-  }
-
-  interface FormValues {
-    name: string;
-    student_id: int;
-    start: Date;
-    end: Date;
-    meeting_status: string;
-    program: string;
-    level_lesson: string;
-    meeting_notes: string;
-    recorded_by: string;
-    recorded_on: Date;
-    edited_by: string;
-    edited_on: Date;
-  }
-
-  interface Meeting {
-    name: string;
-    student_id: int;
-    start: Date;
-    end: Date;
-    meeting_status: string;
-    program: string;
-    level_lesson: string;
-    meeting_notes: string;
-    recorded_by: string;
-    recorded_on: Date;
-    edited_by: string;
-    edited_on: Date;
-  }
 
   /* -------------------------------------------------------------------------- */
   /*                             HANDLE NAME CHANGE                             */
@@ -92,25 +97,33 @@ const MeetingForm: React.FC<Props> = ({
 
   useEffect(() => {
     setSelectedDate(date);
-  }, [date]);
+  }, [date, setSelectedDate]);
 
-  const [startTime, setStartTime] = useState<Dayjs>(dayjs());
-  const [endTime, setEndTime] = useState<Dayjs>(dayjs());
+  const [startTime, setStartTime] = useState<string>();
+  const [endTime, setEndTime] = useState<string>();
 
-  const handleStartTime = (time: Dayjs) => {
+  interface TimeValue {
+    timeOnly: string;
+  }
+
+  const handleStartTime = (time: TimeValue) => {
     const timeOnly = time.format('HH:mm:ss');
     setStartTime(timeOnly);
   };
 
-  const handleEndTime = (time: Dayjs) => {
+  const handleEndTime = (time: TimeValue) => {
     const timeOnly = time.format('HH:mm:ss');
     setEndTime(timeOnly);
   };
 
+  console.log('!!!!!!!!! startTime:', typeof startTime);
+  console.log('!!!!!!!!! endTime:', typeof endTime);
   const startDateTime = `${dayjs(selectedDate).format(
     'YYYY-MM-DD'
   )}T${startTime}`;
   const endDateTime = `${dayjs(selectedDate).format('YYYY-MM-DD')}T${endTime}`;
+  console.log('startDateTime:', typeof startDateTime);
+  console.log('endDateTime:', typeof endDateTime);
 
   const start = new Date(startDateTime);
   const end = new Date(endDateTime);

@@ -4,7 +4,7 @@ import MeetingCalendar from './MeetingCalendar/MeetingCalendar';
 import MeetingDataTable from './MeetingDataTable/MeetingDataTable';
 import MeetingList from './MeetingList/MeetingList';
 import MeetingsTitleBar from './MeetingsTitleBar/MeetingsTitleBar';
-import dayjs from 'dayjs';
+import dayjs, { type Dayjs } from 'dayjs';
 import { api } from '@/utils/api';
 
 import { type dummyMeetings } from '@prisma/client';
@@ -14,14 +14,14 @@ const Meetings = () => {
   // State
   const [meetings, setMeetings] = useState<dummyMeetings[]>([]);
   const [date, setDate] = useState<string | Date | Date[] | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
+  const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedMeetings, setSelectedMeetings] = useState<dummyMeetings[]>([]);
 
   // Database Calls
   const getAllMeetings = api.meetings.getAllMeetings.useQuery(); // getAllMeetings
-  const { data: getDatedMeetings, error } =
+  const { data: getDatedMeetings } =
     api.meetings.getMeetingsByDate.useQuery(selectedDate); //getMeetingsByDate
-  const { data: getStudentsBySchool, error: getStudentsBySchoolError } =
+  const { data: getStudentsBySchool } =
     api.students.getStudentsBySchool.useQuery('King'); // getStudentsByRole
 
   useEffect(() => {
