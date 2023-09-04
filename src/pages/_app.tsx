@@ -17,12 +17,15 @@ import {
   createTheme,
   ThemeProvider as MuiThemeProvider,
 } from '@mui/material/styles';
-import darkTheme from './themes/darkTheme';
-import lightTheme from './themes/lightTheme';
+import darkTheme from '../styles/themes/darkTheme';
+import lightTheme from '../styles/themes/lightTheme';
 import { routingContext } from '@/context/AllContext';
 
 const ColorModeContext = React.createContext({
-  toggleColorMode: () => {},
+  // toggleColorMode: () => {},
+  toggleColorMode: () => {
+    console.log('toggleColorMode');
+  },
 });
 
 const MyApp: AppType<{ session: Session | null }> = ({
@@ -45,14 +48,14 @@ const MyApp: AppType<{ session: Session | null }> = ({
       createTheme({
         ...darkTheme,
       }),
-    [mode]
+    []
   );
   const lightThemeChosen = React.useMemo(
     () =>
       createTheme({
         ...lightTheme,
       }),
-    [mode]
+    []
   );
 
   return (

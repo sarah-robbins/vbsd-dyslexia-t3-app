@@ -1,11 +1,6 @@
 import * as React from 'react';
 import Image from 'next/image';
-import {
-  styled,
-  useTheme,
-  type Theme,
-  type CSSObject,
-} from '@mui/material/styles';
+import { styled, type Theme, type CSSObject } from '@mui/material/styles';
 import Drawer from '@mui/material/Drawer';
 import MuiDrawer from '@mui/material/Drawer';
 import MuiAppBar, {
@@ -32,13 +27,12 @@ import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import Button from '@mui/material/Button';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import EventIcon from '@mui/icons-material/Event';
 import PeopleIcon from '@mui/icons-material/People';
 import GroupsIcon from '@mui/icons-material/Groups';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import SettingsIcon from '@mui/icons-material/Settings';
-import { RoutingContextType, routingContext } from '@/context/AllContext';
+import { type RoutingContextType, routingContext } from '@/context/AllContext';
 import router from 'next/router';
 
 const drawerWidth = 180;
@@ -83,9 +77,13 @@ interface AppBarProps extends MuiAppBarProps {
   open?: boolean;
 }
 
+interface LeftSideNavProps {
+  window?: (Window & typeof globalThis) | undefined;
+}
+
 const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
-})<AppBarProps>(({ theme, open }) => ({
+})<AppBarProps>(({ theme }) => ({
   zIndex: theme.zIndex.drawer + 1,
   transition: theme.transitions.create(['width', 'margin'], {
     easing: theme.transitions.easing.sharp,
@@ -111,13 +109,12 @@ const MiniDrawer = styled(MuiDrawer, {
   }),
 }));
 
-const LeftSideNav = (props: any) => {
-  console.log('props: ', props);
+const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
   // const theme = useTheme();
   const { setRouting }: RoutingContextType = React.useContext(routingContext);
   console.log('routingContext', routingContext);
 
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState<boolean>(false);
   const handleDrawerToggle = () => {
     setOpen(!open);
   };
@@ -225,14 +222,9 @@ const LeftSideNav = (props: any) => {
       </List>
     </div>
   );
-  const { window } = props;
-  console.log('props 2: ', props);
-  console.log('window: ', window);
-
+  // const { window }: { window: Window } = props as { window: Window };
   const container =
-    typeof window === 'function' && window().document
-      ? () => window().document.body
-      : undefined;
+    window && window.document ? () => window.document.body : undefined;
 
   return (
     <>
@@ -324,7 +316,7 @@ const LeftSideNav = (props: any) => {
                   <Typography textAlign="center">{setting}</Typography>
                 </MenuItem>
               ))}
-              <MenuItem onClick={() => router.push('/')}>
+              <MenuItem onClick={() => void router.push('/')}>
                 <Typography textAlign="center">Logout</Typography>
               </MenuItem>
             </Menu>

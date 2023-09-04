@@ -1,14 +1,36 @@
-// @ts-nocheck
-
 import React, { useRef } from 'react';
 import styles from './SplashSpeedDial.module.css';
 import { SpeedDial } from 'primereact/speeddial';
 import { Toast } from 'primereact/toast';
 import { type MenuItem } from 'primereact/menuitem';
-import Link from 'next/link';
 import { useRouter } from 'next/router';
+import Image from 'next/image';
 
 export default function SplashSpeedDial() {
+  const redBgClass = styles?.topRightIconRedBg ?? '';
+  const greenBgClass = styles?.topRightIconGreenBg ?? '';
+  const topRightIconClass = styles?.topRightIcon ?? '';
+  const updateDetected = true;
+
+  const updateStatus = () => {
+    if (updateDetected) {
+      return (
+        <div className={`${redBgClass} absolute z-5`}>
+          <i
+            className={`${topRightIconClass} exclamation-icon pi pi-exclamation-circle`}
+            style={{ color: 'white' }}></i>
+        </div>
+      );
+    }
+    return (
+      <div className={`${greenBgClass} absolute z-5`}>
+        <i
+          className={`${topRightIconClass} exclamation-icon pi pi-check-circle`}
+          style={{ color: 'white' }}></i>
+      </div>
+    );
+  };
+
   const router = useRouter();
   const toast = useRef<Toast>(null);
   const items: MenuItem[] = [
@@ -16,7 +38,6 @@ export default function SplashSpeedDial() {
       label: 'Add',
       icon: 'pi pi-video',
       command: () => {
-        // add link to https://app.whizzimo.com/#/login
         window.open('https://app.whizzimo.com/#/login', '_blank');
       },
     },
@@ -24,7 +45,7 @@ export default function SplashSpeedDial() {
       label: 'Update',
       icon: 'pi pi-refresh',
       command: () => {
-        toast.current.show({
+        toast.current?.show({
           severity: 'success',
           summary: 'Update',
           detail: 'Data Updated',
@@ -35,7 +56,7 @@ export default function SplashSpeedDial() {
       label: 'Login',
       icon: 'pi pi-external-link',
       command: () => {
-        router.push('/dashboard');
+        void router.push('/dashboard');
       },
     },
   ];
@@ -49,21 +70,12 @@ export default function SplashSpeedDial() {
           radius={140}
           type="semi-circle"
           direction="down"
-          showIcon={<img alt="dropdown icon" src="/logo.svg" />}
-          hideIcon={<img alt="dropdown icon" src="/logo.svg" />}
+          showIcon={<Image src="/logo.svg" alt="dropdown icon" />}
+          hideIcon={<Image src="/logo.svg" alt="dropdown icon" />}
           className="p-overlay-badge"
         />
       </div>
-
-      <div className={`${styles.topRightIconRedBg} absolute z-5`}>
-        <i
-          className={`${styles.topRightIcon} exclamation-icon pi pi-exclamation-circle`}
-          style={{ color: 'white' }}></i>
-      </div>
-
-      {/* <div className={`${styles.topRightIconGreenBg} absolute z-5`}>
-        <i className={`${styles.topRightIcon} exclamation-icon pi pi-check-circle`} style={{ color: 'white' }}></i>
-      </div> */}
+      {updateStatus()}
     </div>
   );
 }

@@ -1,6 +1,4 @@
-// @ts-nocheck
-
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   Calendar,
   type CalendarDateTemplateEvent,
@@ -8,32 +6,18 @@ import {
 } from 'primereact/calendar';
 import { Card } from 'primereact/card';
 import dayjs, { type Dayjs } from 'dayjs';
+import { type dummyMeetings } from '@prisma/client';
 
 interface Props {
-  date: string | Date | Date[] | null;
-  selectedDate: Dayjs;
-  meetings: Meeting[];
+  date: Dayjs | null;
+  selectedDate?: Dayjs | null | string;
+  meetings: dummyMeetings[];
   setSelectedDate: (date: Dayjs) => void;
-}
-
-interface Meeting {
-  name: string;
-  student_id: string;
-  start: Date;
-  end: Date;
-  meeting_status: string;
-  program: string;
-  level_lesson: string;
-  meeting_notes: string;
-  recorded_by: string;
-  recorded_on: Date;
-  edited_by: string;
-  edited_on: Date;
 }
 
 const MeetingCalendar: React.FC<Props> = ({
   selectedDate,
-  meetings = [],
+  meetings,
   setSelectedDate,
 }) => {
   const meetingDates: string[] = useMemo(() => {
@@ -65,9 +49,7 @@ const MeetingCalendar: React.FC<Props> = ({
     setSelectedDate(selected);
   };
 
-  useEffect(() => {
-    console.log('Meeting Dates:', meetingDates);
-  }, [meetingDates]);
+  // useEffect(() => {}, [meetingDates]);
 
   // interface CalendarDate {
   //   year: string;
@@ -76,7 +58,7 @@ const MeetingCalendar: React.FC<Props> = ({
   // }
   const dateTemplate = (date: CalendarDateTemplateEvent) => {
     const dayFormatted =
-      date.year +
+      date.year.toString() +
       '-' +
       (Number(date.month) + 1).toString().padStart(2, '0') +
       '-' +
@@ -90,7 +72,6 @@ const MeetingCalendar: React.FC<Props> = ({
   };
 
   const selectedDateValue = dayjs(selectedDate).toDate();
-  console.log('selectedDateValue:', selectedDateValue);
 
   return (
     <div className="card flex w-full">

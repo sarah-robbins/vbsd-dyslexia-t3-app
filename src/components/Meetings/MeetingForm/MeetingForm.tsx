@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import React, { useEffect, useState, useRef } from 'react';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
@@ -19,66 +17,68 @@ import { api } from '@/utils/api';
 import { Toast } from 'primereact/toast';
 import ListItemText from '@mui/material/ListItemText';
 import Checkbox from '@mui/material/Checkbox';
+import { type dummyStudents, type dummyMeetings } from '@prisma/client';
 
 /* -------------------------------------------------------------------------- */
 /*                         Interfacing for TypeScript                         */
 /* -------------------------------------------------------------------------- */
 
 interface Props {
-  meetings: Meeting[];
-  setMeetings: (meetings: Meeting[]) => void;
+  meetings: dummyMeetings[];
+  setMeetings: (meetings: dummyMeetings[]) => void;
   selectedMeetings: Meeting[];
-  setSelectedMeetings: (meeting: Meeting[]) => void;
-  getDatedMeetings: any[];
-  selectedDate: Dayjs;
-  setSelectedDate: (date: Dayjs) => void;
-  getStudentsBySchool: unknown[];
-  selectedMeeting: Meeting | null;
+  setSelectedMeetings: (meetings: Meeting[]) => void;
+  getDatedMeetings: Meeting[];
+  selectedDate?: Dayjs | null | string;
+  // setSelectedDate: (date: Dayjs) => void | null;
+  getStudentsBySchool: dummyStudents[];
   isMeetingSelected: boolean;
 }
 
 interface Meeting {
-  id: number;
+  id?: number;
   name: string;
-  student_id: string;
-  start: Dayjs;
-  end: Dayjs;
+  student_id?: number;
+  start?: Dayjs;
+  end?: Dayjs;
   meeting_status: string;
-  program: string;
-  level_lesson: string;
-  meeting_notes: string;
+  program?: string;
+  level_lesson?: string;
+  meeting_notes?: string;
   recorded_by: string;
   recorded_on: Dayjs;
-  edited_by: string;
-  edited_on: Dayjs;
+  edited_by?: string;
+  edited_on?: Dayjs;
 }
 
 interface FormValues {
+  id?: number;
   name: string;
-  student_id: string;
-  start: Dayjs;
-  end: Dayjs;
+  student_id?: number;
+  start: Dayjs | Date;
+  end: Dayjs | Date;
   meeting_status: string;
-  program: string;
-  level_lesson: string;
-  meeting_notes: string;
+  program?: string;
+  level_lesson?: string;
+  meeting_notes?: string;
   recorded_by: string;
-  recorded_on: Dayjs;
+  recorded_on: Dayjs | Date;
   edited_by: string;
-  edited_on: Dayjs;
+  edited_on?: Dayjs | Date;
 }
 
 const MeetingForm: React.FC<Props> = ({
   meetings,
   setMeetings,
-  selectedDate,
-  setSelectedDate,
+  selectedDate: selectedDateProp,
+  // setSelectedDate,
   getStudentsBySchool = [],
-  getDatedMeetings = [],
+  // getDatedMeetings = [],
   selectedMeetings = [],
-  setSelectedMeetings = [],
+  // setSelectedMeetings = [],
 }) => {
-  const toast = useRef(null);
+  const toast = useRef<Toast>(null);
+  const [selectedDate, setSelectedDate] = useState(selectedDateProp);
 
   /* -------------------------------------------------------------------------- */
   /*                             HANDLE NAME CHANGE                             */
@@ -95,39 +95,36 @@ const MeetingForm: React.FC<Props> = ({
   /*                            HANDLE DATE AND TIME                            */
   /* -------------------------------------------------------------------------- */
 
-  const [date, setDate] = useState<Dayjs>(dayjs());
+  const [date] = useState<Dayjs>(dayjs());
   // const [selectedDate, setSelectedDate] = useState(null);
 
   useEffect(() => {
     setSelectedDate(date);
   }, [date, setSelectedDate]);
 
-  const [startTime, setStartTime] = useState<string>();
-  const [endTime, setEndTime] = useState<string>();
+  const [startTime, setStartTime] = useState<Dayjs>(dayjs());
+  const [endTime, setEndTime] = useState<Dayjs>(dayjs());
 
-  interface TimeValue {
-    timeOnly: string;
-  }
-
-  const handleStartTime = (time: Dayjs) => {
-    const timeOnly = dayjs(time).format('HH:mm:ss');
-    console.log('timeOnly:', timeOnly);
-    setStartTime(timeOnly);
+  const handleStartTime = (time: Dayjs | null) => {
+    if (time) {
+      const timeOnly = dayjs(time);
+      setStartTime(timeOnly);
+    }
+  };
+  const handleEndTime = (time: Dayjs | null) => {
+    const timeOnly = dayjs(time);
+    setEndTime(dayjs(timeOnly));
   };
 
-  const handleEndTime = (time: Dayjs) => {
-    const timeOnly = dayjs(time).format('HH:mm:ss');
-    setEndTime(timeOnly);
-  };
+  const startTimeToString = startTime.toString();
+  const endTimeToString = endTime.toString();
 
-  console.log('!!!!!!!!! startTime:', typeof startTime);
-  console.log('!!!!!!!!! endTime:', typeof endTime);
-  const startDateTime = `${dayjs(selectedDate).format(
+  const startDateTime = `${dayjs(selectedDate as string).format(
     'YYYY-MM-DD'
-  )}T${startTime}`;
-  const endDateTime = `${dayjs(selectedDate).format('YYYY-MM-DD')}T${endTime}`;
-  console.log('startDateTime:', typeof startDateTime);
-  console.log('endDateTime:', typeof endDateTime);
+  )}T${startTimeToString}`;
+  const endDateTime = `${dayjs(selectedDate as string).format(
+    'YYYY-MM-DD'
+  )}T${endTimeToString}`;
 
   const start = dayjs(startDateTime);
   const end = dayjs(endDateTime);
@@ -136,14 +133,14 @@ const MeetingForm: React.FC<Props> = ({
   /*                               Status Options                               */
   /* -------------------------------------------------------------------------- */
 
-  type StatusOption =
-    | 'Met'
-    | 'Student Unavailable'
-    | 'Tutor Unavailable'
-    | 'Student Absent'
-    | 'Tutor Absent';
+  // type StatusOption =
+  //   | 'Met'
+  //   | 'Student Unavailable'
+  //   | 'Tutor Unavailable'
+  //   | 'Student Absent'
+  //   | 'Tutor Absent';
 
-  const statusOptions: StatusOption[] = [
+  const statusOptions: string[] = [
     'Met',
     'Student Unavailable',
     'Tutor Unavailable',
@@ -151,23 +148,24 @@ const MeetingForm: React.FC<Props> = ({
     'Tutor Absent',
   ];
 
-  const status = statusOptions || {};
+  // const status = statusOptions || [];
 
   const options = [...statusOptions];
+  console.log('options from MeetingForm.tsx', options);
 
-  const existingStatus = options.find((opt) => opt === status);
+  // const existingStatus = options.find((opt) => opt === status);
 
-  if (!existingStatus) {
-    options.push(status);
-  }
+  // if (!existingStatus) {
+  //   options.push(status);
+  // }
 
-  const [selectedStatus, setSelectedStatus] = useState<unknown>(options[0]);
+  const [selectedStatus, setSelectedStatus] = useState<string>('');
+  console.log('selectedStatus from MeetingForm.tsx', selectedStatus);
 
   const handleStatusChange = (event: SelectChangeEvent) => {
-    const status = event.target.value; // selected id
-
-    setFormValues({ ...formValues, meeting_status: status });
-    setSelectedStatus(status);
+    const selectedStatus = event.target.value; // selected id
+    setFormValues({ ...formValues, meeting_status: selectedStatus });
+    setSelectedStatus(selectedStatus);
   };
 
   /* -------------------------------------------------------------------------- */
@@ -176,18 +174,20 @@ const MeetingForm: React.FC<Props> = ({
 
   useEffect(() => {
     if (selectedMeetings.length > 0) {
+      console.log('selectedMeetings from MeetingForm.tsx', selectedMeetings);
       const selectedMeeting = selectedMeetings[0];
+      if (!selectedMeeting) return;
       const name = selectedMeeting.name;
       setName(name);
       const start = dayjs(selectedMeeting.start);
       const end = dayjs(selectedMeeting.end);
       setStartTime(start);
-      setEndTime(end.toString());
+      setEndTime(end);
       const meeting_status = selectedMeeting.meeting_status;
       setSelectedStatus(meeting_status);
       setFormValues({
         name: name,
-        student_id: '',
+        student_id: 0,
         start: dayjs(start),
         end: dayjs(end),
         meeting_status: meeting_status,
@@ -206,7 +206,7 @@ const MeetingForm: React.FC<Props> = ({
     if (selectedMeetings.length <= 0) {
       setFormValues({
         name: '',
-        student_id: '',
+        student_id: 0,
         start: dayjs(),
         end: dayjs(),
         meeting_status: '',
@@ -231,7 +231,7 @@ const MeetingForm: React.FC<Props> = ({
 
   const [formValues, setFormValues] = useState<FormValues>({
     name: '',
-    student_id: '',
+    student_id: 0,
     start: dayjs(),
     end: dayjs(),
     meeting_status: '',
@@ -251,19 +251,19 @@ const MeetingForm: React.FC<Props> = ({
     const newMeeting = {
       id: 0,
       name: name,
-      student_id: formValues.student_id,
-      start: start,
-      end: end,
+      student_id: formValues.student_id ?? 0,
+      start: dayjs(start).toDate(),
+      end: dayjs(end).toDate(),
       meeting_status: formValues.meeting_status,
-      program: formValues.program,
-      level_lesson: formValues.level_lesson,
-      meeting_notes: formValues.meeting_notes,
+      program: formValues.program ?? '',
+      level_lesson: formValues.level_lesson ?? '',
+      meeting_notes: formValues.meeting_notes ?? '',
       recorded_by: 'sarah',
-      recorded_on: dayjs(),
+      recorded_on: dayjs().toDate(),
     };
     createMeetingMutation.mutate(newMeeting);
 
-    toast.current.show({
+    toast.current?.show({
       severity: 'success',
       summary: 'This meeting has been added.',
       detail: newMeeting.name,
@@ -277,7 +277,7 @@ const MeetingForm: React.FC<Props> = ({
 
     setFormValues({
       name: '',
-      student_id: '',
+      student_id: 0,
       start: dayjs(),
       end: dayjs(),
       meeting_status: '',
@@ -295,19 +295,22 @@ const MeetingForm: React.FC<Props> = ({
   const editMeetingMutation = api.meetings.editMeeting.useMutation();
 
   const editMeeting = (formValues: FormValues) => {
-    const id = Number(selectedMeetings[0].id);
+    if (!selectedMeetings) {
+      return;
+    }
+    const id = selectedMeetings[0]?.id;
     const editedMeeting = {
       id: id,
       name: name,
-      student_id: formValues.student_id,
-      start: formValues.start,
-      end: formValues.end,
+      student_id: formValues.student_id ?? 0,
+      start: dayjs(start).toDate(),
+      end: dayjs(end).toDate(),
       meeting_status: formValues.meeting_status,
-      program: formValues.program,
-      level_lesson: formValues.level_lesson,
-      meeting_notes: formValues.meeting_notes || '',
+      program: formValues.program ?? '',
+      level_lesson: formValues.level_lesson ?? '',
+      meeting_notes: formValues.meeting_notes ?? '',
       edited_by: 'sarah',
-      edited_on: dayjs(),
+      edited_on: dayjs().toDate(),
     };
     editMeetingMutation.mutate(editedMeeting);
 
@@ -337,7 +340,7 @@ const MeetingForm: React.FC<Props> = ({
   const deleteMeetingMutation = api.meetings.deleteMeeting.useMutation();
 
   const handleDelete = () => {
-    const id = Number(selectedMeetings[0].id);
+    const id = Number(selectedMeetings[0]?.id);
     const confirm = window.confirm(
       'Are you sure you want to delete this meeting?'
     );
@@ -345,10 +348,10 @@ const MeetingForm: React.FC<Props> = ({
 
     deleteMeetingMutation.mutate({ id });
 
-    toast.current.show({
+    toast.current?.show({
       severity: 'success',
       summary: 'This meeting has been deleted.',
-      detail: selectedMeetings[0].name,
+      detail: selectedMeetings[0]?.name,
       life: 3000,
     });
 
@@ -358,11 +361,11 @@ const MeetingForm: React.FC<Props> = ({
     setEndTime(dayjs());
 
     setFormValues({
-      id: '',
+      id: 0,
       name: '',
-      student_id: '',
-      // start: dayjs(),
-      // end: dayjs(),
+      student_id: 0,
+      start: dayjs(),
+      end: dayjs(),
       meeting_status: '',
       program: '',
       level_lesson: '',
@@ -373,8 +376,6 @@ const MeetingForm: React.FC<Props> = ({
       edited_on: dayjs(),
     });
 
-    setSelectedMeetings([]);
-
     const filteredMeetings = meetings.filter((meeting) => meeting.id !== id);
     setMeetings(filteredMeetings);
   };
@@ -384,8 +385,7 @@ const MeetingForm: React.FC<Props> = ({
   /* -------------------------------------------------------------------------- */
 
   //check if id is greater than 0 and return true or false
-  const existingMeeting =
-    getDatedMeetings.id > 0 || selectedMeetings.length > 0;
+  const existingMeeting = selectedMeetings.length > 0;
 
   //check if the meeting exists in the database and return true or false
   const noMeeting =
@@ -426,9 +426,17 @@ const MeetingForm: React.FC<Props> = ({
                 </MenuItem>
               ))} */}
               {getStudentsBySchool.map((s) => (
-                <MenuItem key={s.id} value={`${s.first_name} ${s.last_name}`}>
-                  <Checkbox checked={name.indexOf(s.id) > -1} />
-                  <ListItemText primary={`${s.last_name}, ${s.first_name}`} />
+                <MenuItem
+                  key={s.id}
+                  value={`${s.first_name ?? 'Unknown'} ${
+                    s.last_name ?? 'Unknown'
+                  }`}>
+                  <Checkbox checked={name.indexOf(s.id.toString()) > -1} />
+                  <ListItemText
+                    primary={`${s.last_name ?? 'Unknown'}, ${
+                      s.first_name ?? 'Unknown'
+                    }`}
+                  />
                 </MenuItem>
               ))}
             </Select>
@@ -447,7 +455,6 @@ const MeetingForm: React.FC<Props> = ({
             <DatePicker
               label="Date"
               className="w-12"
-              required
               value={selectedDate}
               onChange={setSelectedDate}
             />
@@ -474,13 +481,11 @@ const MeetingForm: React.FC<Props> = ({
             <div className="flex gap-4">
               <TimePicker
                 label="Start Time"
-                required
                 value={startTime}
                 onChange={handleStartTime}
               />
               <TimePicker
                 label="End Time"
-                required
                 value={endTime}
                 onChange={handleEndTime}
               />

@@ -1,40 +1,39 @@
-// @ts-nocheck
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card } from 'primereact/card';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import Chip from '@mui/material/Chip';
-import MeetingListNameSelect from './MeetingListNameSelect/MeetingListNameSelect';
 import Checkbox from '@mui/material/Checkbox';
-import dayjs from 'dayjs';
+import dayjs, { type Dayjs } from 'dayjs';
+import { type dummyMeetings } from '@prisma/client';
 
 interface Props {
-  selectedDate: string;
+  selectedDate?: Dayjs | null | string;
   getDatedMeetings: Meeting[];
+  meetings: dummyMeetings[];
   selectedMeetings: Meeting[];
-  meetings: Meeting[];
   setSelectedMeetings: (meetings: Meeting[]) => void;
 }
 
 interface Meeting {
-  id: string;
+  id?: number;
   name: string;
-  student_id: string;
-  start: string;
-  end: string;
+  student_id?: number;
+  start?: Dayjs;
+  end?: Dayjs;
   meeting_status: string;
-  program: string;
-  level_lesson: string;
-  meeting_notes: string;
+  program?: string;
+  level_lesson?: string;
+  meeting_notes?: string;
   recorded_by: string;
-  recorded_on: string;
-  edited_by: string;
-  edited_on: string;
+  recorded_on: Dayjs;
+  edited_by?: string;
+  edited_on?: Dayjs;
+  startDateString?: string;
 }
 
 const MeetingList: React.FC<Props> = ({
-  selectedDate = '',
+  selectedDate,
   getDatedMeetings = [],
   selectedMeetings = [],
   meetings = [],
@@ -42,10 +41,9 @@ const MeetingList: React.FC<Props> = ({
     meetings;
   },
 }) => {
-  console.log('selectedMeetings', selectedMeetings);
   const [filteredMeetings, setFilteredMeetings] = useState<Meeting[]>([]);
   // const [selectedMeetings, setSelectedMeetings] = useState<Meeting[]>([]);
-  const [selectedNames, setSelectedNames] = useState<string[]>([]);
+  const [selectedNames] = useState<string[]>([]);
   const selectAllCheckboxRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -58,9 +56,9 @@ const MeetingList: React.FC<Props> = ({
     }
   }, [getDatedMeetings, selectedNames]);
 
-  const handleNameSelect = (names: string[]) => {
-    setSelectedNames(names);
-  };
+  // const handleNameSelect = (names: string[]) => {
+  //   setSelectedNames(names);
+  // };
 
   useEffect(() => {
     if (!selectedDate) {
@@ -68,10 +66,15 @@ const MeetingList: React.FC<Props> = ({
       return;
     }
 
-    const filtered = getDatedMeetings.filter((meeting) => {
-      const meetingDate = dayjs(meeting.start);
-      return meetingDate.isSame(selectedDate, 'day');
-    });
+    const filtered = getDatedMeetings
+      .map((meeting) => ({
+        ...meeting,
+        dateString: dayjs(meeting.start).format('YYYY-MM-DD'),
+      }))
+      .filter((meeting) => {
+        const meetingDate = dayjs(meeting.start);
+        return meetingDate.isSame(selectedDate as Dayjs, 'day');
+      });
     setFilteredMeetings(filtered);
   }, [getDatedMeetings, selectedDate]);
 
@@ -85,17 +88,20 @@ const MeetingList: React.FC<Props> = ({
   }, [selectedMeetings, filteredMeetings]);
 
   const headerTemplate = (data: Meeting) => {
-    const originalDate = data.start;
-    const date = new Date(originalDate);
+    const originalDate = dayjs(data.start);
+    console.log('originalDate', originalDate);
+    console.log('originalDate type', typeof originalDate);
+    const newDate = originalDate.startOf('day').toDate();
+    console.log('newDate', newDate);
 
-    const options = {
+    const options: Intl.DateTimeFormatOptions = {
       weekday: 'long',
       month: 'short',
       day: 'numeric',
       year: 'numeric',
     };
 
-    const getOrdinalSuffix = (day) => {
+    const getOrdinalSuffix = (day: number) => {
       if (day >= 11 && day <= 13) {
         return 'th';
       }
@@ -114,8 +120,8 @@ const MeetingList: React.FC<Props> = ({
 
     const formatter = new Intl.DateTimeFormat('en-US', options);
 
-    const formattedDate = formatter.format(date);
-    const dayOfMonth = date.getDate();
+    const formattedDate = formatter.format(newDate);
+    const dayOfMonth = newDate.getDate();
     const ordinalSuffix = getOrdinalSuffix(dayOfMonth);
 
     const finalFormattedDate = formattedDate.replace(
@@ -129,9 +135,10 @@ const MeetingList: React.FC<Props> = ({
           <div className="flex align-items-center gap-2">
             <span className="font-bold">{finalFormattedDate}</span>
           </div>
-          <td colSpan="5">
+          <td colSpan={5}>
             <div className="flex justify-content-end font-bold w-full">
-              Total Meetings: {calculateMeetingTotal(data.start)}
+              Total Meetings:{' '}
+              {calculateMeetingTotal(data.start?.toString() ?? '')}
             </div>
           </td>
         </div>
@@ -140,7 +147,7 @@ const MeetingList: React.FC<Props> = ({
   };
 
   const footerTemplate = () => {
-    return <td colSpan="5" className="h-auto"></td>;
+    return <td colSpan={5} className="h-auto"></td>;
   };
 
   const statusBodyTemplate = (rowData: Meeting) => {
@@ -153,29 +160,24 @@ const MeetingList: React.FC<Props> = ({
     );
   };
 
-  const formatMeetingTime = (data: Meeting) => {
-    const start = data.start;
-    const end = data.end;
+  const formatMeetingTime = (data: dummyMeetings) => {
+    const { start, end } = data;
 
-    const formatTime = (timeString) => {
-      const date = new Date(timeString);
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
+    const formatTime = (time: Date | null): string => {
+      const date = dayjs(time);
+      const hours = date.hour();
+      const minutes = date.minute();
 
       const isPM = hours >= 12;
       const formattedHours = isPM ? hours % 12 || 12 : hours;
-      const formattedTime = `${formattedHours}:${minutes
-        .toString()
-        .padStart(2, '0')}`;
-
+      const formattedMinutes = minutes.toString().padStart(2, '0');
       const period = isPM ? 'pm' : 'am';
 
-      return formattedTime + period;
+      return `${formattedHours}:${formattedMinutes}${period}`;
     };
 
     const startTime = formatTime(start);
     const endTime = formatTime(end);
-
     const timeSpan = `${startTime} - ${endTime}`;
 
     return (
@@ -184,13 +186,34 @@ const MeetingList: React.FC<Props> = ({
       </div>
     );
   };
-
-  const calculateMeetingTotal = (start: string) => {
+  // calculate the total amount of meetings on a given day in the meeting list
+  const calculateMeetingTotal = (start: string): number => {
     let total = 0;
+
+    // Convert start string to a dayjs object
+    const startDate = dayjs(start);
+
+    // Extract day, month, and year from start
+    const startDay = startDate.date();
+    const startMonth = startDate.month();
+    const startYear = startDate.year();
 
     if (getDatedMeetings) {
       for (const meeting of getDatedMeetings) {
-        if (meeting.start === start) {
+        // Convert meeting.start string to a dayjs object
+        const meetingDate = dayjs(meeting.start);
+
+        // Extract day, month, and year from meeting.start
+        const meetingDay = meetingDate.date();
+        const meetingMonth = meetingDate.month();
+        const meetingYear = meetingDate.year();
+
+        // Compare extracted values
+        if (
+          meetingDay === startDay &&
+          meetingMonth === startMonth &&
+          meetingYear === startYear
+        ) {
           total++;
         }
       }
@@ -232,16 +255,28 @@ const MeetingList: React.FC<Props> = ({
   };
 
   const toggleCheckbox = (meeting: Meeting) => {
-    setSelectedMeetings((prevSelectedMeetings) => {
-      if (isCheckboxChecked(meeting)) {
-        return prevSelectedMeetings.filter(
-          (selectedMeeting) => selectedMeeting.id !== meeting.id
-        );
-      } else {
-        return [...prevSelectedMeetings, meeting];
-      }
-    });
+    let updatedMeetings: Meeting[];
+
+    if (isCheckboxChecked(meeting)) {
+      updatedMeetings = selectedMeetings.filter((m) => m.id !== meeting.id);
+    } else {
+      updatedMeetings = [...selectedMeetings, meeting];
+    }
+
+    setSelectedMeetings(updatedMeetings);
   };
+  // const toggleCheckbox = (meeting: Meeting) => {
+  //   setSelectedMeetings((prevSelectedMeetings: Meeting[]): Meeting[] => {
+  //     console.log('prevSelectedMeetings', prevSelectedMeetings);
+  //     if (isCheckboxChecked(meeting)) {
+  //       return prevSelectedMeetings.filter(
+  //         (selectedMeeting) => selectedMeeting.id !== meeting.id
+  //       );
+  //     } else {
+  //       return [...prevSelectedMeetings, meeting];
+  //     }
+  //   });
+  // };
 
   return (
     <Card className="lg:w-7 flex-order-1 lg:flex-order-2 elevate-item">
@@ -255,10 +290,10 @@ const MeetingList: React.FC<Props> = ({
       <DataTable
         value={filteredMeetings}
         rowGroupMode="subheader"
-        groupRowsBy="start"
+        groupRowsBy="dateString"
         sortMode="single"
         sortField="start"
-        sortOrder={-1}
+        sortOrder={1}
         scrollable
         scrollHeight="510px"
         rowGroupHeaderTemplate={headerTemplate}
@@ -266,13 +301,13 @@ const MeetingList: React.FC<Props> = ({
         dataKey="id"
         stripedRows
         tableStyle={{ minWidth: '20rem' }}
-        rowClassName={(rowData) =>
+        rowClassName={(rowData: Meeting) =>
           isCheckboxChecked(rowData) ? 'row-selected' : ''
         }>
         <Column
           header={() => (
             <Checkbox
-              ref={selectAllCheckboxRef}
+              // ref={selectAllCheckboxRef}
               indeterminate={
                 selectedMeetings.length > 0 &&
                 selectedMeetings.length < filteredMeetings.length

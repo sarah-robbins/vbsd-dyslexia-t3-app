@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '@/server/api/trpc';
-import { dummyMeetings } from '@prisma/client';
 
 export const meetingsRouter = createTRPCRouter({
   //get all meetings

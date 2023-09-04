@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '@/server/api/trpc';
-import { dummyStudents } from '@prisma/client';
+// import { dummyStudents } from '@prisma/client';
 
 export const studentsRouter = createTRPCRouter({
   //get all students
@@ -35,10 +35,10 @@ export const studentsRouter = createTRPCRouter({
         level_lesson: z.string(),
         date_intervention_began: z.date(),
         services: z.string(),
-        new_student: z.string(),
-        moved: z.string(),
+        new_student: z.boolean(),
+        moved: z.boolean(),
         new_location: z.string(),
-        withdrew: z.string(),
+        withdrew: z.boolean(),
         additional_comments: z.string(),
         last_edited: z.date(),
         created_at: z.date(),

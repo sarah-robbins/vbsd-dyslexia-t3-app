@@ -1,9 +1,9 @@
 import React from 'react';
-import styles from './index.module.css';
-import { signIn, signOut, useSession } from 'next-auth/react';
+// import styles from './index.module.css';
+// import { signIn, signOut, useSession } from 'next-auth/react';
 import { type NextPage } from 'next';
 import Head from 'next/head';
-import { api } from '@/utils/api';
+// import { api } from '@/utils/api';
 import SplashSpeedDial from '@/components/SplashSpeedDial/SplashSpeedDial';
 
 const Home: NextPage = () => {

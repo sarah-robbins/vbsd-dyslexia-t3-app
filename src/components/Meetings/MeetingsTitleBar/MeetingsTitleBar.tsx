@@ -1,12 +1,14 @@
-// @ts-nocheck
-
 import { Button } from '@mui/material';
-import React, { useState } from 'react';
-import CalendarSpanPicker from '../CalendarSpanPicker/CalendarSpanPicker';
-import dayjs from 'dayjs';
+import React from 'react';
+// import CalendarSpanPicker from '../CalendarSpanPicker/CalendarSpanPicker';
+import dayjs, { type Dayjs } from 'dayjs';
 
-const MeetingsTitleBar = ({ setSelectedDate }) => {
-  const [date, setDate] = useState<string | Date | Date[] | null>(null);
+interface Props {
+  setSelectedDate: (date: Dayjs) => void | null;
+}
+
+const MeetingsTitleBar: React.FC<Props> = ({ setSelectedDate }) => {
+  // const [date, setDate] = useState<string | Date | Date[] | null>(null);
 
   const handleTodayClick = () => {
     const today = dayjs();

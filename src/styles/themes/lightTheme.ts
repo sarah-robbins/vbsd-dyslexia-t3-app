@@ -26,7 +26,7 @@ const lightTheme: ThemeOptions = {
     },
     warning: {
       main: '#F59E0B',
-    }
+    },
     // white: {
     //   main: '#ffffff',
     // }
@@ -43,13 +43,13 @@ const lightTheme: ThemeOptions = {
       xl: 1200,
     },
   },
-  colorSchemes: {
-    light: {
-      color: {
-        primary: '#ff0000'
-      }
-    }
-  }
+  // colorSchemes: {
+  //   light: {
+  //     color: {
+  //       primary: '#ff0000',
+  //     },
+  //   },
+  // },
 };
 
-export default lightTheme
+export default lightTheme;

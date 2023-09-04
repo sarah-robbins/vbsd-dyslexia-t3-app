@@ -1,7 +1,7 @@
 .topRightIconRedBg {
   background-color: red;
-  top: -15px;
-  right: -15px;
+  top: -16px;
+  right: -16px;
   border-radius: 50%;
   width: 2.5rem;
   height: 2.5rem;
@@ -16,4 +16,5 @@
 }
 .topRightIcon {
   padding: 6px;
+  font-size: 1.8rem !important
 }

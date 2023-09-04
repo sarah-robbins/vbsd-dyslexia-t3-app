@@ -22,16 +22,16 @@ model appSettings {
 
 model dummyMeetings {
   id             Int       @id @unique @default(autoincrement())
-  name           String?   @db.VarChar
+  name           String    @default("") @db.VarChar
   student_id     Int?
   start          DateTime? @db.Timestamp(6)
   end            DateTime? @db.Timestamp(6)
-  meeting_status String?   @db.VarChar
+  meeting_status String    @default("") @db.VarChar
   program        String?   @db.VarChar
   level_lesson   String?   @db.VarChar
   meeting_notes  String?   @db.VarChar
-  recorded_by    String?   @db.VarChar
-  recorded_on    DateTime? @default(now()) @db.Timestamp(6)
+  recorded_by    String    @default("") @db.VarChar
+  recorded_on    DateTime  @default(now()) @db.Timestamp(6)
   edited_by      String?   @db.VarChar
   edited_on      DateTime? @db.Timestamp(6)
 }
