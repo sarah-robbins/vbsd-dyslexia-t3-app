@@ -7,12 +7,9 @@ import { type dummyUsers } from '@prisma/client';
 
 const Users: React.FC = () => {
   const getAllUsers = api.users.getAllUsers.useQuery();
-  console.log('get all users: ', getAllUsers);
   const [users, setUsers] = useState<dummyUsers[]>([]);
-  console.log('all users: ', users);
 
   useEffect(() => {
-    console.log('get all users: ', getAllUsers);
     setUsers(getAllUsers.data as dummyUsers[]);
   }, [getAllUsers]);
 
