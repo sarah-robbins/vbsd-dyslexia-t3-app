@@ -15,6 +15,15 @@ const Users: React.FC = () => {
 
   // Table data with new row first
 
+  const userNameTemplate = (rowData: dummyUsers) => {
+    return (
+      <>
+        <span className="p-column-title">Name</span>
+        {rowData.last_name}, {rowData.first_name}
+      </>
+    );
+  };
+
   if (!getAllUsers.data) return <p>Loading...</p>;
 
   return (
@@ -25,9 +34,7 @@ const Users: React.FC = () => {
         stripedRows
         tableStyle={{ minWidth: '60rem' }}>
         <Column
-          body={(rowData: dummyUsers) =>
-            `${rowData.last_name as string}, ${rowData.first_name as string}`
-          }
+          body={userNameTemplate}
           header="Name"
           style={{ whiteSpace: 'nowrap' }}
           sortable
