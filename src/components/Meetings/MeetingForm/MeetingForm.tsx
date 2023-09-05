@@ -29,8 +29,8 @@ interface Props {
   selectedMeetings: Meeting[];
   setSelectedMeetings: (meetings: Meeting[]) => void;
   getDatedMeetings: Meeting[];
-  selectedDate?: Dayjs | null | string;
-  // setSelectedDate: (date: Dayjs) => void | null;
+  selectedDate: Dayjs;
+  setSelectedDate: (date: Dayjs) => void;
   getStudentsBySchool: dummyStudents[];
   isMeetingSelected: boolean;
 }
@@ -70,15 +70,14 @@ interface FormValues {
 const MeetingForm: React.FC<Props> = ({
   meetings,
   setMeetings,
-  selectedDate: selectedDateProp,
-  // setSelectedDate,
+  selectedDate,
+  setSelectedDate,
   getStudentsBySchool = [],
   // getDatedMeetings = [],
   selectedMeetings = [],
   // setSelectedMeetings = [],
 }) => {
   const toast = useRef<Toast>(null);
-  const [selectedDate, setSelectedDate] = useState(selectedDateProp);
 
   /* -------------------------------------------------------------------------- */
   /*                             HANDLE NAME CHANGE                             */
@@ -119,10 +118,10 @@ const MeetingForm: React.FC<Props> = ({
   const startTimeToString = startTime.toString();
   const endTimeToString = endTime.toString();
 
-  const startDateTime = `${dayjs(selectedDate as string).format(
+  const startDateTime = `${dayjs(selectedDate?.toDate()).format(
     'YYYY-MM-DD'
   )}T${startTimeToString}`;
-  const endDateTime = `${dayjs(selectedDate as string).format(
+  const endDateTime = `${dayjs(selectedDate?.toDate()).format(
     'YYYY-MM-DD'
   )}T${endTimeToString}`;
 
@@ -456,7 +455,7 @@ const MeetingForm: React.FC<Props> = ({
               label="Date"
               className="w-12"
               value={selectedDate}
-              onChange={setSelectedDate}
+              onChange={(value) => setSelectedDate(dayjs(value))}
             />
           </LocalizationProvider>
           <FormControl className="w-12">

@@ -29,13 +29,16 @@ const Meetings = () => {
   // State
   const [meetings, setMeetings] = useState<dummyMeetings[]>([]);
   const [date] = useState<Dayjs | null>(dayjs());
-  const [selectedDate, setSelectedDate] = useState<Dayjs | null | string>();
+  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [selectedMeetings, setSelectedMeetings] = useState<Meeting[]>([]);
 
   // Database Calls
   const getAllMeetings = api.meetings.getAllMeetings.useQuery(); // getAllMeetings
+
+  const dateToQuery =
+    selectedDate && dayjs.isDayjs(selectedDate) ? selectedDate : dayjs();
   const { data: getDatedMeetings } = api.meetings.getMeetingsByDate.useQuery(
-    selectedDate as string
+    dateToQuery.toDate()
   ) as { data: Meeting[] }; //getMeetingsByDate
   console.log('selectedDates from Meetings.tsx', selectedDate);
   const { data: getStudentsBySchool } =
@@ -75,6 +78,7 @@ const Meetings = () => {
       <div className="flex flex-column lg:flex-row gap-4">
         <MeetingForm
           selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
           meetings={meetings}
           setMeetings={setMeetings}
           getStudentsBySchool={getStudentsBySchool}

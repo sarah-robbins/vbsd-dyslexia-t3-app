@@ -10,7 +10,7 @@ import { type dummyMeetings } from '@prisma/client';
 
 interface Props {
   date: Dayjs | null;
-  selectedDate?: Dayjs | null | string;
+  selectedDate?: Dayjs;
   meetings: dummyMeetings[];
   setSelectedDate: (date: Dayjs) => void;
 }
@@ -46,7 +46,9 @@ const MeetingCalendar: React.FC<Props> = ({
       selected = dayjs(e.value);
     }
 
+    console.log('selected date from Calendar', selected);
     setSelectedDate(selected);
+    console.log('selectedDate afters setSelectedDate', selectedDate);
   };
 
   // useEffect(() => {}, [meetingDates]);

@@ -8,7 +8,7 @@ import dayjs, { type Dayjs } from 'dayjs';
 import { type dummyMeetings } from '@prisma/client';
 
 interface Props {
-  selectedDate?: Dayjs | null | string;
+  selectedDate: Dayjs;
   getDatedMeetings: Meeting[];
   meetings: dummyMeetings[];
   selectedMeetings: Meeting[];
@@ -73,7 +73,7 @@ const MeetingList: React.FC<Props> = ({
       }))
       .filter((meeting) => {
         const meetingDate = dayjs(meeting.start);
-        return meetingDate.isSame(selectedDate as Dayjs, 'day');
+        return meetingDate.isSame(selectedDate, 'day');
       });
     setFilteredMeetings(filtered);
   }, [getDatedMeetings, selectedDate]);

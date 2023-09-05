@@ -5,9 +5,13 @@ import { type NextPage } from 'next';
 import Head from 'next/head';
 // import { api } from '@/utils/api';
 import SplashSpeedDial from '@/components/SplashSpeedDial/SplashSpeedDial';
+import { useSession } from 'next-auth/react';
 
 const Home: NextPage = () => {
   // const hello = api.example.hello.useQuery({ text: "from tRPC" });
+
+  const { data: sessionData } = useSession();
+  console.log('sessionData from index.tsx', sessionData);
 
   return (
     <>
@@ -27,6 +31,7 @@ const Home: NextPage = () => {
           <div>
             <SplashSpeedDial />
           </div>
+
           {/* <div className={styles.showcaseContainer}>
             <p className={styles.showcaseText}>
               {hello.data ? hello.data.greeting : "Loading tRPC query..."}

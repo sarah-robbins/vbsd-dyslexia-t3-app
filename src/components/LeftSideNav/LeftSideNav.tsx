@@ -33,7 +33,7 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { type RoutingContextType, routingContext } from '@/context/AllContext';
-import router from 'next/router';
+import { signOut, useSession } from 'next-auth/react';
 
 const drawerWidth = 180;
 
@@ -110,6 +110,7 @@ const MiniDrawer = styled(MuiDrawer, {
 }));
 
 const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
+  const { data: session } = useSession();
   // const theme = useTheme();
   const { setRouting }: RoutingContextType = React.useContext(routingContext);
   console.log('routingContext', routingContext);
@@ -272,7 +273,7 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
             <div className="text-right mr-2 hidden md:flex flex-column">
               <Typography variant="h6" noWrap component="div">
                 <Box sx={{ lineHeight: '1' }} className="mb-1">
-                  Full Name
+                  {session ? session.user.name : ''}
                 </Box>
               </Typography>
               <Typography variant="subtitle2" noWrap component="div">
@@ -316,7 +317,10 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
                   <Typography textAlign="center">{setting}</Typography>
                 </MenuItem>
               ))}
-              <MenuItem onClick={() => void router.push('/')}>
+              <MenuItem
+                onClick={() => {
+                  void signOut({ callbackUrl: 'http://localhost:3000/' });
+                }}>
                 <Typography textAlign="center">Logout</Typography>
               </MenuItem>
             </Menu>

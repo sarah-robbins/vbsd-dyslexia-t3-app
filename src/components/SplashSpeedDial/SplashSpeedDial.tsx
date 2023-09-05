@@ -3,10 +3,11 @@ import styles from './SplashSpeedDial.module.css';
 import { SpeedDial } from 'primereact/speeddial';
 import { Toast } from 'primereact/toast';
 import { type MenuItem } from 'primereact/menuitem';
-import { useRouter } from 'next/router';
 import Image from 'next/image';
+import { signIn } from 'next-auth/react';
 
 export default function SplashSpeedDial() {
+  // const { data: session } = useSession();
   const redBgClass = styles?.topRightIconRedBg ?? '';
   const greenBgClass = styles?.topRightIconGreenBg ?? '';
   const topRightIconClass = styles?.topRightIcon ?? '';
@@ -31,7 +32,6 @@ export default function SplashSpeedDial() {
     );
   };
 
-  const router = useRouter();
   const toast = useRef<Toast>(null);
   const items: MenuItem[] = [
     {
@@ -56,7 +56,7 @@ export default function SplashSpeedDial() {
       label: 'Login',
       icon: 'pi pi-external-link',
       command: () => {
-        void router.push('/dashboard');
+        void signIn('google', { callbackUrl: '/dashboard' });
       },
     },
   ];
@@ -70,8 +70,22 @@ export default function SplashSpeedDial() {
           radius={140}
           type="semi-circle"
           direction="down"
-          showIcon={<Image src="/logo.svg" alt="dropdown icon" />}
-          hideIcon={<Image src="/logo.svg" alt="dropdown icon" />}
+          showIcon={
+            <Image
+              src="/logo.svg"
+              width={150}
+              height={150}
+              alt="dropdown icon"
+            />
+          }
+          hideIcon={
+            <Image
+              src="/logo.svg"
+              width={150}
+              height={150}
+              alt="dropdown icon"
+            />
+          }
           className="p-overlay-badge"
         />
       </div>
