@@ -60,17 +60,17 @@ model dummyStudents {
 }
 
 model dummyUsers {
-  id               Int       @id @unique @default(autoincrement())
-  first_name       String?   @db.VarChar
-  last_name        String?   @db.VarChar
-  school           String?   @db.VarChar
-  email            String?   @db.VarChar
-  phone            String?   @db.VarChar
-  role             String?   @db.VarChar
-  super_admin_role String?   @db.VarChar
-  picture          String?   @db.VarChar
-  created_at       DateTime? @default(now()) @db.Timestamptz(6)
-  view             String?   @db.VarChar
+  id               Int      @id @unique @default(autoincrement())
+  first_name       String   @default("") @db.VarChar
+  last_name        String   @default("") @db.VarChar
+  school           String   @default("") @db.VarChar
+  email            String   @default("") @db.VarChar
+  phone            String   @default("") @db.VarChar
+  role             String   @default("") @db.VarChar
+  super_admin_role String?  @db.VarChar
+  picture          String?  @db.VarChar
+  created_at       DateTime @default(now()) @db.Timestamptz(6)
+  view             String   @default("") @db.VarChar
 }
 
 model Account {

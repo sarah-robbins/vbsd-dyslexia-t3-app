@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import LeftSideNav from '@/components/LeftSideNav/LeftSideNav';
 import Meetings from '@/components/Meetings/Meetings';
 import Students from '@/components/Students/Students';
-// import Users from '@/components/Users/Users';
+import Users from '@/components/Users/Users';
 import Stats from '@/components/Stats/Stats';
 import Settings from '@/components/Settings/Settings';
 import { useContext, useEffect, useState } from 'react';
@@ -26,7 +26,7 @@ const Dashboard = () => {
         />
         {currentRoute === 'students' && <Students />}
         {currentRoute === 'meetings' && <Meetings />}
-        {/* {currentRoute === 'users' && <Users />} */}
+        {currentRoute === 'users' && <Users />}
         {currentRoute === 'stats' && <Stats />}
         {currentRoute === 'settings' && <Settings />}
       </Box>
