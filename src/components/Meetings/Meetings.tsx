@@ -5,7 +5,6 @@ import MeetingList from './MeetingList/MeetingList';
 import MeetingsTitleBar from './MeetingsTitleBar/MeetingsTitleBar';
 import dayjs, { type Dayjs } from 'dayjs';
 import { api } from '@/utils/api';
-
 import { type dummyStudents, type dummyMeetings } from '@prisma/client';
 import Students from '../Students/Students';
 

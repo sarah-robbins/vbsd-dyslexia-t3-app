@@ -119,7 +119,6 @@ const MeetingList: React.FC<Props> = ({
     };
 
     const formatter = new Intl.DateTimeFormat('en-US', options);
-
     const formattedDate = formatter.format(newDate);
     const dayOfMonth = newDate.getDate();
     const ordinalSuffix = getOrdinalSuffix(dayOfMonth);

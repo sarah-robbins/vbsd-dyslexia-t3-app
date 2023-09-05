@@ -319,7 +319,7 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
               ))}
               <MenuItem
                 onClick={() => {
-                  void signOut({ callbackUrl: 'http://localhost:3000/' });
+                  void signOut({ callbackUrl: '/' });
                 }}>
                 <Typography textAlign="center">Logout</Typography>
               </MenuItem>

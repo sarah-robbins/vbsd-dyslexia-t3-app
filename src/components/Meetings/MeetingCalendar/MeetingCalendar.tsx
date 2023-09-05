@@ -39,7 +39,6 @@ const MeetingCalendar: React.FC<Props> = ({
 
     if (Array.isArray(e.value)) {
       // Handle multiple dates
-
       selected = dayjs(e.value[0]); // Use first date
     } else {
       // Handle single date
