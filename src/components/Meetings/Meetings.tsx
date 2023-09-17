@@ -6,7 +6,7 @@ import MeetingsTitleBar from './MeetingsTitleBar/MeetingsTitleBar';
 import dayjs, { type Dayjs } from 'dayjs';
 import { api } from '@/utils/api';
 import { type dummyStudents, type dummyMeetings } from '@prisma/client';
-import Students from '../Students/Students-no-edit';
+import Students from '../Students/Students';
 import { type Calendar } from 'primereact/calendar';
 
 interface Meeting {

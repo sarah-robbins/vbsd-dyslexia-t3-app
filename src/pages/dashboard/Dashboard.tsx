@@ -11,7 +11,7 @@ import { type RoutingContextType, routingContext } from '@/context/AllContext';
 const Dashboard = () => {
   const { routing }: RoutingContextType = useContext(routingContext);
   // meetings will need to vary based on default View of logged in user in store/session.
-  const [currentRoute, setCurrentRoute] = useState<string>('students');
+  const [currentRoute, setCurrentRoute] = useState<string>('meetings');
 
   useEffect(() => {
     if (routing) {

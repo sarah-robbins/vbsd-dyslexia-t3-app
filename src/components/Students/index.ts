@@ -1,1 +1,1 @@
-export { default } from './Students-no-edit';
+export { default } from './Students';
