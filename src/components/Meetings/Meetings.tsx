@@ -67,7 +67,7 @@ const Meetings = () => {
       <div className="flex gap-4 align-items-center justify-content-between w-full">
         <MeetingsTitleBar
           setSelectedDate={setSelectedDate}
-          calendarRef={calendarRef}
+          // calendarRef={calendarRef}
         />
       </div>
       <div className="flex">
