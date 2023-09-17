@@ -113,7 +113,6 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
   const { data: session } = useSession();
   // const theme = useTheme();
   const { setRouting }: RoutingContextType = React.useContext(routingContext);
-  console.log('routingContext', routingContext);
 
   const [open, setOpen] = React.useState<boolean>(false);
   const handleDrawerToggle = () => {

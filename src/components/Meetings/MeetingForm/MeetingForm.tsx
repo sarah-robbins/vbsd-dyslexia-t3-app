@@ -71,13 +71,15 @@ const MeetingForm: React.FC<Props> = ({
   meetings,
   setMeetings,
   selectedDate,
-  setSelectedDate,
+  // setSelectedDate,
   getStudentsBySchool = [],
   // getDatedMeetings = [],
   selectedMeetings = [],
   // setSelectedMeetings = [],
 }) => {
   const toast = useRef<Toast>(null);
+  const toastDelete = useRef<Toast>(null);
+  const [formDate, setFormDate] = useState(selectedDate);
 
   /* -------------------------------------------------------------------------- */
   /*                             HANDLE NAME CHANGE                             */
@@ -94,12 +96,23 @@ const MeetingForm: React.FC<Props> = ({
   /*                            HANDLE DATE AND TIME                            */
   /* -------------------------------------------------------------------------- */
 
-  const [date] = useState<Dayjs>(dayjs());
+  // const [date] = useState<Dayjs>(dayjs());
   // const [selectedDate, setSelectedDate] = useState(null);
 
+  // useEffect(() => {
+  //   setSelectedDate(date);
+  // }, [date, setSelectedDate]);
+
+  // When selectedDate updates
   useEffect(() => {
-    setSelectedDate(date);
-  }, [date, setSelectedDate]);
+    setFormDate(selectedDate);
+  }, [selectedDate]);
+
+  const handleFormDateChange = (date: Dayjs | null) => {
+    if (date) {
+      setFormDate(date);
+    }
+  };
 
   const [startTime, setStartTime] = useState<Dayjs>(dayjs());
   const [endTime, setEndTime] = useState<Dayjs>(dayjs());
@@ -116,18 +129,30 @@ const MeetingForm: React.FC<Props> = ({
     setEndTime(dayjs(timeOnly));
   };
 
-  const startTimeToString = startTime.toString();
-  const endTimeToString = endTime.toString();
+  const startTimeToString = startTime.format('HH:mm:ss');
+  const endTimeToString = endTime.format('HH:mm:ss');
 
-  const startDateTime = `${dayjs(selectedDate?.toDate()).format(
+  const dateFromForm = formDate || dayjs();
+  const startDateTime = `${dayjs(dateFromForm?.toDate()).format(
     'YYYY-MM-DD'
   )}T${startTimeToString}`;
-  const endDateTime = `${dayjs(selectedDate?.toDate()).format(
+  const endDateTime = `${dayjs(dateFromForm?.toDate()).format(
     'YYYY-MM-DD'
   )}T${endTimeToString}`;
 
-  const start = dayjs(startDateTime);
-  const end = dayjs(endDateTime);
+  const start = startDateTime;
+  const end = endDateTime;
+
+  console.log('start', start);
+  console.log('end', end);
+  console.log('formDate', formDate);
+  console.log('selectedDate', selectedDate);
+  console.log('startDateTime', startDateTime);
+  console.log('endDateTime', endDateTime);
+  console.log('startTime', startTime);
+  console.log('endTime', endTime);
+  console.log('start', start);
+  console.log('end', end);
 
   /* -------------------------------------------------------------------------- */
   /*                               Status Options                               */
@@ -151,7 +176,6 @@ const MeetingForm: React.FC<Props> = ({
   // const status = statusOptions || [];
 
   const options = [...statusOptions];
-  console.log('options from MeetingForm.tsx', options);
 
   // const existingStatus = options.find((opt) => opt === status);
 
@@ -160,8 +184,7 @@ const MeetingForm: React.FC<Props> = ({
   // }
 
   const [selectedStatus, setSelectedStatus] = useState<string>('');
-  console.log('selectedStatus from MeetingForm.tsx', selectedStatus);
-
+  console.log(selectedStatus);
   const handleStatusChange = (event: SelectChangeEvent) => {
     const selectedStatus = event.target.value; // selected id
     setFormValues({ ...formValues, meeting_status: selectedStatus });
@@ -174,11 +197,11 @@ const MeetingForm: React.FC<Props> = ({
 
   useEffect(() => {
     if (selectedMeetings.length > 0) {
-      console.log('selectedMeetings from MeetingForm.tsx', selectedMeetings);
       const selectedMeeting = selectedMeetings[0];
       if (!selectedMeeting) return;
       const name = selectedMeeting.name;
       setName(name);
+      setFormDate(dayjs(selectedMeeting.start));
       const start = dayjs(selectedMeeting.start);
       const end = dayjs(selectedMeeting.end);
       setStartTime(start);
@@ -341,43 +364,92 @@ const MeetingForm: React.FC<Props> = ({
 
   const handleDelete = () => {
     const id = Number(selectedMeetings[0]?.id);
-    const confirm = window.confirm(
-      'Are you sure you want to delete this meeting?'
-    );
-    if (!confirm) return;
+    // const confirm = window.confirm(
+    //   'Are you sure you want to delete this meeting?'
+    // );
+    // if (!confirm) return;
 
-    deleteMeetingMutation.mutate({ id });
+    toastDelete.current?.show({
+      severity: 'info',
+      sticky: true,
+      className: 'border-none',
+      content: (
+        <div
+          className="flex flex-column align-items-center"
+          style={{ flex: '1' }}>
+          <div className="text-center">
+            <i
+              className="pi pi-exclamation-triangle"
+              style={{ fontSize: '3rem' }}></i>
+            <div className="font-bold text-xl my-3">
+              Are you sure you want to delete {selectedMeetings[0]?.name}?
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => {
+                try {
+                  deleteMeetingMutation.mutate({ id: id });
+                } catch (error) {
+                  console.error(
+                    `Error deleting ${selectedMeetings[0]?.name ?? ''}`
+                  );
+                }
 
-    toast.current?.show({
-      severity: 'success',
-      summary: 'This meeting has been deleted.',
-      detail: selectedMeetings[0]?.name,
-      life: 3000,
+                if (deleteMeetingMutation.isSuccess) {
+                  toast.current?.show({
+                    severity: 'success',
+                    summary: 'This meeting has been deleted.',
+                    life: 3000,
+                  });
+                  setName('');
+                  setSelectedStatus('');
+                  setStartTime(dayjs());
+                  setEndTime(dayjs());
+
+                  setFormValues({
+                    id: 0,
+                    name: '',
+                    student_id: 0,
+                    start: dayjs(),
+                    end: dayjs(),
+                    meeting_status: '',
+                    program: '',
+                    level_lesson: '',
+                    meeting_notes: '',
+                    recorded_by: '',
+                    recorded_on: dayjs(),
+                    edited_by: '',
+                    edited_on: dayjs(),
+                  });
+
+                  setMeetings(meetings.filter((meeting) => meeting.id !== id));
+                  toastDelete.current?.clear();
+                }
+
+                if (deleteMeetingMutation.isError) {
+                  toast.current?.show({
+                    severity: 'error',
+                    summary:
+                      'There was an error, and this meeting was not deleted.',
+                    life: 3000,
+                  });
+                }
+              }}
+              variant="contained"
+              color="primary">
+              Confirm
+            </Button>
+            <Button
+              onClick={() => toastDelete.current?.clear()}
+              variant="contained"
+              color="secondary">
+              Cancel
+            </Button>
+          </div>
+        </div>
+      ),
     });
-
-    setName('');
-    setSelectedStatus('');
-    setStartTime(dayjs());
-    setEndTime(dayjs());
-
-    setFormValues({
-      id: 0,
-      name: '',
-      student_id: 0,
-      start: dayjs(),
-      end: dayjs(),
-      meeting_status: '',
-      program: '',
-      level_lesson: '',
-      meeting_notes: '',
-      recorded_by: '',
-      recorded_on: dayjs(),
-      edited_by: '',
-      edited_on: dayjs(),
-    });
-
-    const filteredMeetings = meetings.filter((meeting) => meeting.id !== id);
-    setMeetings(filteredMeetings);
   };
 
   /* -------------------------------------------------------------------------- */
@@ -398,7 +470,7 @@ const MeetingForm: React.FC<Props> = ({
   return (
     <Card className="lg:w-5 flex-order-2 lg:flex-order-1 card">
       <Toast ref={toast} />
-
+      <Toast ref={toastDelete} />
       <div className="flex justify-content-center gap-4 flex-column">
         <h3>Meeting Form</h3>
         <Box
@@ -455,8 +527,8 @@ const MeetingForm: React.FC<Props> = ({
             <DatePicker
               label="Date"
               className="w-12"
-              value={selectedDate}
-              onChange={(value) => setSelectedDate(dayjs(value))}
+              value={formDate}
+              onChange={handleFormDateChange}
             />
           </LocalizationProvider>
           <FormControl className="w-12">
@@ -503,19 +575,24 @@ const MeetingForm: React.FC<Props> = ({
             rows={4}
           />
           <Stack direction="row" spacing={2}>
-            <Button
+            {/* <Button
               variant="contained"
               color="primary"
               onClick={() => handleAdd(formValues)}
               disabled={existingMeeting}>
               Add
-            </Button>
+            </Button> */}
             <Button
               variant="contained"
               color="primary"
-              onClick={() => editMeeting(formValues)}
-              disabled={noMeeting}>
-              Edit
+              onClick={() => {
+                if (existingMeeting) {
+                  editMeeting(formValues);
+                } else {
+                  handleAdd(formValues);
+                }
+              }}>
+              Save
             </Button>
             <Button
               variant="contained"

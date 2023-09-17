@@ -110,6 +110,7 @@ model User {
   school        String?
   superAdmin    Boolean?  @default(false)
   updatedAt     DateTime  @updatedAt
+  view          String?   @default("")
   accounts      Account[]
   sessions      Session[]
 }

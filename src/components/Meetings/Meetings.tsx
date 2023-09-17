@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import MeetingForm from './MeetingForm/MeetingForm';
 import MeetingCalendar from './MeetingCalendar/MeetingCalendar';
 import MeetingList from './MeetingList/MeetingList';
@@ -6,7 +6,8 @@ import MeetingsTitleBar from './MeetingsTitleBar/MeetingsTitleBar';
 import dayjs, { type Dayjs } from 'dayjs';
 import { api } from '@/utils/api';
 import { type dummyStudents, type dummyMeetings } from '@prisma/client';
-import Students from '../Students/Students';
+import Students from '../Students/Students-no-edit';
+import { type Calendar } from 'primereact/calendar';
 
 interface Meeting {
   id?: number;
@@ -30,6 +31,7 @@ const Meetings = () => {
   const [date] = useState<Dayjs | null>(dayjs());
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [selectedMeetings, setSelectedMeetings] = useState<Meeting[]>([]);
+  const calendarRef = useRef<Calendar>(null);
 
   // Database Calls
   const getAllMeetings = api.meetings.getAllMeetings.useQuery(); // getAllMeetings
@@ -39,7 +41,6 @@ const Meetings = () => {
   const { data: getDatedMeetings } = api.meetings.getMeetingsByDate.useQuery(
     dateToQuery.toDate()
   ) as { data: Meeting[] }; //getMeetingsByDate
-  console.log('selectedDates from Meetings.tsx', selectedDate);
   const { data: getStudentsBySchool } =
     api.students.getStudentsBySchool.useQuery('King') as {
       data: dummyStudents[];
@@ -64,7 +65,10 @@ const Meetings = () => {
   return (
     <div className="flex flex-column justify-content-center gap-4">
       <div className="flex gap-4 align-items-center justify-content-between w-full">
-        <MeetingsTitleBar setSelectedDate={setSelectedDate} />
+        <MeetingsTitleBar
+          setSelectedDate={setSelectedDate}
+          calendarRef={calendarRef}
+        />
       </div>
       <div className="flex">
         <MeetingCalendar
@@ -72,12 +76,11 @@ const Meetings = () => {
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
           meetings={meetings}
+          ref={calendarRef}
         />
       </div>
       <div className="flex flex-column lg:flex-row gap-4">
         <MeetingForm
-          selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
           meetings={meetings}
           setMeetings={setMeetings}
           getStudentsBySchool={getStudentsBySchool}
@@ -85,6 +88,8 @@ const Meetings = () => {
           selectedMeetings={selectedMeetings}
           setSelectedMeetings={setSelectedMeetings}
           isMeetingSelected={!!selectedMeetings}
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
         />
         <MeetingList
           meetings={meetings}

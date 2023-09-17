@@ -262,7 +262,11 @@ const MeetingList: React.FC<Props> = ({
       updatedMeetings = [...selectedMeetings, meeting];
     }
 
-    setSelectedMeetings(updatedMeetings);
+    if (updatedMeetings.length > 0) {
+      setSelectedMeetings(updatedMeetings);
+    } else {
+      setSelectedMeetings([]);
+    }
   };
   // const toggleCheckbox = (meeting: Meeting) => {
   //   setSelectedMeetings((prevSelectedMeetings: Meeting[]): Meeting[] => {

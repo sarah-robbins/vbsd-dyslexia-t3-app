@@ -13,12 +13,14 @@ interface Props {
   selectedDate?: Dayjs;
   meetings: dummyMeetings[];
   setSelectedDate: (date: Dayjs) => void;
+  ref: React.MutableRefObject<Calendar | null>;
 }
 
 const MeetingCalendar: React.FC<Props> = ({
   selectedDate,
   meetings,
   setSelectedDate,
+  ref,
 }) => {
   const meetingDates: string[] = useMemo(() => {
     if (meetings) {
@@ -78,6 +80,7 @@ const MeetingCalendar: React.FC<Props> = ({
     <div className="card flex w-full">
       <Card className="meeting-calendar w-full">
         <Calendar
+          ref={ref}
           value={selectedDateValue}
           onChange={handleDateChange}
           numberOfMonths={3}

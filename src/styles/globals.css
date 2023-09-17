@@ -3,7 +3,10 @@
 :root {
   --primary-color: #4caf50 !important;
   --highlight-text-color: #4caf50 !important;
+  --primary-light-color: #d3ecd4;
+  --primary-light-hover-color: #c1e6c6;
   --secondary-color: #d1d1d1;
+  --very-light-hover-color: #eee;
   color-scheme: light;
 }
 
@@ -303,9 +306,20 @@ main {
 }
 
 .p-datepicker-today span {
+  background-color: transparent !important;
+  border: 2px solid var(--primary-color) !important;
+  color: var(--primary-color) !important;
+}
+
+.p-datepicker table td>span.p-highlight {
   background-color: var(--primary-color) !important;
   color: #fff !important;
 }
+
+.p-datepicker:not(.p-disabled) table td span:not(.p-highlight):not(.p-disabled):hover {
+  background: var(--very-light-hover-color) !important;
+}
+
 .meeting-day {
   background-color: var(--secondary-color);
   border-radius: 50%;

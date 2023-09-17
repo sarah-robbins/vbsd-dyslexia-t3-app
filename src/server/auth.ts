@@ -18,16 +18,30 @@ import { prisma } from '@/server/db';
 declare module 'next-auth' {
   interface Session extends DefaultSession {
     user: {
-      id: number;
+      id: string;
+      role: string;
+      view: string;
+      school: string;
       // ...other properties
       // role: UserRole;
     } & DefaultSession['user'];
   }
+}
+interface UsersList {
+  id: number;
+  first_name: string | null;
+  last_name: string | null;
+  school: string | null;
+  email: string | null;
+  phone: string | null;
+  role: string | null;
+  super_admin_role: string | null;
+  picture: string | null;
+  created_at: Date | null;
+  view: string | null;
 
-  // interface User {
-  //   // ...other properties
-  //   // role: UserRole;
-  // }
+  // ...other properties
+  // role: UserRole;
 }
 
 /**
@@ -37,13 +51,32 @@ declare module 'next-auth' {
  */
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-      },
-    }),
+    session: async ({ session, user }) => {
+      const usersList = await prisma.dummyUsers.findMany({
+        where: { email: user.email },
+      });
+
+      console.log('usersList', usersList);
+
+      const firstUser = usersList[0];
+
+      if (firstUser !== undefined) {
+        console.log('user', user);
+        return {
+          ...session,
+          user: {
+            ...user,
+            // id: user.id,
+            role: (firstUser as UsersList).role,
+            view: (firstUser as UsersList).view,
+            school: (firstUser as UsersList).school,
+          },
+        };
+      } else {
+        // Handle the case where firstUser is undefined, possibly returning a session with default values or an error.
+        return session;
+      }
+    },
   },
   adapter: PrismaAdapter(prisma),
   providers: [

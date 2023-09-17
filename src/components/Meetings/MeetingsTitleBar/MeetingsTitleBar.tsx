@@ -2,17 +2,22 @@ import { Button } from '@mui/material';
 import React from 'react';
 // import CalendarSpanPicker from '../CalendarSpanPicker/CalendarSpanPicker';
 import dayjs, { type Dayjs } from 'dayjs';
+// import { type Calendar } from 'primereact/calendar';
 
 interface Props {
   setSelectedDate: (date: Dayjs) => void | null;
+  // calendarRef: React.MutableRefObject<Calendar | null>;
 }
 
-const MeetingsTitleBar: React.FC<Props> = ({ setSelectedDate }) => {
+const MeetingsTitleBar: React.FC<Props> = ({
+  setSelectedDate,
+  // calendarRef,
+}) => {
   // const [date, setDate] = useState<string | Date | Date[] | null>(null);
 
   const handleTodayClick = () => {
-    const today = dayjs();
-    setSelectedDate(today);
+    setSelectedDate(dayjs());
+    // calendarRef.current?.setDate(dayjs().toDate());
   };
 
   return (

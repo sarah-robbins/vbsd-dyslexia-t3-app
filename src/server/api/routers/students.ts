@@ -91,23 +91,23 @@ export const studentsRouter = createTRPCRouter({
       z
         .object({
           id: z.number().int(),
-          school: z.string(),
-          first_name: z.string(),
-          last_name: z.string(),
-          grade: z.string(),
-          home_room_teacher: z.string(),
-          tutor_ln: z.string(),
-          tutor_fn: z.string(),
-          intervention_program: z.string(),
-          level_lesson: z.string(),
-          date_intervention_began: z.date(),
-          services: z.string(),
-          new_student: z.boolean(),
-          moved: z.boolean(),
-          new_location: z.string().optional(),
-          withdrew: z.boolean(),
-          additional_comments: z.string().optional(),
-          last_edited: z.date(),
+          school: z.string().optional(),
+          first_name: z.string().optional(),
+          last_name: z.string().optional(),
+          grade: z.string().optional(),
+          home_room_teacher: z.string().optional(),
+          tutor_ln: z.string().optional(),
+          tutor_fn: z.string().optional(),
+          intervention_program: z.string().optional(),
+          level_lesson: z.string().optional(),
+          date_intervention_began: z.date().optional(),
+          services: z.string().optional(),
+          new_student: z.boolean().optional(),
+          moved: z.boolean().optional(),
+          new_location: z.string().optional().optional(),
+          withdrew: z.boolean().optional(),
+          additional_comments: z.string().optional().optional(),
+          last_edited: z.date().optional(),
         })
         .partial()
     )
@@ -142,13 +142,13 @@ export const studentsRouter = createTRPCRouter({
   getScheduleByStudentId: publicProcedure
     .input(
       z.object({
-        studentId: z.number(),
+        id: z.number(),
       })
     )
     .query(async ({ ctx, input }) => {
       return ctx.prisma.dummyStudents.findUnique({
         where: {
-          id: input.studentId,
+          id: input.id,
         },
         select: {
           schedule: true,
