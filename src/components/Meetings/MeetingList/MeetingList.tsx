@@ -89,10 +89,7 @@ const MeetingList: React.FC<Props> = ({
 
   const headerTemplate = (data: Meeting) => {
     const originalDate = dayjs(data.start);
-    console.log('originalDate', originalDate);
-    console.log('originalDate type', typeof originalDate);
     const newDate = originalDate.startOf('day').toDate();
-    console.log('newDate', newDate);
 
     const options: Intl.DateTimeFormatOptions = {
       weekday: 'long',

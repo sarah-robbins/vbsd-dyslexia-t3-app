@@ -56,12 +56,9 @@ export const authOptions: NextAuthOptions = {
         where: { email: user.email },
       });
 
-      console.log('usersList', usersList);
-
       const firstUser = usersList[0];
 
       if (firstUser !== undefined) {
-        console.log('user', user);
         return {
           ...session,
           user: {

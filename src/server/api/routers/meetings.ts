@@ -11,7 +11,6 @@ export const meetingsRouter = createTRPCRouter({
   getMeetingsByDate: publicProcedure
     .input(z.date())
     .query(async ({ ctx, input }) => {
-      console.log('input value from meetings.tx: ', input);
       const startDate = new Date(input);
       startDate.setHours(0, 0, 0, 0);
       const endDate = new Date(input);

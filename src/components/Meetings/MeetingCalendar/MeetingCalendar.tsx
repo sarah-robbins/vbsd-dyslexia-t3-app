@@ -47,9 +47,7 @@ const MeetingCalendar: React.FC<Props> = ({
       selected = dayjs(e.value);
     }
 
-    console.log('selected date from Calendar', selected);
     setSelectedDate(selected);
-    console.log('selectedDate afters setSelectedDate', selectedDate);
   };
 
   // useEffect(() => {}, [meetingDates]);
