@@ -2,6 +2,7 @@
 
 :root {
   --primary-color: #4caf50 !important;
+  --primary-hover-color: #43a047 !important;
   --highlight-text-color: #4caf50 !important;
   --primary-light-color: #d3ecd4;
   --primary-light-hover-color: #c1e6c6;
@@ -316,7 +317,7 @@ main {
   color: #fff !important;
 }
 
-.p-datepicker:not(.p-disabled) table td span:not(.p-highlight):not(.p-disabled):hover {
+.p-datepicker:not(.p-disabled) table td span:not(.p-highlight):not(.p-disabled) span:hover {
   background: var(--very-light-hover-color) !important;
 }
 
@@ -328,6 +329,14 @@ main {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.p-highlight > .meeting-day {
+  background-color: var(--primary-color);
+}
+
+.p-datepicker table td>span.p-highlight:hover, .p-highlight > span.meeting-day:hover {
+  background-color: var(--primary-hover-color) !important;
 }
 
 .p-datepicker:not(.p-disabled) table td span:not(.p-highlight):not(.p-disabled):focus, .p-datepicker table td>span:focus {
