@@ -5,7 +5,8 @@ import { api } from '@/utils/api';
 import '@/styles/globals.css';
 import '@/styles/primeflex.scss';
 // PrimeReact theme
-import 'primereact/resources/themes/lara-light-blue/theme.css';
+// import 'primereact/resources/themes/lara-light-blue/theme.css';
+import '@/styles/themes/vb-green/theme.css';
 // PrimeReact core
 import 'primereact/resources/primereact.min.css';
 // PrimeFlex
