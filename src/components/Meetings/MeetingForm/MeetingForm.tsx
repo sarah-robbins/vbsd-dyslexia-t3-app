@@ -276,13 +276,6 @@ const MeetingForm: React.FC<Props> = ({
     };
     createMeetingMutation.mutate(newMeeting);
 
-    toast.current?.show({
-      severity: 'success',
-      summary: 'This meeting has been added.',
-      detail: newMeeting.name,
-      life: 3000,
-    });
-
     setName('');
     setSelectedStatus('');
     setStartTime(dayjs());
@@ -303,6 +296,26 @@ const MeetingForm: React.FC<Props> = ({
       edited_on: dayjs(),
     });
   };
+
+  useEffect(() => {
+    if (createMeetingMutation.isSuccess) {
+      toast.current?.show({
+        severity: 'success',
+        summary: 'This meeting has been added.',
+        life: 3000,
+      });
+    }
+  }, [createMeetingMutation.isSuccess]);
+
+  useEffect(() => {
+    if (createMeetingMutation.isError) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'There was an error, and this meeting was not added.',
+        life: 3000,
+      });
+    }
+  }, [createMeetingMutation.isError]);
 
   /* ------------------- edit Meeting ------------------- */
   const editMeetingMutation = api.meetings.editMeeting.useMutation();
@@ -326,27 +339,27 @@ const MeetingForm: React.FC<Props> = ({
       edited_on: dayjs().toDate(),
     };
     editMeetingMutation.mutate(editedMeeting);
-
-    // setName('');
-    // setSelectedStatus('');
-    // setStartTime(dayjs());
-    // setEndTime(dayjs());
-
-    // setFormValues({
-    //   name: '',
-    //   student_id: 0,
-    //   start: dayjs(),
-    //   end: dayjs(),
-    //   meeting_status: '',
-    //   program: '',
-    //   level_lesson: '',
-    //   meeting_notes: '',
-    //   recorded_by: '',
-    //   recorded_on: dayjs(),
-    //   edited_by: '',
-    //   edited_on: dayjs(),
-    // });
   };
+  useEffect(() => {
+    if (editMeetingMutation.isSuccess) {
+      console.log('meeting saved successfully!');
+      toast.current?.show({
+        severity: 'success',
+        summary: 'This meeting has been saved.',
+        life: 3000,
+      });
+    }
+  }, [editMeetingMutation.isSuccess]);
+
+  useEffect(() => {
+    if (editMeetingMutation.isError) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'There was an error, and this meeting was not saved.',
+        life: 3000,
+      });
+    }
+  }, [editMeetingMutation.isError]);
 
   /* ------------------------------ DELETEMEETING ----------------------------- */
 
