@@ -361,3 +361,7 @@ main {
 .p-disabled {
   opacity: .2 !important;
 }
+
+.MuiFormControl-root:has(> .Mui-disabled) {
+  opacity: 0.5;
+}

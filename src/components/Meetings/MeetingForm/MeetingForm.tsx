@@ -521,6 +521,22 @@ const MeetingForm: React.FC<Props> = ({
               onChange={handleFormDateChange}
             />
           </LocalizationProvider>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <div className="flex gap-4">
+              <TimePicker
+                label="Start Time"
+                value={startTime}
+                onChange={handleStartTime}
+                className="w-6"
+              />
+              <TimePicker
+                label="End Time"
+                value={endTime}
+                onChange={handleEndTime}
+                className="w-6"
+              />
+            </div>
+          </LocalizationProvider>
           <FormControl className="w-12">
             <InputLabel id="demo-simple-select-label">
               Meeting Status
@@ -539,52 +555,38 @@ const MeetingForm: React.FC<Props> = ({
               ))}
             </Select>
           </FormControl>
-
-          <FormControl className="w-12">
-            <InputLabel id="demo-simple-select-label">Program</InputLabel>
-            <Select
-              labelId="demo-simple-select-label"
-              id="demo-simple-select"
-              value={formValues.program ? formValues.program : ''}
-              label="Program"
-              required
-              // onChange={handleStatusChange}>
-              onChange={handleProgramChange}>
-              {programs.map((option) => (
-                <MenuItem key={option} value={option}>
-                  {option}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <TextField
-            id="outlined-multiline-flexible"
-            value={formValues.level_lesson}
-            required
-            onChange={(e) =>
-              setFormValues({ ...formValues, level_lesson: e.target.value })
-            }
-            label="Level/Lesson"
-          />
-
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <div className="flex gap-4">
-              <TimePicker
-                label="Start Time"
-                value={startTime}
-                onChange={handleStartTime}
-              />
-              <TimePicker
-                label="End Time"
-                value={endTime}
-                onChange={handleEndTime}
-              />
-            </div>
-          </LocalizationProvider>
+          <div className="flex gap-4">
+            <FormControl className="w-6">
+              <InputLabel id="demo-simple-select-label">Program</InputLabel>
+              <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                value={formValues.program ? formValues.program : ''}
+                label="Program"
+                disabled={formValues.meeting_status !== 'Met'}
+                // onChange={handleStatusChange}>
+                onChange={handleProgramChange}>
+                {programs.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              id="outlined-multiline-flexible"
+              value={formValues.level_lesson}
+              disabled={formValues.meeting_status !== 'Met'}
+              onChange={(e) =>
+                setFormValues({ ...formValues, level_lesson: e.target.value })
+              }
+              label="Level/Lesson"
+              className="w-6"
+            />
+          </div>
           <TextField
             id="outlined-multiline-flexible"
             value={formValues.meeting_notes}
-            required
             onChange={(e) =>
               setFormValues({ ...formValues, meeting_notes: e.target.value })
             }
