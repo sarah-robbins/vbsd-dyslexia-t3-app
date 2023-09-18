@@ -373,9 +373,9 @@ const MeetingForm: React.FC<Props> = ({
     // if (!confirm) return;
 
     toastDelete.current?.show({
-      severity: 'info',
+      severity: 'error',
+      summary: 'Delete Meeting',
       sticky: true,
-      className: 'border-none',
       content: (
         <div
           className="flex flex-column align-items-center"
@@ -440,7 +440,7 @@ const MeetingForm: React.FC<Props> = ({
                 }
               }}
               variant="contained"
-              color="primary">
+              color="error">
               Confirm
             </Button>
             <Button

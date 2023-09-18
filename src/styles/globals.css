@@ -312,6 +312,10 @@ main {
   color: var(--primary-color) !important;
 }
 
+.p-datepicker-today .p-highlight span {
+  color: #fff !important;
+}
+
 .p-datepicker table td>span.p-highlight {
   background-color: var(--primary-color) !important;
   color: #fff !important;

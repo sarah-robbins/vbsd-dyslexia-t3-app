@@ -74,6 +74,13 @@ const MeetingCalendar: React.FC<Props> = ({
 
   const selectedDateValue = dayjs(selectedDate).toDate();
 
+  const currentDate = new Date();
+  const firstMonthInView = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth() - 1,
+    1
+  );
+
   return (
     <div className="card flex w-full">
       <Card className="meeting-calendar w-full">
@@ -85,6 +92,7 @@ const MeetingCalendar: React.FC<Props> = ({
           inline
           className="w-full"
           dateTemplate={dateTemplate}
+          viewDate={firstMonthInView}
         />
       </Card>
     </div>

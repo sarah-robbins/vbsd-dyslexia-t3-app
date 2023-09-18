@@ -11,7 +11,7 @@ export default function SplashSpeedDial() {
   const redBgClass = styles?.topRightIconRedBg ?? '';
   const greenBgClass = styles?.topRightIconGreenBg ?? '';
   const topRightIconClass = styles?.topRightIcon ?? '';
-  const updateDetected = true;
+  const updateDetected = false;
   const updateStatus = () => {
     if (updateDetected) {
       return (
