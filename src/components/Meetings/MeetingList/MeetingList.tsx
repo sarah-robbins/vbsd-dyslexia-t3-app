@@ -251,20 +251,31 @@ const MeetingList: React.FC<Props> = ({
   };
 
   const toggleCheckbox = (meeting: Meeting) => {
-    let updatedMeetings: Meeting[];
-
+    // If checked, remove
     if (isCheckboxChecked(meeting)) {
-      updatedMeetings = selectedMeetings.filter((m) => m.id !== meeting.id);
-    } else {
-      updatedMeetings = [...selectedMeetings, meeting];
+      setSelectedMeetings(selectedMeetings.filter((m) => m.id !== meeting.id));
+      return;
     }
 
-    if (updatedMeetings.length > 0) {
-      setSelectedMeetings(updatedMeetings);
-    } else {
-      setSelectedMeetings([]);
-    }
+    // Else select only this one
+    setSelectedMeetings([meeting]);
   };
+  // const toggleCheckbox = (meeting: Meeting) => {
+  //   let updatedMeetings: Meeting[];
+
+  //   if (isCheckboxChecked(meeting)) {
+  //     updatedMeetings = selectedMeetings.filter((m) => m.id !== meeting.id);
+  //   } else {
+  //     updatedMeetings = [...selectedMeetings, meeting];
+  //   }
+
+  //   if (updatedMeetings.length > 0) {
+  //     setSelectedMeetings(updatedMeetings);
+  //   } else {
+  //     setSelectedMeetings([]);
+  //   }
+  // };
+
   // const toggleCheckbox = (meeting: Meeting) => {
   //   setSelectedMeetings((prevSelectedMeetings: Meeting[]): Meeting[] => {
   //     console.log('prevSelectedMeetings', prevSelectedMeetings);
