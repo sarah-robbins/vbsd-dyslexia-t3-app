@@ -5769,14 +5769,14 @@
   box-shadow: 0 0 0 0.2rem var(--primary-color-light);
 }
 .p-toast .p-toast-message.p-toast-message-info {
-  background: #e9e9ff;
-  border: solid #696cff;
+  background: var(--very-light-hover-color);
+  border: solid var(--text-color-secondary);
   border-width: 0 0 0 6px;
-  color: #696cff;
+  color: var(--text-color-secondary);
 }
 .p-toast .p-toast-message.p-toast-message-info .p-toast-message-icon,
 .p-toast .p-toast-message.p-toast-message-info .p-toast-icon-close {
-  color: #696cff;
+  color: var(--text-color-secondary);
 }
 .p-toast .p-toast-message.p-toast-message-success {
   background: #e4f8f0;

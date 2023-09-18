@@ -460,7 +460,7 @@ const MeetingForm: React.FC<Props> = ({
   return (
     <Card className="lg:w-5 flex-order-2 lg:flex-order-1 card">
       <Toast ref={toast} />
-      <Toast ref={toastDelete} />
+      <Toast ref={toastDelete} position="top-center" />
       <div className="flex justify-content-center gap-4 flex-column">
         <h3>Meeting Form</h3>
         <Box
