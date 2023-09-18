@@ -610,7 +610,7 @@ const MeetingForm: React.FC<Props> = ({
                   handleAdd(formValues);
                 }
               }}>
-              Save
+              {existingMeeting ? 'Save' : 'Add'}
             </Button>
             <Button
               variant="contained"
