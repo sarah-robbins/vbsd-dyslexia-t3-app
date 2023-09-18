@@ -38,9 +38,11 @@ const Meetings = () => {
 
   const dateToQuery =
     selectedDate && dayjs.isDayjs(selectedDate) ? selectedDate : dayjs();
+
   const { data: getDatedMeetings } = api.meetings.getMeetingsByDate.useQuery(
     dateToQuery.toDate()
   ) as { data: Meeting[] }; //getMeetingsByDate
+
   const { data: getStudentsBySchool } =
     api.students.getStudentsBySchool.useQuery('King') as {
       data: dummyStudents[];
@@ -61,6 +63,11 @@ const Meetings = () => {
       setMeetings(getAllMeetings.data);
     }
   }, [getAllMeetings.data, getAllMeetings.isSuccess]);
+
+  console.log('getDatedMeetings', getDatedMeetings);
+  useEffect(() => {
+    setSelectedDate(selectedDate);
+  }, [selectedDate]);
 
   return (
     <div className="flex flex-column justify-content-center gap-4">

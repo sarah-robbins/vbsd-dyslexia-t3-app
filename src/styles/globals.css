@@ -356,3 +356,8 @@ main {
   background: var(--primary-color) !important;
   color: #fff;
 }
+
+.p-component:disabled,
+.p-disabled {
+  opacity: .2 !important;
+}
