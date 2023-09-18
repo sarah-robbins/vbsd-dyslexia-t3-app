@@ -288,7 +288,7 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
                 sx={{ p: 1 }}
                 className="user-button">
                 <Avatar
-                  alt="Full Name"
+                  alt={session ? (session.user.name as string) : ''}
                   src="/"
                   className="navbar-avatar ml-2 mr-2"
                   variant="rounded"
