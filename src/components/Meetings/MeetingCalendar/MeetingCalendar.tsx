@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import {
   Calendar,
-  type CalendarDateTemplateEvent,
   type CalendarChangeEvent,
+  type CalendarDateTemplateEvent,
 } from 'primereact/calendar';
 import { Card } from 'primereact/card';
 import dayjs, { type Dayjs } from 'dayjs';
@@ -13,14 +13,19 @@ interface Props {
   selectedDate?: Dayjs;
   meetings: dummyMeetings[];
   setSelectedDate: (date: Dayjs) => void;
-  ref: React.MutableRefObject<Calendar | null>;
+  key: number;
+  viewDate: Dayjs;
+  setDate: (date: Dayjs) => void;
 }
 
 const MeetingCalendar: React.FC<Props> = ({
   selectedDate,
   meetings,
   setSelectedDate,
-  ref,
+  key,
+  viewDate,
+  date,
+  setDate,
 }) => {
   const meetingDates: string[] = useMemo(() => {
     if (meetings) {
@@ -74,25 +79,23 @@ const MeetingCalendar: React.FC<Props> = ({
 
   const selectedDateValue = dayjs(selectedDate).toDate();
 
-  const currentDate = new Date();
-  const firstMonthInView = new Date(
-    currentDate.getFullYear(),
-    currentDate.getMonth() - 1,
-    1
-  );
-
   return (
     <div className="card flex w-full">
       <Card className="meeting-calendar w-full">
         <Calendar
-          ref={ref}
+          key={key}
           value={selectedDateValue}
+          // value={date}
           onChange={handleDateChange}
+          // onChange={(e) => {
+          //   setDate(e.value);
+          // }}
           numberOfMonths={3}
           inline
           className="w-full"
           dateTemplate={dateTemplate}
-          viewDate={firstMonthInView}
+          // viewDate={firstMonthInView}
+          viewDate={viewDate.toDate()}
         />
       </Card>
     </div>

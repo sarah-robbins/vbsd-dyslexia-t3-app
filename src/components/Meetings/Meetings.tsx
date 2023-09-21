@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import MeetingForm from './MeetingForm/MeetingForm';
 import MeetingCalendar from './MeetingCalendar/MeetingCalendar';
 import MeetingList from './MeetingList/MeetingList';
@@ -7,7 +7,6 @@ import dayjs, { type Dayjs } from 'dayjs';
 import { api } from '@/utils/api';
 import { type dummyStudents, type dummyMeetings } from '@prisma/client';
 import Students from '../Students/Students';
-import { type Calendar } from 'primereact/calendar';
 
 interface Meeting {
   id?: number;
@@ -28,10 +27,20 @@ interface Meeting {
 const Meetings = () => {
   // State
   const [meetings, setMeetings] = useState<dummyMeetings[]>([]);
-  const [date] = useState<Dayjs | null>(dayjs());
+  const [date, setDate] = useState<Dayjs | null>(dayjs());
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [selectedMeetings, setSelectedMeetings] = useState<Meeting[]>([]);
-  const calendarRef = useRef<Calendar>(null);
+
+  function getFirstMonthInView() {
+    const currentDate = dayjs();
+
+    // Set to first day of previous month
+    const firstDayOfMonth = currentDate.subtract(1, 'month').startOf('month');
+
+    return firstDayOfMonth;
+  }
+  const [viewDate, setViewDate] = useState(getFirstMonthInView());
+  const [key, setKey] = useState<number>(1); // add key state
 
   // Database Calls
   const getAllMeetings = api.meetings.getAllMeetings.useQuery(); // getAllMeetings
@@ -74,7 +83,9 @@ const Meetings = () => {
       <div className="flex gap-4 align-items-center justify-content-between w-full">
         <MeetingsTitleBar
           setSelectedDate={setSelectedDate}
-          // calendarRef={calendarRef}
+          setDate={setDate}
+          setViewDate={setViewDate}
+          setKey={setKey}
         />
       </div>
       <div className="flex">
@@ -83,7 +94,9 @@ const Meetings = () => {
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
           meetings={meetings}
-          ref={calendarRef}
+          viewDate={viewDate}
+          setDate={setDate}
+          key={key}
         />
       </div>
       <div className="flex flex-column lg:flex-row gap-4">

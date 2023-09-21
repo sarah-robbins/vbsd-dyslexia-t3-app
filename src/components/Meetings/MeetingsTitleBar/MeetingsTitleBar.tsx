@@ -4,20 +4,36 @@ import React from 'react';
 import dayjs, { type Dayjs } from 'dayjs';
 // import { type Calendar } from 'primereact/calendar';
 
+type SetKey = React.Dispatch<React.SetStateAction<number>>;
+
 interface Props {
   setSelectedDate: (date: Dayjs) => void | null;
-  // calendarRef: React.MutableRefObject<Calendar | null>;
+  setDate: (date: Dayjs) => void | null;
+  setViewDate: (date: Dayjs) => void | null;
+  setKey: SetKey;
 }
 
 const MeetingsTitleBar: React.FC<Props> = ({
-  setSelectedDate,
-  // calendarRef,
+  // setSelectedDate,
+  setDate,
+  setViewDate,
+  setKey,
 }) => {
   // const [date, setDate] = useState<string | Date | Date[] | null>(null);
 
+  // const handleTodayClick = () => {
+  //   setSelectedDate(dayjs());
+  //   // calendarRef.current?.setDate(dayjs().toDate());
+  // };
+
   const handleTodayClick = () => {
-    setSelectedDate(dayjs());
-    // calendarRef.current?.setDate(dayjs().toDate());
+    const today = dayjs();
+    setDate(today);
+
+    const dateAsDate = today.subtract(1, 'month').startOf('month');
+    setViewDate(dateAsDate);
+
+    setKey((prevKey: number) => prevKey + 1); // update key on click
   };
 
   return (
