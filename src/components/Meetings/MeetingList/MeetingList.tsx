@@ -139,7 +139,7 @@ const MeetingList: React.FC<Props> = ({
         <Chip
           key={index}
           color={getStatusColorForTable(getStatusForTable ?? '')}
-          label={status}
+          label={getStatusForTable ?? ''}
           className="meeting-status-chips"
         />
         <br />
