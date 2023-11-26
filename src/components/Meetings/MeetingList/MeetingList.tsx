@@ -41,23 +41,19 @@ const MeetingList: React.FC<Props> = ({
   >([]);
   const selectAllCheckboxRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    if (!selectedDate) {
-      setFilteredMeetings([]);
-      return;
+    if (selectedDate) {
+      const filtered = datedMeetingsWithAttendees
+        .map((meeting) => ({
+          ...meeting,
+          dateString: dayjs(meeting.start).format('YYYY-MM-DD'),
+        }))
+        .filter((meeting) => {
+          const meetingDate = dayjs(meeting.start);
+          return meetingDate.isSame(selectedDate, 'day');
+        });
+      setFilteredMeetings(filtered);
     }
-
-    const filtered = datedMeetingsWithAttendees
-      .map((meeting) => ({
-        ...meeting,
-        dateString: dayjs(meeting.start).format('YYYY-MM-DD'),
-      }))
-      .filter((meeting) => {
-        const meetingDate = dayjs(meeting.start);
-        return meetingDate.isSame(selectedDate, 'day');
-      });
-    console.log('filtered meetings is firing!!!', filtered);
-    setFilteredMeetings(filtered);
-  }, [getDatedMeetings, selectedDate]);
+  }, [datedMeetingsWithAttendees, getDatedMeetings, selectedDate]);
 
   useEffect(() => {
     // Update the indeterminate state of the "Check All" checkbox

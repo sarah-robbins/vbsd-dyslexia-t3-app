@@ -53,9 +53,7 @@ const MeetingCalendar: React.FC<Props> = ({
     }
 
     setSelectedDate(selected);
-    console.log('selected from MeetingCalendar', selected);
   };
-  console.log('selected date from MeetingCalendar', selectedDate);
 
   // useEffect(() => {}, [meetingDates]);
 
