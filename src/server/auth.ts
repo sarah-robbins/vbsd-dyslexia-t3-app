@@ -53,7 +53,7 @@ interface UsersList {
 export const authOptions: NextAuthOptions = {
   callbacks: {
     session: async ({ session, user }) => {
-      const userFromDb = await prisma.Users.findFirst({
+      const userFromDb = await prisma.users.findFirst({
         where: { email: user.email },
       });
 
