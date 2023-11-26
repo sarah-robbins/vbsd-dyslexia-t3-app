@@ -251,10 +251,8 @@ main {
   height: auto;
 }
 
-.mobile-menu-toggle {
-  margin-left: 10px;
-  margin-right: 10px;
-  /* align-self: end; */
+button.mobile-menu-toggle {
+  margin-left: 12px;
 }
 
 .user-button.MuiButtonBase-root.MuiButton-root:hover {
