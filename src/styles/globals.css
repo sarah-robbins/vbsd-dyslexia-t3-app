@@ -273,6 +273,23 @@ main {
 .meeting-status-chips.MuiChip-root {
   width: 160px;
   border-radius: 4px;
+  margin: 3px 0;
+}
+
+.multi-attendee-name {
+  min-width: 80px;
+  /* no wrap */
+  /* white-space: nowrap; */
+  margin-right: 16px;
+}
+
+.meeting-attendee-name {
+  height: 32px;
+  line-height: normal;
+  margin: 3px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .meeting-list-name-select .Mui-focused legend {

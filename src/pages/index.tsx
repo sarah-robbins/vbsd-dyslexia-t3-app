@@ -11,7 +11,6 @@ const Home: NextPage = () => {
   // const hello = api.example.hello.useQuery({ text: "from tRPC" });
 
   const { data: sessionData } = useSession();
-  console.log('sessionData from index.tsx', sessionData);
 
   return (
     <>

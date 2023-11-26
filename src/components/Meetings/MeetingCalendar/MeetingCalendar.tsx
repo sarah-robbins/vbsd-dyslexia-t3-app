@@ -6,14 +6,14 @@ import {
 } from 'primereact/calendar';
 import { Card } from 'primereact/card';
 import dayjs, { type Dayjs } from 'dayjs';
-import { type dummyMeetings } from '@prisma/client';
+import { type Meeting } from '@/types';
 
 interface Props {
   date: Dayjs | null;
   selectedDate?: Dayjs;
-  meetings: dummyMeetings[];
+  meetings: Meeting[];
   setSelectedDate: (date: Dayjs) => void;
-  key: number;
+  uniqueKey: number;
   viewDate: Dayjs;
   setDate: (date: Dayjs) => void;
 }
@@ -22,7 +22,7 @@ const MeetingCalendar: React.FC<Props> = ({
   selectedDate,
   meetings,
   setSelectedDate,
-  key,
+  uniqueKey,
   viewDate,
   date,
   setDate,
@@ -53,7 +53,9 @@ const MeetingCalendar: React.FC<Props> = ({
     }
 
     setSelectedDate(selected);
+    console.log('selected from MeetingCalendar', selected);
   };
+  console.log('selected date from MeetingCalendar', selectedDate);
 
   // useEffect(() => {}, [meetingDates]);
 
@@ -83,7 +85,7 @@ const MeetingCalendar: React.FC<Props> = ({
     <div className="card flex w-full">
       <Card className="meeting-calendar w-full">
         <Calendar
-          key={key}
+          key={uniqueKey}
           value={selectedDateValue}
           // value={date}
           onChange={handleDateChange}

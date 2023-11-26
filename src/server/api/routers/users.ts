@@ -1,18 +1,21 @@
 import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '@/server/api/trpc';
-// import { dummyUsers } from '@prisma/client';
 
 export const usersRouter = createTRPCRouter({
   //get all users
   getAllUsers: publicProcedure.query(async ({ ctx }) => {
-    return await ctx.prisma.dummyUsers.findMany();
+    return await ctx.prisma.users.findMany({
+      include: {
+        Students: true,
+      },
+    });
   }),
 
   // getUsersBySchool
   getUsersBySchool: publicProcedure
     .input(z.string())
     .query(async ({ ctx, input }) => {
-      return await ctx.prisma.dummyUsers.findMany({
+      return await ctx.prisma.users.findMany({
         where: {
           school: input,
         },
@@ -37,7 +40,7 @@ export const usersRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.prisma.dummyUsers.create({
+      return ctx.prisma.users.create({
         data: {
           id: input.id,
           first_name: input.first_name,
@@ -62,7 +65,7 @@ export const usersRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.prisma.dummyUsers.delete({
+      return await ctx.prisma.users.delete({
         where: {
           id: input.id,
         },
@@ -88,7 +91,7 @@ export const usersRouter = createTRPCRouter({
         .partial()
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.prisma.dummyUsers.update({
+      return await ctx.prisma.users.update({
         where: {
           id: input.id,
         },

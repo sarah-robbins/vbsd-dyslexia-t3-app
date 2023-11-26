@@ -24,6 +24,7 @@
     "@trpc/next": "^10.26.0",
     "@trpc/react-query": "^10.26.0",
     "@trpc/server": "^10.26.0",
+    "@vercel/postgres": "^0.5.1",
     "dayjs": "^1.11.9",
     "material-ui-popup-state": "^5.0.9",
     "next": "^13.4.2",

@@ -5,23 +5,31 @@ import { Column } from 'primereact/column';
 import Chip from '@mui/material/Chip';
 import Checkbox from '@mui/material/Checkbox';
 import dayjs, { type Dayjs } from 'dayjs';
-import {
-  type Meeting,
-  // type MeetingAttendees,
-  type Student,
-  type MeetingWithAttendees,
-} from '@/types';
-// import { api } from '@/utils/api';
+import { type Meetings } from '@prisma/client';
 
 interface Props {
   selectedDate: Dayjs;
-  getDatedMeetings: MeetingWithAttendees[];
-  meetings: MeetingWithAttendees[];
-  getStudentsBySchool: Student[];
-  selectedMeetings: MeetingWithAttendees[];
-  setSelectedMeetings: (meetings: MeetingWithAttendees[]) => void;
-  datedMeetingsWithAttendees: MeetingWithAttendees[];
-  attendeesName: string[];
+  getDatedMeetings: Meeting[];
+  meetings: Meetings[];
+  selectedMeetings: Meeting[];
+  setSelectedMeetings: (meetings: Meeting[]) => void;
+}
+
+interface Meeting {
+  meeting_id?: number;
+  name: string;
+  student_id?: number;
+  start?: Dayjs;
+  end?: Dayjs;
+  meeting_status: string;
+  program?: string;
+  level_lesson?: string;
+  meeting_notes?: string;
+  recorded_by: string;
+  recorded_on: Dayjs;
+  edited_by?: string;
+  edited_on?: Dayjs;
+  startDateString?: string;
 }
 
 const MeetingList: React.FC<Props> = ({
@@ -29,24 +37,35 @@ const MeetingList: React.FC<Props> = ({
   getDatedMeetings = [],
   selectedMeetings = [],
   meetings = [],
-  // getStudentsBySchool = [],
   setSelectedMeetings = () => {
     meetings;
   },
-  datedMeetingsWithAttendees = [],
-  // attendeesName = [],
 }) => {
-  const [filteredMeetings, setFilteredMeetings] = useState<
-    MeetingWithAttendees[]
-  >([]);
+  const [filteredMeetings, setFilteredMeetings] = useState<Meeting[]>([]);
+  const [selectedNames] = useState<string[]>([]);
   const selectAllCheckboxRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (selectedNames.length > 0) {
+      const filteredData = getDatedMeetings.filter((meeting) =>
+        selectedNames.includes(meeting.name)
+      );
+      setFilteredMeetings(filteredData);
+      // setIsMeetingSelected(true);
+    }
+  }, [getDatedMeetings, selectedNames]);
+
+  // const handleNameSelect = (names: string[]) => {
+  //   setSelectedNames(names);
+  // };
+
   useEffect(() => {
     if (!selectedDate) {
       setFilteredMeetings([]);
       return;
     }
 
-    const filtered = datedMeetingsWithAttendees
+    const filtered = getDatedMeetings
       .map((meeting) => ({
         ...meeting,
         dateString: dayjs(meeting.start).format('YYYY-MM-DD'),
@@ -55,7 +74,6 @@ const MeetingList: React.FC<Props> = ({
         const meetingDate = dayjs(meeting.start);
         return meetingDate.isSame(selectedDate, 'day');
       });
-    console.log('filtered meetings is firing!!!', filtered);
     setFilteredMeetings(filtered);
   }, [getDatedMeetings, selectedDate]);
 
@@ -127,31 +145,21 @@ const MeetingList: React.FC<Props> = ({
     return <td colSpan={5} className="h-auto"></td>;
   };
 
-  const statusBodyTemplate = (rowData: MeetingWithAttendees) => {
-    // const status = getStatusForTable(rowData) ?? '';
-    const uniqueStatuses = Array.from(
-      new Set(rowData.attendees.map((attendee) => attendee.meeting_status))
+  const statusBodyTemplate = (rowData: Meeting) => {
+    return (
+      <Chip
+        color={getStatusForTable(rowData.meeting_status)}
+        label={rowData.meeting_status}
+        className="meeting-status-chips"
+      />
     );
-
-    // Return an array of Chips, one for each unique status
-    return uniqueStatuses.map((getStatusForTable, index) => (
-      <>
-        <Chip
-          key={index}
-          color={getStatusColorForTable(getStatusForTable ?? '')}
-          label={status}
-          className="meeting-status-chips"
-        />
-        <br />
-      </>
-    ));
   };
 
-  const formatMeetingTime = (data: Meeting) => {
+  const formatMeetingTime = (data: Meetings) => {
     const { start, end } = data;
 
-    const formatTime = (time: Date | Dayjs | null): string => {
-      const date = dayjs(time ? time.toISOString() : undefined);
+    const formatTime = (time: Date | null): string => {
+      const date = dayjs(time);
       const hours = date.hour();
       const minutes = date.minute();
 
@@ -208,88 +216,8 @@ const MeetingList: React.FC<Props> = ({
     return total;
   };
 
-  // const { data: attendees } = api.attendees.getAttendeesByMeeting.useQuery(
-  //   selectedMeetings[0]?.id ?? 0
-  // ) as {
-  //   data: MeetingAttendees[];
-  // };
-  useEffect(() => {
-    console.log('selectedMeetings: ', selectedMeetings);
-    // if (selectedMeetings.length === 0) {
-    //   setSelectedMeetingAttendees([]);
-    //   return;
-    // }
-
-    // setAttendees(attendees);
-
-    // setSelectedMeetingAttendees(
-    //   datedMeetingsWithAttendees.filter(
-    //     (a) => a.meeting_id === selectedMeetings[0]?.id
-    //   )
-    // );
-  }, [selectedMeetings]);
-
-  // const students = getStudentsBySchool;
-  // const { data: currentAttendees } =
-  //   api.attendees.getAttendeesByMeeting.useQuery(rowData.id) as {
-  //     data: MeetingAttendees[];
-  //   };
-  const getName = (rowData: MeetingWithAttendees) => {
-    if (!datedMeetingsWithAttendees || !rowData) {
-      return <div>Loading...</div>;
-    }
-    return rowData.attendees.map((attendee, index) => (
-      <div className="meeting-attendee-name" key={index}>
-        {attendee.name}
-      </div>
-    ));
-  };
-
-  // const getStatusForTable = (rowData: MeetingWithAttendees) => {
-  //   if (!rowData || !rowData.attendees || rowData.attendees.length === 0) {
-  //     return <div>Loading...</div>;
-  //   }
-  //   const statuses = rowData.attendees
-  //     .map((attendee) => attendee.meeting_status)
-  //     .join(', ');
-  //   return statuses;
-  // };
-
-  // Map attendee ids to student names
-  // const names = students.map((currentStudent) => {
-  //   const attendee = currentAttendees.find(
-  //     (a) => a.student_id === currentStudent.id
-  //   );
-  //   const studentId = attendee?.student_id;
-  //   const student = getStudentsBySchool.find((s) => s.id === studentId);
-  //   const firstName = student?.first_name ?? '';
-  //   const lastName = student?.last_name ?? '';
-
-  //   return `${firstName} ${lastName}`;
-  // });
-
-  // const filteredNames = names.filter((name) => name != ' ');
-
-  // // Join names into string
-  // return filteredNames.length > 1
-  //   ? filteredNames.join(', ')
-  //   : filteredNames[0];
-  // };
-
-  // const getMeetingStatus = (rowData: MeetingWithAttendees) => {
-  //   const meeting_id = rowData.id;
-  //   const meetingAttendees = rowData.attendees.find(
-  //     (meetingAttendee) => meetingAttendee.meeting_id === meeting_id
-  //   );
-  //   const meeting_status = meetingAttendees?.meeting_status;
-  //   // const status = student?.meeting_status ?? '';
-  //   return meeting_status;
-
-  //   // return 'Met';
-  // };
-
-  const getStatusColorForTable = (getStatusForTable: string) => {
-    switch (getStatusForTable) {
+  const getStatusForTable = (meeting_status: string) => {
+    switch (meeting_status) {
       case 'Met':
         return 'primary';
 
@@ -315,38 +243,60 @@ const MeetingList: React.FC<Props> = ({
     }
   };
 
-  const isCheckboxChecked = (meeting: MeetingWithAttendees) => {
+  const isCheckboxChecked = (meeting: Meeting) => {
     return selectedMeetings.some(
-      (selectedMeeting) => selectedMeeting.id === meeting.id
+      (selectedMeeting) => selectedMeeting.meeting_id === meeting.meeting_id
     );
   };
 
-  // TODO: This seems to be running way to many time one page load. Research why.
+  // const toggleCheckbox = (meeting: Meeting) => {
+  //   // If checked, remove
+  //   if (isCheckboxChecked(meeting)) {
+  //     setSelectedMeetings(selectedMeetings.filter((m) => m.id !== meeting.id));
+  //     return;
+  //   }
+  //   // Else select only this one
+  //   setSelectedMeetings([meeting]);
+  // };
 
-  const toggleCheckbox = (meeting: MeetingWithAttendees) => {
-    // If checked, remove
+  const toggleCheckbox = (meeting: Meeting) => {
+    let updatedMeetings: Meeting[];
+
     if (isCheckboxChecked(meeting)) {
-      setSelectedMeetings(selectedMeetings.filter((m) => m.id !== meeting.id));
-      return;
+      updatedMeetings = selectedMeetings.filter(
+        (m) => m.meeting_id !== meeting.meeting_id
+      );
+    } else {
+      updatedMeetings = [...selectedMeetings, meeting];
     }
-    // Else select only this one
-    setSelectedMeetings([meeting]);
-    // const students = getStudentsBySchool;
-    // const attendees = datedMeetingsWithAttendees;
-    // const firstMeeting = selectedMeetings[0];
-    if (selectedMeetings.length > 0) {
+
+    if (updatedMeetings.length > 0) {
+      setSelectedMeetings(updatedMeetings);
+    } else {
+      setSelectedMeetings([]);
     }
-    // setSelectedMeetingAttendees(
-    //   getAttendeesByMeeting.filter(
-    //     (a) => a.meeting_id === selectedMeetings[0]?.id
-    //   )
-    // );
   };
+
+  // const toggleCheckbox = (meeting: Meeting) => {
+  //   setSelectedMeetings((prevSelectedMeetings: Meeting[]): Meeting[] => {
+  //     if (isCheckboxChecked(meeting)) {
+  //       return prevSelectedMeetings.filter(
+  //         (selectedMeeting) => selectedMeeting.id !== meeting.id
+  //       );
+  //     } else {
+  //       return [...prevSelectedMeetings, meeting];
+  //     }
+  //   });
+  // };
 
   return (
     <Card className="lg:w-7 flex-order-1 lg:flex-order-2 elevate-item">
       <div className="meeting-list-name-select flex justify-content-between align-items-center gap-4">
         <h3>Meetings</h3>
+        {/* <MeetingListNameSelect
+          selectedNames={selectedNames}
+          onNameSelect={handleNameSelect}
+        /> */}
       </div>
       <DataTable
         value={filteredMeetings}
@@ -362,7 +312,7 @@ const MeetingList: React.FC<Props> = ({
         dataKey="id"
         stripedRows
         tableStyle={{ minWidth: '20rem' }}
-        rowClassName={(rowData: MeetingWithAttendees) =>
+        rowClassName={(rowData: Meeting) =>
           isCheckboxChecked(rowData) ? 'row-selected' : ''
         }>
         <Column
@@ -379,7 +329,7 @@ const MeetingList: React.FC<Props> = ({
               onChange={toggleAllCheckboxes}
             />
           )}
-          body={(rowData: MeetingWithAttendees) => (
+          body={(rowData: Meeting) => (
             <Checkbox
               checked={isCheckboxChecked(rowData)}
               onChange={() => toggleCheckbox(rowData)}
@@ -396,7 +346,7 @@ const MeetingList: React.FC<Props> = ({
           sortable
         />
         <Column
-          body={getName}
+          field="name"
           header="Name"
           style={{ minWidth: '150px' }}
           sortable

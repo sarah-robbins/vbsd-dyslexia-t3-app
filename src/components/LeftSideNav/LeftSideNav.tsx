@@ -139,11 +139,11 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
       link: '/meetings',
       icon: 'MeetingsIcon',
     },
-    // {
-    //   text: 'Students',
-    //   link: '/students',
-    //   icon: 'StudentsIcon',
-    // },
+    {
+      text: 'Students',
+      link: '/students',
+      icon: 'StudentsIcon',
+    },
     {
       text: 'Users',
       link: '/users',
@@ -168,6 +168,13 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
     StatsIcon: LeaderboardIcon,
     SettingsIcon: SettingsIcon,
   };
+
+  function capitalizeEachWord(string: string): string {
+    return string
+      .split(' ')
+      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
 
   // const theme = useTheme();
   // const isMdAndUp = useMediaQuery(theme.breakpoints.up('md'));
@@ -196,7 +203,13 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
         {links.map((link) => (
           <ListItem key={link.text} disablePadding sx={{ display: 'block' }}>
             <ListItemButton
-              onClick={() => setRouting(link.text.toLowerCase())}
+              onClick={() => {
+                const newRoute = link.text.toLowerCase();
+                setRouting(newRoute); // Update the context
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('currentRoute', newRoute); // Update local storage
+                }
+              }}
               sx={{
                 minHeight: 48,
                 justifyContent: 'initial',
@@ -276,7 +289,9 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
                 </Box>
               </Typography>
               <Typography variant="subtitle2" noWrap component="div">
-                <Box sx={{ lineHeight: '1' }}>Tutor</Box>
+                <Box sx={{ lineHeight: '1' }}>
+                  {capitalizeEachWord(session ? session.user.role : '')}
+                </Box>
               </Typography>
             </div>
             <Tooltip title="Open settings">

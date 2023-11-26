@@ -19,6 +19,7 @@ declare module 'next-auth' {
   interface Session extends DefaultSession {
     user: {
       id: string;
+      userId: number;
       role: string;
       view: string;
       school: string;
@@ -52,25 +53,25 @@ interface UsersList {
 export const authOptions: NextAuthOptions = {
   callbacks: {
     session: async ({ session, user }) => {
-      const usersList = await prisma.dummyUsers.findMany({
+      const userFromDb = await prisma.Users.findFirst({
         where: { email: user.email },
       });
 
-      const firstUser = usersList[0];
-
-      if (firstUser !== undefined) {
+      if (userFromDb !== undefined) {
         return {
           ...session,
           user: {
             ...user,
             // id: user.id,
-            role: (firstUser as UsersList).role,
-            view: (firstUser as UsersList).view,
-            school: (firstUser as UsersList).school,
+            userId: (userFromDb as UsersList).id,
+            role: (userFromDb as UsersList).role,
+            view: (userFromDb as UsersList).view,
+            school: (userFromDb as UsersList).school,
           },
         };
       } else {
-        // Handle the case where firstUser is undefined, possibly returning a session with default values or an error.
+        // Handle the case where userFromDb is undefined, possibly returning a session with default values or an error.
+        console.log('userFromDb is undefined');
         return session;
       }
     },

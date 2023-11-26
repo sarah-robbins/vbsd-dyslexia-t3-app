@@ -3,19 +3,18 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { api } from '@/utils/api';
 import { Card } from 'primereact/card';
-import { type dummyUsers } from '@prisma/client';
+import { type User } from '@/types';
 
 const Users: React.FC = () => {
   const getAllUsers = api.users.getAllUsers.useQuery();
-  const [users, setUsers] = useState<dummyUsers[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
-    setUsers(getAllUsers.data as dummyUsers[]);
+    setUsers(getAllUsers.data as User[]);
   }, [getAllUsers]);
-
   // Table data with new row first
 
-  const userNameTemplate = (rowData: dummyUsers) => {
+  const userNameTemplate = (rowData: User) => {
     return (
       <>
         <span className="p-column-title">Name</span>

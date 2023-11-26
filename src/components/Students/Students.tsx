@@ -5,22 +5,30 @@ import { api } from '@/utils/api';
 import { Toast } from 'primereact/toast';
 import { Card } from 'primereact/card';
 
-import { type dummyStudents } from '@prisma/client';
+import { type Student } from '@/types';
 
 const Students: React.FC = () => {
   const getAllStudents = api.students.getAllStudents.useQuery();
-  const [students, setStudents] = useState<dummyStudents[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
   const toast = useRef(null);
+
+  const { data: getStudentsBySchool } =
+    api.students.getStudentsBySchool.useQuery(
+      // sessionData?.school as string
+      'King'
+    ) as {
+      data: Student[];
+    };
 
   useEffect(() => {
     if (getAllStudents.data) {
-      setStudents(getAllStudents.data);
+      setStudents(getStudentsBySchool);
     }
-  }, [getAllStudents.data]);
+  }, [getStudentsBySchool]);
 
   const rows = [...students].filter((r) => r != null);
 
-  const studentNameTemplate = (rowData: dummyStudents) => {
+  const studentNameTemplate = (rowData: Student) => {
     return (
       <>
         <span className="p-column-title">Name</span>
@@ -29,11 +37,11 @@ const Students: React.FC = () => {
     );
   };
 
-  const tutorNameTemplate = (rowData: dummyStudents) => {
+  const tutorNameTemplate = (rowData: Student) => {
     return (
       <>
         <span className="p-column-title">Name</span>
-        {rowData.tutor_ln}, {rowData.tutor_fn}
+        {rowData.tutor_id}
       </>
     );
   };

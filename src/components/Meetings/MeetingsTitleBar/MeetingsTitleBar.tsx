@@ -4,20 +4,20 @@ import React from 'react';
 import dayjs, { type Dayjs } from 'dayjs';
 // import { type Calendar } from 'primereact/calendar';
 
-type SetKey = React.Dispatch<React.SetStateAction<number>>;
+type SetUniqueKey = React.Dispatch<React.SetStateAction<number>>;
 
 interface Props {
   setSelectedDate: (date: Dayjs) => void | null;
   setDate: (date: Dayjs) => void | null;
   setViewDate: (date: Dayjs) => void | null;
-  setKey: SetKey;
+  setUniqueKey: SetUniqueKey;
 }
 
 const MeetingsTitleBar: React.FC<Props> = ({
   // setSelectedDate,
   setDate,
   setViewDate,
-  setKey,
+  setUniqueKey,
 }) => {
   // const [date, setDate] = useState<string | Date | Date[] | null>(null);
 
@@ -33,7 +33,7 @@ const MeetingsTitleBar: React.FC<Props> = ({
     const dateAsDate = today.subtract(1, 'month').startOf('month');
     setViewDate(dateAsDate);
 
-    setKey((prevKey: number) => prevKey + 1); // update key on click
+    setUniqueKey((prevKey: number) => prevKey + 1); // update key on click
   };
 
   return (

@@ -7,72 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model appSettings {
-  id                     Int      @id(map: "app_settings_pkey") @default(autoincrement())
-  school_name            String
-  primary_color          String
-  school_options         String[]
-  meeting_status_options String[]
-  user_role_options      String[]
-  initial_view_options   String[]
-  grade_options          String[]
-  program_options        String[]
-  services_options       String[]
-}
-
-model dummyMeetings {
-  id             Int       @id @unique @default(autoincrement())
-  name           String    @default("") @db.VarChar
-  student_id     Int?
-  start          DateTime? @db.Timestamp(6)
-  end            DateTime? @db.Timestamp(6)
-  meeting_status String    @default("") @db.VarChar
-  program        String?   @db.VarChar
-  level_lesson   String?   @db.VarChar
-  meeting_notes  String?   @db.VarChar
-  recorded_by    String    @default("") @db.VarChar
-  recorded_on    DateTime  @default(now()) @db.Timestamp(6)
-  edited_by      String?   @db.VarChar
-  edited_on      DateTime? @db.Timestamp(6)
-}
-
-model dummyStudents {
-  id                      Int       @id @unique @default(autoincrement())
-  school                  String?   @db.VarChar
-  first_name              String?   @db.VarChar
-  last_name               String?   @db.VarChar
-  grade                   String?   @db.VarChar
-  home_room_teacher       String?   @db.VarChar
-  tutor_ln                String?   @db.VarChar
-  tutor_fn                String?   @db.VarChar
-  intervention_program    String?   @db.VarChar
-  level_lesson            String?   @db.VarChar
-  date_intervention_began DateTime? @db.Date
-  services                String?   @db.VarChar
-  new_location            String?   @db.VarChar
-  additional_comments     String?   @db.VarChar
-  last_edited             DateTime? @db.Timestamp(6)
-  created_at              DateTime? @default(now()) @db.Timestamptz(6)
-  new_student             Boolean?  @default(true)
-  moved                   Boolean?  @default(false)
-  withdrew                Boolean?  @default(false)
-  schedule                Json?
-}
-
-model dummyUsers {
-  id               Int      @id @unique @default(autoincrement())
-  first_name       String   @default("") @db.VarChar
-  last_name        String   @default("") @db.VarChar
-  school           String   @default("") @db.VarChar
-  email            String   @default("") @db.VarChar
-  phone            String   @default("") @db.VarChar
-  role             String   @default("") @db.VarChar
-  super_admin_role String?  @db.VarChar
-  picture          String?  @db.VarChar
-  created_at       DateTime @default(now()) @db.Timestamptz(6)
-  view             String   @default("") @db.VarChar
-}
-
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -110,9 +44,11 @@ model User {
   school        String?
   superAdmin    Boolean?  @default(false)
   updatedAt     DateTime  @updatedAt
-  view          String?   @default("")
+  view          String?
+  userId        Int?      @unique
   accounts      Account[]
   sessions      Session[]
+  Users         Users?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
@@ -121,4 +57,82 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model AppSettings {
+  id                     Int      @id(map: "app_settings_pkey") @default(autoincrement())
+  school_name            String
+  primary_color          String
+  school_options         String[]
+  meeting_status_options String[]
+  user_role_options      String[]
+  initial_view_options   String[]
+  grade_options          String[]
+  program_options        String[]
+  services_options       String[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model MeetingAttendees {
+  id             BigInt    @id @unique @default(autoincrement())
+  created_at     DateTime  @default(now()) @db.Timestamptz(6)
+  meeting_status String?
+  student_id     Int?
+  meeting_id     Int?
+  Meetings       Meetings? @relation(fields: [meeting_id], references: [id], onDelete: Cascade)
+  Students       Students? @relation(fields: [student_id], references: [id], onDelete: Cascade)
+}
+
+model Meetings {
+  id               Int                @id(map: "dummyMeetings_pkey") @unique(map: "dummyMeetings_id_key") @default(autoincrement())
+  start            DateTime?          @db.Timestamp(6)
+  end              DateTime?          @db.Timestamp(6)
+  program          String?
+  level_lesson     String?
+  meeting_notes    String?
+  recorded_by      String
+  recorded_on      DateTime           @default(now()) @db.Timestamp(6)
+  edited_by        String?
+  edited_on        DateTime?          @db.Timestamp(6)
+  MeetingAttendees MeetingAttendees[]
+}
+
+model Students {
+  id                      Int                @id(map: "dummyStudents_pkey") @unique(map: "dummyStudents_id_key") @default(autoincrement())
+  school                  String?
+  first_name              String?
+  last_name               String?
+  grade                   String?
+  home_room_teacher       String?
+  tutor_id                Int?
+  intervention_program    String?
+  level_lesson            String?
+  date_intervention_began DateTime?          @db.Date
+  services                String?
+  new_student             Boolean?           @default(true)
+  moved                   Boolean?           @default(false)
+  new_location            String?
+  withdrew                Boolean?           @default(false)
+  additional_comments     String?
+  last_edited             DateTime?          @default(now()) @db.Timestamptz(6)
+  schedule                Json?
+  MeetingAttendees        MeetingAttendees[]
+  Users                   Users?             @relation(fields: [tutor_id], references: [id])
+}
+
+model Users {
+  id               Int        @id(map: "dummyUsers_pkey") @unique(map: "dummyUsers_id_key") @default(autoincrement())
+  first_name       String
+  last_name        String
+  school           String
+  email            String
+  phone            String
+  role             String
+  super_admin_role String?
+  picture          String?
+  created_at       DateTime   @default(now()) @db.Timestamptz(6)
+  view             String
+  Students         Students[]
+  User             User?
 }
