@@ -20,6 +20,7 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
+import LightbulbIcon from '@mui/icons-material/Lightbulb';
 import Box from '@mui/material/Box';
 import Menu from '@mui/material/Menu';
 import Avatar from '@mui/material/Avatar';
@@ -34,6 +35,9 @@ import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { type RoutingContextType, routingContext } from '@/context/AllContext';
 import { signOut, useSession } from 'next-auth/react';
+import { TextField } from '@mui/material';
+import Link from 'next/link';
+import { api } from '@/utils/api';
 
 const drawerWidth = 180;
 
@@ -111,10 +115,50 @@ const MiniDrawer = styled(MuiDrawer, {
 
 const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
   const { data: session } = useSession();
+  console.log(session);
   // const theme = useTheme();
   const { setRouting }: RoutingContextType = React.useContext(routingContext);
 
   const [open, setOpen] = React.useState<boolean>(false);
+
+  const [phone, setPhone] = React.useState<string>(session?.user.phone || '');
+  const updateUserMutation = api.users.updateUser.useMutation();
+
+  const handlePhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = event.target.value;
+
+    // Remove all non-digit characters
+    const numbers = inputValue.replace(/\D/g, '');
+
+    // Format the string as per the phone number format
+    let phone = '';
+    for (let i = 0; i < numbers.length; i++) {
+      if (i === 3 || i === 6) {
+        phone += '-';
+      }
+      phone += numbers[i];
+    }
+
+    // Trim the formatted string to match the required length (12 includes hyphens)
+    phone = phone.substring(0, 12);
+
+    setPhone(phone);
+  };
+
+  const handleSavePhone = () => {
+    if (session && session.user.userId) {
+      const userId = Number(session.user.userId);
+      if (!isNaN(userId)) {
+        updateUserMutation.mutate({
+          id: userId,
+          phone: phone,
+        });
+      } else {
+        console.error('Invalid user ID');
+      }
+    }
+  };
+
   const handleDrawerToggle = () => {
     setOpen(!open);
   };
@@ -180,64 +224,101 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
   // const isMdAndUp = useMediaQuery(theme.breakpoints.up('md'));
 
   const drawer = (
-    <div>
-      <DrawerHeader></DrawerHeader>
-      <Divider />
-      <div className="w-12 h-3rem no-wrap justify-content-between align-items-center hidden md:flex ">
-        {!open ? (
-          ''
-        ) : (
-          <Typography variant="h6" noWrap component="div" className="px-4">
-            Menu
-          </Typography>
-        )}
-        {/* <h3 className='px-4 py-2'>Menu</h3> */}
-        <IconButton
-          onClick={handleDrawerToggle}
-          className="mobile-menu-toggle py-2">
-          {!open ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-        </IconButton>
-      </div>
-      <Divider />
-      <List>
-        {links.map((link) => (
-          <ListItem key={link.text} disablePadding sx={{ display: 'block' }}>
-            <ListItemButton
-              onClick={() => {
-                const newRoute = link.text.toLowerCase();
-                setRouting(newRoute); // Update the context
-                if (typeof window !== 'undefined') {
-                  localStorage.setItem('currentRoute', newRoute); // Update local storage
-                }
-              }}
-              sx={{
-                minHeight: 48,
-                justifyContent: 'initial',
-                px: 2.5,
-              }}>
-              <ListItemIcon
+    <div
+      className="flex flex-column justify-content-between"
+      style={{ height: '100%' }}>
+      <div>
+        <DrawerHeader></DrawerHeader>
+        <Divider />
+        <div className="w-12 h-3rem no-wrap justify-content-between align-items-center hidden md:flex ">
+          {!open ? (
+            ''
+          ) : (
+            <Typography variant="h6" noWrap component="div" className="px-4">
+              Menu
+            </Typography>
+          )}
+          {/* <h3 className='px-4 py-2'>Menu</h3> */}
+          <IconButton
+            onClick={handleDrawerToggle}
+            className="mobile-menu-toggle py-2">
+            {!open ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+          </IconButton>
+        </div>
+        <Divider />
+        <List>
+          {links.map((link) => (
+            <ListItem key={link.text} disablePadding sx={{ display: 'block' }}>
+              <ListItemButton
+                onClick={() => {
+                  const newRoute = link.text.toLowerCase();
+                  setRouting(newRoute); // Update the context
+                  if (typeof window !== 'undefined') {
+                    localStorage.setItem('currentRoute', newRoute); // Update local storage
+                  }
+                }}
                 sx={{
-                  minWidth: 0,
-                  mr: open ? 3 : 'auto',
-                  justifyContent: 'center',
+                  minHeight: 48,
+                  justifyContent: 'initial',
+                  px: 2.5,
                 }}>
-                {React.createElement(
-                  iconMap[link.icon as keyof typeof iconMap]
-                )}
-              </ListItemIcon>
-              <ListItemText
-                primary={link.text}
-                sx={{ opacity: open ? 1 : 0 }}
-              />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    mr: open ? 3 : 'auto',
+                    justifyContent: 'center',
+                  }}>
+                  {React.createElement(
+                    iconMap[link.icon as keyof typeof iconMap]
+                  )}
+                </ListItemIcon>
+                <ListItemText
+                  primary={link.text}
+                  sx={{ opacity: open ? 1 : 0 }}
+                />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
+      </div>
+      <div className="tutorial-icon">
+        <Link
+          href="https://google.com"
+          className="flex align-items-center
+          justify-content-center"
+          style={{ width: '100%' }}>
+          <IconButton aria-label="Tutorial" disabled>
+            <LightbulbIcon />
+          </IconButton>
+        </Link>
+      </div>
     </div>
   );
   // const { window }: { window: Window } = props as { window: Window };
   const container =
     window && window.document ? () => window.document.body : undefined;
+
+  const userProfile = (
+    <div className="flex flex-column justify-content-center align-items-center gap-3">
+      {/* I need to add a box to edit the user's phone number, then a place that displays the email, but doesn't not allow the user to edit it. */}
+      <TextField
+        value={phone}
+        onChange={handlePhoneChange}
+        label="Phone Number"
+        className="w-12"
+      />
+      <TextField
+        // id="outlined-multiline-flexible"
+        value={session ? session.user.email : ''}
+        disabled
+        label="Email"
+        className="w-12"
+      />
+      <Button variant="contained" color="primary" onClick={handleSavePhone}>
+        Save
+      </Button>
+    </div>
+  );
 
   return (
     <>
@@ -326,11 +407,7 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
               }}
               open={Boolean(anchorElUser)}
               onClose={handleCloseUserMenu}>
-              {settings.map((setting) => (
-                <MenuItem key={setting} disabled onClick={handleCloseUserMenu}>
-                  <Typography textAlign="center">{setting}</Typography>
-                </MenuItem>
-              ))}
+              <div className="user-profile-dropdown">{userProfile}</div>
               <MenuItem
                 onClick={() => {
                   void signOut({ callbackUrl: '/' });

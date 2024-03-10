@@ -1,6 +1,9 @@
 import { z } from 'zod';
-import { createTRPCRouter, publicProcedure } from '@/server/api/trpc';
-import { type Meeting } from '@/types';
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from '@/server/api/trpc';
 
 export const meetingsRouter = createTRPCRouter({
   //get all meetings
@@ -10,6 +13,45 @@ export const meetingsRouter = createTRPCRouter({
         MeetingAttendees: true,
       },
     });
+  }),
+
+  getMeetingsForRole: protectedProcedure.query(async ({ ctx }) => {
+    const userRole = ctx.session?.user?.role;
+    const tutorId = ctx.session?.user?.userId;
+    const userSchool = ctx.session?.user?.school;
+
+    switch (userRole) {
+      case 'tutor':
+        return await ctx.prisma.meetings.findMany({
+          where: {
+            tutor_id: tutorId,
+          },
+        });
+      case 'principal':
+        return await ctx.prisma.meetings.findMany({
+          where: {
+            MeetingAttendees: {
+              some: {
+                Students: {
+                  school: userSchool,
+                },
+              },
+            },
+          },
+          include: {
+            MeetingAttendees: {
+              include: {
+                Students: true,
+              },
+            },
+          },
+        });
+      case 'admin':
+        return await ctx.prisma.meetings.findMany();
+      default:
+        // Handle default case or throw an error
+        return [];
+    }
   }),
 
   // getAllAttendees: publicProcedure.query(async ({ ctx }) => {
@@ -210,38 +252,48 @@ export const meetingsRouter = createTRPCRouter({
         meeting_notes: z.string().optional(),
         recorded_by: z.string(),
         recorded_on: z.date(),
+        tutor_id: z.number().int(),
         attendees: z.array(
           z.object({
             student_id: z.number().int(),
             meeting_status: z.string().optional(),
+            created_at: z.date(),
           })
         ),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const meeting = await ctx.prisma.meetings.create({
-        data: {
-          start: input.start,
-          end: input.end,
-          program: input.program,
-          level_lesson: input.level_lesson,
-          meeting_notes: input.meeting_notes,
-          recorded_by: input.recorded_by,
-          recorded_on: input.recorded_on,
-        },
-      });
-
-      for (const attendee of input.attendees) {
-        await ctx.prisma.meetingAttendees.create({
+      try {
+        const meeting = await ctx.prisma.meetings.create({
           data: {
-            meeting_id: meeting.id,
-            student_id: attendee.student_id,
-            meeting_status: attendee.meeting_status,
+            start: input.start,
+            end: input.end,
+            program: input.program,
+            level_lesson: input.level_lesson,
+            meeting_notes: input.meeting_notes,
+            recorded_by: input.recorded_by,
+            recorded_on: input.recorded_on,
+            tutor_id: input.tutor_id,
           },
         });
-      }
 
-      return meeting;
+        for (const attendee of input.attendees) {
+          console.log('attendee from trpc', attendee);
+          await ctx.prisma.meetingAttendees.create({
+            data: {
+              student_id: attendee.student_id,
+              meeting_status: attendee.meeting_status,
+              meeting_id: meeting.id,
+              created_at: attendee.created_at,
+            },
+          });
+        }
+
+        return meeting;
+      } catch (error) {
+        console.error('Error creating meeting:', error);
+        throw new Error('Failed to create meeting and attendees');
+      }
     }),
 
   //delete meeting
@@ -271,6 +323,7 @@ export const meetingsRouter = createTRPCRouter({
         meeting_notes: z.string().optional(),
         edited_by: z.string(),
         edited_on: z.date(),
+        tutor_id: z.number().int(),
         attendees: z.array(
           z.object({
             student_id: z.number().int(),
@@ -293,6 +346,7 @@ export const meetingsRouter = createTRPCRouter({
           meeting_notes: input.meeting_notes,
           edited_by: input.edited_by,
           edited_on: input.edited_on,
+          tutor_id: input.tutor_id,
         },
       });
 
@@ -326,5 +380,44 @@ export const meetingsRouter = createTRPCRouter({
       }
 
       return { success: true };
+    }),
+
+  deleteAttendeesInput: publicProcedure
+    .input(
+      z.object({
+        attendeeIds: z.array(z.number()),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await ctx.prisma.meetingAttendees.deleteMany({
+          where: {
+            id: {
+              in: input.attendeeIds,
+            },
+          },
+        });
+        return { success: true };
+      } catch (error) {
+        console.error('Error deleting attendees:', error);
+        throw error;
+      }
+    }),
+
+  // Example tRPC procedure on the server
+  getAttendeesByMeeting: publicProcedure
+    .input(z.object({ meeting_id: z.number() }))
+    .query(async ({ input, ctx }) => {
+      return await ctx.prisma.meetingAttendees.findMany({
+        where: {
+          meeting_id: input.meeting_id,
+        },
+        select: {
+          id: true,
+          student_id: true,
+          meeting_id: true,
+          // any other fields you need
+        },
+      });
     }),
 });

@@ -19,12 +19,10 @@ import ListItemText from '@mui/material/ListItemText';
 import Checkbox from '@mui/material/Checkbox';
 import type {
   Student,
-  Meeting,
   MeetingAttendees,
   FormValues,
   MeetingWithAttendees,
 } from '@/types';
-// import useCurrentAttendees from '@/hooks';
 import { OutlinedInput } from '@mui/material';
 import { useSession } from 'next-auth/react';
 
@@ -40,42 +38,20 @@ interface Props {
   getDatedMeetings: MeetingWithAttendees[];
   selectedDate: Dayjs;
   setSelectedDate: (date: Dayjs) => void;
-  getStudentsBySchool: Student[];
+  students: Student[];
   isMeetingSelected: boolean;
   selectedMeetingAttendees: MeetingAttendees[];
   setDatedMeetingsWithAttendees: (meetings: MeetingWithAttendees[]) => void;
-  // attendees: MeetingAttendees[];
 }
-
-// interface FormValues {
-//   id?: number;
-//   // name: string;
-//   name: [];
-//   student_id?: number;
-//   start: Dayjs | Date;
-//   end: Dayjs | Date;
-//   meeting_status: string;
-//   program?: string;
-//   level_lesson?: string;
-//   meeting_notes?: string;
-//   recorded_by: string;
-//   recorded_on: Dayjs | Date;
-//   edited_by: string;
-//   edited_on?: Dayjs | Date;
-// }
 
 const MeetingForm: React.FC<Props> = ({
   meetings,
   setMeetings,
   selectedDate,
-  // setSelectedDate,
-  getStudentsBySchool = [],
+  students = [],
   getDatedMeetings = [],
   selectedMeetings = [],
   setDatedMeetingsWithAttendees,
-  // setSelectedMeetings = [],
-  // selectedMeetingAttendees = [],
-  // attendees = [],
 }) => {
   const { data: session } = useSession();
   const sessionData = session?.user;
@@ -98,13 +74,14 @@ const MeetingForm: React.FC<Props> = ({
     recorded_on: dayjs(),
     edited_by: '',
     edited_on: dayjs(),
+    attendees: [],
   });
 
   useEffect(() => {
     if (selectedDate && getDatedMeetings) {
       const datedMeetingsWithAttendees: MeetingWithAttendees[] =
         getDatedMeetings.map((meeting): MeetingWithAttendees => {
-          const students = getStudentsBySchool;
+          // const students = getStudentsBySchool;
           const attendees = (meeting.MeetingAttendees ?? [])
             .map((attendee) => {
               const student = students?.find(
@@ -124,65 +101,127 @@ const MeetingForm: React.FC<Props> = ({
                 id: number;
                 meeting_id: number;
                 student_id: number;
-                meeting_status: string | null;
-                created_at: Dayjs | null;
+                meeting_status: string;
+                created_at: Dayjs;
                 name: string;
               } => Boolean(a)
             ) as {
             id: number;
             meeting_id: number;
             student_id: number;
-            meeting_status: string | null;
-            created_at: Dayjs | null;
+            meeting_status: string;
+            created_at: Dayjs;
             name: string;
-          }[]; // Filter out undefined or null values
-          // TODO: attendees has typescript errors
+          }[];
           return { ...meeting, attendees };
         });
 
       setDatedMeetingsWithAttendees(datedMeetingsWithAttendees);
     }
-  }, [getDatedMeetings, getStudentsBySchool, selectedDate]);
+  }, [getDatedMeetings, students, selectedDate, setDatedMeetingsWithAttendees]);
 
   /* -------------------------------------------------------------------------- */
   /*                             HANDLE NAME CHANGE                             */
   /* -------------------------------------------------------------------------- */
 
-  // const [name, setName] = React.useState('');
   const [name, setName] = React.useState<string[]>([]);
   const [studentNames, setStudentNames] = React.useState<string[]>([]);
   const [selectedNames, setSelectedNames] = React.useState<string[]>([]);
   const [namesForSelect, setNamesForSelect] = React.useState<string[]>([]);
+  const [removedAttendees, setRemovedAttendees] = useState<number[]>([]);
+  const [selectedAttendees, setSelectedAttendees] = useState<
+    MeetingAttendees[]
+  >([]);
+
+  // useEffect(() => {
+  //   console.log('students: ', students);
+  //   console.log('selectedMeetings: ', selectedMeetings);
+  //   console.log('attendees', attendees);
+  //   console.log('formValues: ', formValues);
+  //   console.log('selectedAttendees: ', selectedAttendees);
+  //   console.log('selectedNames: ', selectedNames);
+  //   console.log('removedAttendees: ', removedAttendees);
+  // }, [
+  //   selectedMeetings,
+  //   attendees,
+  //   formValues,
+  //   students,
+  //   selectedAttendees,
+  //   selectedNames,
+  //   removedAttendees,
+  // ]);
+
+  const meeting_id = selectedMeetings[0]?.id ?? 0;
+  const { data: mySelectedAttendees } =
+    api.meetings.getAttendeesByMeeting.useQuery({ meeting_id }) as {
+      data: MeetingAttendees[];
+    };
+
+  useEffect(() => {
+    if (mySelectedAttendees) {
+      setSelectedAttendees(mySelectedAttendees);
+    }
+  }, [selectedMeetings]);
 
   const handleNameChange = (event: SelectChangeEvent<string[]>) => {
     const value = event.target.value;
     const newSelectedNames =
       typeof value === 'string' ? value.split(',') : value;
 
-    // Update individualStatuses for new selections
-    const newStatuses = { ...individualStatuses };
-    newSelectedNames.forEach((name) => {
-      if (!newStatuses[name]) {
-        newStatuses[name] = ''; // Set a default status, or use your logic to determine this
+    // Function to get name by student ID
+    const getNameById = (studentId: number): string => {
+      const student = students.find((s) => s.id === studentId);
+      return student
+        ? `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim()
+        : '';
+    };
+
+    // Map names to their corresponding student IDs
+    const nameToStudentIdMap = new Map<string, number>();
+    students.forEach((student) => {
+      if (student.id !== undefined) {
+        const name = getNameById(student.id);
+        nameToStudentIdMap.set(name, student.id);
       }
     });
 
+    // Determine newly removed attendee IDs based on selectedAttendees
+    const newlyRemovedAttendeeIds = selectedAttendees
+      .filter(({ student_id }) => {
+        if (student_id === undefined) return false;
+        return !newSelectedNames.includes(getNameById(student_id));
+      })
+      .map(({ id }) => id ?? -1) // Use -1 or a suitable placeholder for undefined ID
+      .filter((id) => id !== -1); // Filter out the placeholders
+
+    // Determine re-added attendee IDs
+    const reAddedAttendeeIds = removedAttendees.filter((attendeeId) =>
+      newSelectedNames.some((name) =>
+        selectedAttendees.find(
+          ({ id, student_id }) =>
+            id === attendeeId && nameToStudentIdMap.get(name) === student_id
+        )
+      )
+    );
+
+    // Update removedAttendees
+    const updatedRemovedAttendees = [
+      ...removedAttendees.filter((id) => !reAddedAttendeeIds.includes(id)),
+      ...newlyRemovedAttendeeIds,
+    ];
+
     setSelectedNames(newSelectedNames);
-    setIndividualStatuses(newStatuses);
+    setRemovedAttendees(updatedRemovedAttendees);
   };
+
+  useEffect(() => {
+    console.log('removedAttendees updated: ', removedAttendees);
+  }, [removedAttendees]);
 
   /* -------------------------------------------------------------------------- */
   /*                            HANDLE DATE AND TIME                            */
   /* -------------------------------------------------------------------------- */
 
-  // const [date] = useState<Dayjs>(dayjs());
-  // const [selectedDate, setSelectedDate] = useState(null);
-
-  // useEffect(() => {
-  //   setSelectedDate(date);
-  // }, [date, setSelectedDate]);
-
-  // When selectedDate updates
   useEffect(() => {
     setFormDate(selectedDate);
   }, [selectedDate]);
@@ -190,7 +229,6 @@ const MeetingForm: React.FC<Props> = ({
   const handleFormDateChange = (date: Dayjs | null) => {
     if (date) {
       setFormDate(date);
-      console.log('date from handleFormDateChange', date);
     }
   };
 
@@ -249,41 +287,47 @@ const MeetingForm: React.FC<Props> = ({
 
     if (allAttendees.length > 1) {
       const initialStatuses = allAttendees.reduce((acc, attendee) => {
-        const attendeeName = attendee.name;
-        acc[attendeeName] = attendee.meeting_status || '';
+        const attendeeName = attendee?.name;
+        if (attendeeName) {
+          // Ensure attendeeName is not undefined
+          acc[attendeeName] = attendee.meeting_status || '';
+        }
         return acc;
       }, {} as { [key: string]: string });
       setIndividualStatuses(initialStatuses);
     } else if (allAttendees.length === 1) {
-      // setSelectedStatus(allAttendees[0].meeting_status || '');
     }
   }, [selectedMeetings]);
 
   const renderStatusSelects = () => {
     if (selectedNames.length > 1) {
-      return Object.entries(individualStatuses).map(([studentName, status]) => (
-        <div key={studentName} className="flex flex-column gap-4">
-          <div className="flex gap-4">
-            <div className="multi-attendee-name">{studentName}</div>
-            <FormControl className="w-12">
-              <InputLabel id="demo-simple-select-label">
-                Meeting Status
-              </InputLabel>
-              <Select
-                value={status}
-                onChange={(e) =>
-                  handleIndividualStatusChange(studentName, e.target.value)
-                }>
-                {options.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+      return selectedNames.map((studentName) => {
+        const status = individualStatuses[studentName] || '';
+
+        return (
+          <div key={studentName} className="flex flex-column gap-4">
+            <div className="flex gap-4">
+              <div className="multi-attendee-name">{studentName}</div>
+              <FormControl className="w-12">
+                <InputLabel id="demo-simple-select-label">
+                  Meeting Status
+                </InputLabel>
+                <Select
+                  value={status}
+                  onChange={(e) =>
+                    handleIndividualStatusChange(studentName, e.target.value)
+                  }>
+                  {options.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </div>
           </div>
-        </div>
-      ));
+        );
+      });
     } else {
       return (
         <FormControl className="w-12">
@@ -291,9 +335,7 @@ const MeetingForm: React.FC<Props> = ({
 
           <Select
             value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            // ... other props
-          >
+            onChange={(e) => setSelectedStatus(e.target.value)}>
             {options.map((option) => (
               <MenuItem key={option} value={option}>
                 {option}
@@ -304,6 +346,10 @@ const MeetingForm: React.FC<Props> = ({
       );
     }
   };
+
+  useEffect(() => {
+    renderStatusSelects();
+  }, [selectedNames]);
 
   const handleIndividualStatusChange = (
     studentName: string,
@@ -316,7 +362,6 @@ const MeetingForm: React.FC<Props> = ({
     return Object.values(individualStatuses).some((status) => status === 'Met');
   };
 
-  // Use this function to disable or enable the Program and Level/Lesson fields
   const isEditable = isMetStatusPresent();
 
   /* -------------------------------------------------------------------------- */
@@ -338,7 +383,7 @@ const MeetingForm: React.FC<Props> = ({
   /*                           HANDLE SELECTED MEETING                          */
   /* -------------------------------------------------------------------------- */
 
-  const allStudentNames = getStudentsBySchool.map((student) => {
+  const allStudentNames = students.map((student) => {
     const firstName = student?.first_name ?? '';
     const lastName = student?.last_name ?? '';
 
@@ -348,76 +393,62 @@ const MeetingForm: React.FC<Props> = ({
     setStudentNames(allStudentNames);
   }, [allStudentNames]);
 
-  // Update the selectedMeetings value anytime a checkbox is checked.
-
+  // TODO: This useEffect hook is not correctly setting isFormEditable. It is not updating when the selectedMeetings state changes.
   useEffect(() => {
     const getAttendeeNames = (): string[] => {
-      return selectedMeetings.flatMap((meeting) =>
-        meeting.attendees.map((attendee) => attendee.name)
+      return selectedMeetings.flatMap(
+        (meeting) => meeting?.attendees?.map((attendee) => attendee.name) ?? []
       );
     };
     const names = getAttendeeNames();
     setName(names);
-    setSelectedNames(names); // Assuming you want to pre-select these names
+    setSelectedNames(names);
   }, [selectedMeetings]);
 
-  useEffect(() => {
-    // Let's say we want to log the new meetings count every time it changes
-    console.log(`Number of formdates updated: ${getDatedMeetings.length}`);
-  }, [meetings]);
+  // useEffect(() => {}, [getDatedMeetings.length, meetings]);
 
   useEffect(() => {
-    if (selectedMeetings.length > 0 && selectedMeetings[0]?.attendees) {
+    if (selectedMeetings.length > 0) {
       const selectedMeeting = selectedMeetings[0];
       if (!selectedMeeting) return;
-      // const attendeeNames = selectedMeetings[0].attendees.map(
-      //   (attendee) => attendee.name
-      // );
-      // setSelectedNames(attendeeNames);
 
-      const newStatuses: { [key: string]: string } = {}; // Define the type explicitly
-      selectedMeetings[0].attendees.forEach((attendee) => {
+      const newStatuses: { [key: string]: string } = {};
+      selectedMeeting.attendees?.forEach((attendee) => {
         newStatuses[attendee.name] = attendee.meeting_status || '';
       });
       setIndividualStatuses(newStatuses);
 
-      // Determine if form is editable
       const metStatusPresent = Object.values(newStatuses).some(
         (status) => status === 'Met'
       );
       setIsFormEditable(metStatusPresent);
 
-      const attendeeNames = attendees.map((attendee) => {
-        const student = getStudentsBySchool.find(
-          (s) => s.id === attendee.student_id
-        );
-        const firstName = student?.first_name ?? '';
-        const lastName = student?.last_name ?? '';
+      const attendeeNames =
+        selectedMeeting.attendees?.map((attendee) => {
+          const student = students.find((s) => s.id === attendee.student_id);
+          const firstName = student?.first_name ?? '';
+          const lastName = student?.last_name ?? '';
 
-        const name = `${firstName} ${lastName}`;
-        setName((prevNames) => [...prevNames, ...name]);
-        return name;
-      });
+          return `${firstName} ${lastName}`;
+        }) || [];
 
-      setNamesForSelect(
-        typeof attendeeNames === 'string' ? [attendeeNames] : attendeeNames
-      );
+      setName((prevNames) => [...prevNames, ...attendeeNames]);
+      setNamesForSelect(attendeeNames);
 
-      // const name = 'Johnny Doe';
       setFormDate(dayjs(selectedMeeting.start));
       const start = dayjs(selectedMeeting.start);
       const end = dayjs(selectedMeeting.end);
       setStartTime(start);
       setEndTime(end);
       const meeting_status =
-        selectedMeeting?.attendees[0]?.meeting_status ?? '';
+        selectedMeeting.attendees?.[0]?.meeting_status ?? '';
       setSelectedStatus(meeting_status);
       setFormValues({
-        name: namesForSelect,
+        name: attendeeNames,
         student_id: 0,
         start: dayjs(start),
         end: dayjs(end),
-        meeting_status: meeting_status,
+        meeting_status: meeting_status || '',
         program: selectedMeeting.program || '',
         level_lesson: selectedMeeting.level_lesson || '',
         meeting_notes: selectedMeeting.meeting_notes || '',
@@ -425,15 +456,14 @@ const MeetingForm: React.FC<Props> = ({
         recorded_on: dayjs(),
         edited_by: '',
         edited_on: dayjs(),
+        attendees: selectedMeeting.attendees ?? [],
       });
     }
-  }, [attendees, getStudentsBySchool, namesForSelect, selectedMeetings]);
+  }, [students, selectedMeetings]);
 
-  // Update the selectedMeetings value anytime a checkbox is unchecked.
   useEffect(() => {
     if (selectedMeetings.length <= 0) {
       setFormValues({
-        // name: '',
         name: [],
         student_id: 0,
         start: dayjs(),
@@ -446,8 +476,8 @@ const MeetingForm: React.FC<Props> = ({
         recorded_on: dayjs(),
         edited_by: '',
         edited_on: dayjs(),
+        attendees: [],
       });
-      // setName('');
       setName([]);
       setSelectedStatus('');
       setStartTime(dayjs());
@@ -460,136 +490,98 @@ const MeetingForm: React.FC<Props> = ({
   /* -------------------------------------------------------------------------- */
 
   /* ------------------- create Meeting ------------------- */
-  const createMeetingMutation = api.meetings.createMeeting.useMutation();
+  const updateAttendees = () => {
+    const updatedAttendees: MeetingAttendees[] = selectedNames.map((name) => {
+      const student = students.find(
+        (s) => `${s.first_name || ''} ${s.last_name || ''}` === name
+      );
+      const studentId = student ? student.id : undefined;
+      const meetingStatus = individualStatuses[name] || '';
 
-  const handleAdd = (formValues: FormValues) => {
-    const newMeeting = {
-      id: 0,
-      name: name,
-      student_id: formValues.student_id ?? 0,
-      start: dayjs(start).toDate(),
-      end: dayjs(end).toDate(),
-      meeting_status: formValues.meeting_status,
-      program: formValues.program ?? '',
-      level_lesson: formValues.level_lesson ?? '',
-      meeting_notes: formValues.meeting_notes ?? '',
-      recorded_by: sessionData?.userId.toString() ?? '',
-      recorded_on: dayjs().toDate(),
-      attendees: [],
-    };
-    createMeetingMutation.mutate(newMeeting);
-
-    // setName('');
-    setName([]);
-    setSelectedStatus('');
-    setStartTime(dayjs());
-    setEndTime(dayjs());
-
-    setFormValues({
-      // name: '',
-      name: [],
-      student_id: 0,
-      start: dayjs(),
-      end: dayjs(),
-      meeting_status: '',
-      program: '',
-      level_lesson: '',
-      meeting_notes: '',
-      recorded_by: '',
-      recorded_on: dayjs(),
-      edited_by: '',
-      edited_on: dayjs(),
+      return {
+        student_id: studentId,
+        meeting_status: meetingStatus,
+      };
     });
+
+    setFormValues((prevValues) => ({
+      ...prevValues,
+      attendees: updatedAttendees,
+    }));
   };
 
   useEffect(() => {
-    if (createMeetingMutation.isSuccess) {
-      toast.current?.show({
-        severity: 'success',
-        summary: 'This meeting has been added.',
-        life: 3000,
-      });
-    }
-  }, [createMeetingMutation.isSuccess]);
+    updateAttendees();
+  }, [selectedNames, individualStatuses, students]);
+
+  const createMeetingMutation = api.meetings.createMeeting.useMutation();
 
   useEffect(() => {
-    if (createMeetingMutation.isError) {
-      toast.current?.show({
-        severity: 'error',
-        summary: 'There was an error, and this meeting was not added.',
-        life: 3000,
-      });
-    }
-  }, [createMeetingMutation.isError]);
+    if (!formValues.attendees) return;
+    const getAttendees = formValues.attendees?.map((attendee) => ({
+      student_id: attendee.student_id,
+      meeting_status: attendee.meeting_status,
+      created_at: dayjs().toDate(),
+    }));
 
-  /* ------------------- edit Meeting ------------------- */
-  const editMeetingMutation = api.meetings.editMeeting.useMutation();
+    setAttendees(getAttendees);
+  }, [formValues.attendees]);
 
-  // const editMeeting = (formValues: FormValues) => {
-  //   if (!selectedMeetings) {
-  //     return;
-  //   }
-  //   const id = selectedMeetings[0]?.id as number;
-
-  //   const editedMeeting = {
-  //     id: id,
-  //     name: name,
-  //     student_id: formValues.student_id ?? 0,
-  //     start: dayjs(start).toDate(),
-  //     end: dayjs(end).toDate(),
-  //     meeting_status: formValues.meeting_status,
-  //     program: formValues.program ?? '',
-  //     level_lesson: formValues.level_lesson ?? '',
-  //     meeting_notes: formValues.meeting_notes ?? '',
-  //     edited_by: 'sarah',
-  //     edited_on: dayjs().toDate(),
-  //   };
-  //   editMeetingMutation.mutate(editedMeeting);
-  // };
-
-  const editMeeting = async (formValues: FormValues) => {
+  const handleAdd = (formValues: FormValues) => {
     if (!selectedMeetings.length) {
       return;
     }
 
     try {
-      // Prepare meeting data
-      const meetingData = {
-        id: selectedMeetings[0]?.id as number,
-        start: formValues.start?.toDate() ?? new Date(),
-        end: formValues.end?.toDate() ?? new Date(),
+      const validAttendees = attendees
+        .filter((attendee) => attendee.student_id !== undefined) // Filter out undefined student IDs
+        .map((attendee) => ({
+          student_id: attendee.student_id as number, // Cast to number, since we filtered out undefined
+          meeting_status: attendee.meeting_status,
+          created_at: dayjs().toDate(),
+        }));
+
+      const newMeeting = {
+        start: dayjs(start).toDate(),
+        end: dayjs(end).toDate(),
         program: formValues.program ?? '',
         level_lesson: formValues.level_lesson ?? '',
         meeting_notes: formValues.meeting_notes ?? '',
-        edited_by: sessionData?.userId.toString() ?? '',
-        edited_on: new Date(),
-        attendees: selectedNames.map((name) => {
-          const attendeeStatus = individualStatuses[name];
-          const studentId =
-            getStudentsBySchool.find(
-              (student) =>
-                `${student.first_name ?? ''} ${student.last_name ?? ''}` ===
-                name
-            )?.id ?? 0;
-          return {
-            student_id: studentId,
-            meeting_status: attendeeStatus,
-          };
-        }),
+        recorded_by: sessionData?.userId.toString() ?? '',
+        recorded_on: dayjs().toDate(),
+        tutor_id: sessionData?.userId || 0,
+        attendees: validAttendees,
       };
 
-      // Call the tRPC mutation
-      const response = await editMeetingMutation.mutateAsync(meetingData);
+      createMeetingMutation.mutate(newMeeting);
 
-      if (response.success) {
+      setName([]);
+      setSelectedNames([]);
+      setSelectedStatus('');
+      setStartTime(dayjs());
+      setEndTime(dayjs());
+
+      setFormValues({
+        name: [],
+        student_id: 0,
+        start: dayjs(),
+        end: dayjs(),
+        meeting_status: '',
+        program: '',
+        level_lesson: '',
+        meeting_notes: '',
+        recorded_by: '',
+        recorded_on: dayjs(),
+        edited_by: '',
+        edited_on: dayjs(),
+        attendees: [],
+      });
+      if (createMeetingMutation.isSuccess) {
         toast.current?.show({
           severity: 'success',
           summary: 'Meeting successfully updated.',
           life: 3000,
         });
-
-        // Update meetings list if necessary
-        // ... your logic to update meetings list
       }
     } catch (error) {
       console.error('Error updating meeting:', error);
@@ -601,26 +593,78 @@ const MeetingForm: React.FC<Props> = ({
     }
   };
 
-  useEffect(() => {
-    if (editMeetingMutation.isSuccess) {
-      toast.current?.show({
-        severity: 'success',
-        summary: 'This meeting has been saved.',
-        life: 3000,
-      });
-      setMeetings(meetings);
+  /* ------------------- edit Meeting ------------------- */
+  const editMeetingMutation = api.meetings.editMeeting.useMutation();
+  const removeAttendees = api.meetings.deleteAttendeesInput.useMutation();
+  const editMeeting = async (formValues: FormValues) => {
+    if (!selectedMeetings.length) {
+      return;
     }
-  }, [editMeetingMutation.isSuccess]);
 
-  useEffect(() => {
-    if (editMeetingMutation.isError) {
+    try {
+      const meetingData = {
+        id: selectedMeetings[0]?.id as number,
+        start: formValues.start?.toDate() ?? new Date(),
+        end: formValues.end?.toDate() ?? new Date(),
+        program: formValues.program ?? '',
+        level_lesson: formValues.level_lesson ?? '',
+        meeting_notes: formValues.meeting_notes ?? '',
+        edited_by: sessionData?.userId.toString() ?? '',
+        edited_on: new Date(),
+        tutor_id: sessionData?.userId || 0,
+        attendees: selectedNames.map((name) => {
+          const attendeeStatus = individualStatuses[name];
+          const studentId =
+            students.find(
+              (student) =>
+                `${student.first_name ?? ''} ${student.last_name ?? ''}` ===
+                name
+            )?.id ?? 0;
+          return {
+            student_id: studentId,
+            meeting_status: attendeeStatus,
+          };
+        }),
+      };
+
+      console.log('removedAttendees: ', removedAttendees);
+
+      // Use removedAttendees as is, since it's already an array of numbers
+      const attendeeIdsToRemove = {
+        attendeeIds: removedAttendees,
+      };
+
+      // Make an API call to delete the removed attendees
+      if (removedAttendees.length > 0) {
+        removeAttendees.mutate(attendeeIdsToRemove, {
+          onSuccess: () => {
+            console.log('Attendees deleted successfully');
+            // Update your state/UI as necessary
+          },
+          onError: (error) => {
+            console.error('Error deleting attendees:', error);
+          },
+        });
+      }
+
+      const response = await editMeetingMutation.mutateAsync(meetingData);
+
+      if (response.success) {
+        toast.current?.show({
+          severity: 'success',
+          summary: 'Meeting successfully updated.',
+          life: 3000,
+        });
+      }
+    } catch (error) {
+      console.error('Error updating meeting:', error);
       toast.current?.show({
         severity: 'error',
-        summary: 'There was an error, and this meeting was not saved.',
+        summary: 'Error updating meeting.',
         life: 3000,
       });
     }
-  }, [editMeetingMutation.isError]);
+  };
 
   /* ------------------------------ DELETEMEETING ----------------------------- */
 
@@ -628,11 +672,6 @@ const MeetingForm: React.FC<Props> = ({
 
   const handleDelete = () => {
     const id = Number(selectedMeetings[0]?.id);
-    // const confirm = window.confirm(
-    //   'Are you sure you want to delete this meeting?'
-    // );
-    // if (!confirm) return;
-
     toastDelete.current?.show({
       severity: 'error',
       summary: 'Delete Meeting',
@@ -664,7 +703,6 @@ const MeetingForm: React.FC<Props> = ({
                     summary: 'This meeting has been deleted.',
                     life: 3000,
                   });
-                  // setName('');
                   setName([]);
                   setSelectedStatus('');
                   setStartTime(dayjs());
@@ -672,7 +710,6 @@ const MeetingForm: React.FC<Props> = ({
 
                   setFormValues({
                     id: 0,
-                    // name: '',
                     name: [],
                     student_id: 0,
                     start: dayjs(),
@@ -685,6 +722,7 @@ const MeetingForm: React.FC<Props> = ({
                     recorded_on: dayjs(),
                     edited_by: '',
                     edited_on: dayjs(),
+                    attendees: [],
                   });
 
                   setMeetings(meetings.filter((meeting) => meeting.id !== id));
@@ -720,21 +758,12 @@ const MeetingForm: React.FC<Props> = ({
   /*                          CONDITIONALS FOR THE FORM                         */
   /* -------------------------------------------------------------------------- */
 
-  //check if id is greater than 0 and return true or false
   const existingMeeting = selectedMeetings.length > 0;
 
-  //check if the meeting exists in the database and return true or false
   const noMeeting =
     selectedMeetings.length <= 0 || selectedMeetings.length === undefined;
 
   const [isFormEditable, setIsFormEditable] = useState(false);
-
-  // useEffect(() => {
-  //   const metStatusPresent = Object.values(individualStatuses).some(
-  //     (status) => status === 'Met'
-  //   );
-  //   setIsFormEditable(metStatusPresent);
-  // }, [individualStatuses, selectedMeetings]);
 
   /* ------------------------------------------------------------- */
   /*                           HTML RETURN                         */
@@ -756,7 +785,6 @@ const MeetingForm: React.FC<Props> = ({
           className="flex justify-content-center gap-4 flex-column">
           <FormControl className="w-12">
             <InputLabel id="demo-simple-select-label">Name</InputLabel>
-            {/* I would like a Select component that uses the names of the students from the database data of Students. */}
             <Select
               labelId="demo-multiple-checkbox-label"
               id="demo-multiple-checkbox"
@@ -807,7 +835,6 @@ const MeetingForm: React.FC<Props> = ({
                 value={formValues.program ? formValues.program : ''}
                 label="Program"
                 disabled={!isFormEditable}
-                // onChange={handleStatusChange}>
                 onChange={handleProgramChange}>
                 {programs.map((option) => (
                   <MenuItem key={option} value={option}>
@@ -838,13 +865,6 @@ const MeetingForm: React.FC<Props> = ({
             rows={4}
           />
           <Stack direction="row" spacing={2}>
-            {/* <Button
-              variant="contained"
-              color="primary"
-              onClick={() => handleAdd(formValues)}
-              disabled={existingMeeting}>
-              Add
-            </Button> */}
             <Button
               variant="contained"
               color="primary"

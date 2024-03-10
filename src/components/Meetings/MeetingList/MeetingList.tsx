@@ -5,19 +5,13 @@ import { Column } from 'primereact/column';
 import Chip from '@mui/material/Chip';
 import Checkbox from '@mui/material/Checkbox';
 import dayjs, { type Dayjs } from 'dayjs';
-import {
-  type Meeting,
-  // type MeetingAttendees,
-  type Student,
-  type MeetingWithAttendees,
-} from '@/types';
-// import { api } from '@/utils/api';
+import { type Meeting, type Student, type MeetingWithAttendees } from '@/types';
 
 interface Props {
   selectedDate: Dayjs;
   getDatedMeetings: MeetingWithAttendees[];
   meetings: MeetingWithAttendees[];
-  getStudentsBySchool: Student[];
+  students: Student[];
   selectedMeetings: MeetingWithAttendees[];
   setSelectedMeetings: (meetings: MeetingWithAttendees[]) => void;
   datedMeetingsWithAttendees: MeetingWithAttendees[];
@@ -29,12 +23,11 @@ const MeetingList: React.FC<Props> = ({
   getDatedMeetings = [],
   selectedMeetings = [],
   meetings = [],
-  // getStudentsBySchool = [],
+  // students = [],
   setSelectedMeetings = () => {
     meetings;
   },
   datedMeetingsWithAttendees = [],
-  // attendeesName = [],
 }) => {
   const [filteredMeetings, setFilteredMeetings] = useState<
     MeetingWithAttendees[]
@@ -108,12 +101,12 @@ const MeetingList: React.FC<Props> = ({
           <div className="flex align-items-center gap-2">
             <span className="font-bold">{finalFormattedDate}</span>
           </div>
-          <td colSpan={5}>
+          <div>
             <div className="flex justify-content-end font-bold w-full">
               Total Meetings:{' '}
               {calculateMeetingTotal(data.start?.toString() ?? '')}
             </div>
-          </td>
+          </div>
         </div>
       </React.Fragment>
     );
@@ -124,22 +117,23 @@ const MeetingList: React.FC<Props> = ({
   };
 
   const statusBodyTemplate = (rowData: MeetingWithAttendees) => {
-    // const status = getStatusForTable(rowData) ?? '';
-    const uniqueStatuses = Array.from(
-      new Set(rowData.attendees.map((attendee) => attendee.meeting_status))
-    );
+    // Check if attendees are present
+    if (!rowData.attendees || rowData.attendees.length === 0) {
+      return <span>No Attendees</span>; // Or handle this case as appropriate
+    }
 
-    // Return an array of Chips, one for each unique status
-    return uniqueStatuses.map((getStatusForTable, index) => (
-      <>
+    // Map each attendee to a Chip with their status
+    return rowData.attendees.map((attendee, index) => (
+      <React.Fragment key={attendee.id}>
+        {' '}
         <Chip
           key={index}
-          color={getStatusColorForTable(getStatusForTable ?? '')}
-          label={getStatusForTable ?? ''}
+          color={getStatusColorForTable(attendee.meeting_status ?? '')}
+          label={attendee.meeting_status ?? 'Unknown Status'}
           className="meeting-status-chips"
         />
         <br />
-      </>
+      </React.Fragment>
     ));
   };
 
@@ -204,85 +198,20 @@ const MeetingList: React.FC<Props> = ({
     return total;
   };
 
-  // const { data: attendees } = api.attendees.getAttendeesByMeeting.useQuery(
-  //   selectedMeetings[0]?.id ?? 0
-  // ) as {
-  //   data: MeetingAttendees[];
-  // };
   useEffect(() => {
     console.log('selectedMeetings: ', selectedMeetings);
-    // if (selectedMeetings.length === 0) {
-    //   setSelectedMeetingAttendees([]);
-    //   return;
-    // }
-
-    // setAttendees(attendees);
-
-    // setSelectedMeetingAttendees(
-    //   datedMeetingsWithAttendees.filter(
-    //     (a) => a.meeting_id === selectedMeetings[0]?.id
-    //   )
-    // );
   }, [selectedMeetings]);
 
-  // const students = getStudentsBySchool;
-  // const { data: currentAttendees } =
-  //   api.attendees.getAttendeesByMeeting.useQuery(rowData.id) as {
-  //     data: MeetingAttendees[];
-  //   };
   const getName = (rowData: MeetingWithAttendees) => {
     if (!datedMeetingsWithAttendees || !rowData) {
       return <div>Loading...</div>;
     }
-    return rowData.attendees.map((attendee, index) => (
-      <div className="meeting-attendee-name" key={index}>
+    return rowData?.attendees?.map((attendee) => (
+      <div className="meeting-attendee-name" key={attendee.id}>
         {attendee.name}
       </div>
     ));
   };
-
-  // const getStatusForTable = (rowData: MeetingWithAttendees) => {
-  //   if (!rowData || !rowData.attendees || rowData.attendees.length === 0) {
-  //     return <div>Loading...</div>;
-  //   }
-  //   const statuses = rowData.attendees
-  //     .map((attendee) => attendee.meeting_status)
-  //     .join(', ');
-  //   return statuses;
-  // };
-
-  // Map attendee ids to student names
-  // const names = students.map((currentStudent) => {
-  //   const attendee = currentAttendees.find(
-  //     (a) => a.student_id === currentStudent.id
-  //   );
-  //   const studentId = attendee?.student_id;
-  //   const student = getStudentsBySchool.find((s) => s.id === studentId);
-  //   const firstName = student?.first_name ?? '';
-  //   const lastName = student?.last_name ?? '';
-
-  //   return `${firstName} ${lastName}`;
-  // });
-
-  // const filteredNames = names.filter((name) => name != ' ');
-
-  // // Join names into string
-  // return filteredNames.length > 1
-  //   ? filteredNames.join(', ')
-  //   : filteredNames[0];
-  // };
-
-  // const getMeetingStatus = (rowData: MeetingWithAttendees) => {
-  //   const meeting_id = rowData.id;
-  //   const meetingAttendees = rowData.attendees.find(
-  //     (meetingAttendee) => meetingAttendee.meeting_id === meeting_id
-  //   );
-  //   const meeting_status = meetingAttendees?.meeting_status;
-  //   // const status = student?.meeting_status ?? '';
-  //   return meeting_status;
-
-  //   // return 'Met';
-  // };
 
   const getStatusColorForTable = (getStatusForTable: string) => {
     switch (getStatusForTable) {
@@ -317,8 +246,6 @@ const MeetingList: React.FC<Props> = ({
     );
   };
 
-  // TODO: This seems to be running way to many time one page load. Research why.
-
   const toggleCheckbox = (meeting: MeetingWithAttendees) => {
     // If checked, remove
     if (isCheckboxChecked(meeting)) {
@@ -327,16 +254,8 @@ const MeetingList: React.FC<Props> = ({
     }
     // Else select only this one
     setSelectedMeetings([meeting]);
-    // const students = getStudentsBySchool;
-    // const attendees = datedMeetingsWithAttendees;
-    // const firstMeeting = selectedMeetings[0];
     if (selectedMeetings.length > 0) {
     }
-    // setSelectedMeetingAttendees(
-    //   getAttendeesByMeeting.filter(
-    //     (a) => a.meeting_id === selectedMeetings[0]?.id
-    //   )
-    // );
   };
 
   return (
@@ -346,6 +265,7 @@ const MeetingList: React.FC<Props> = ({
       </div>
       <DataTable
         value={filteredMeetings}
+        emptyMessage="No meetings today."
         rowGroupMode="subheader"
         groupRowsBy="dateString"
         sortMode="single"

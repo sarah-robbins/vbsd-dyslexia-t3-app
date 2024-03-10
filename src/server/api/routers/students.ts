@@ -7,7 +7,23 @@ import {
 
 export const studentsRouter = createTRPCRouter({
   getAllStudents: publicProcedure.query(async ({ ctx }) => {
-    return await ctx.prisma.students.findMany();
+    return await ctx.prisma.students.findMany({
+      include: {
+        Users: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+          },
+        },
+        MeetingAttendees: {
+          select: {
+            id: true,
+            meeting_status: true,
+          },
+        },
+      },
+    });
   }),
 
   getStudentsForRole: protectedProcedure.query(async ({ ctx }) => {
@@ -17,19 +33,70 @@ export const studentsRouter = createTRPCRouter({
 
     switch (userRole) {
       case 'tutor':
+      case "Tutor":
         return await ctx.prisma.students.findMany({
           where: {
             tutor_id: tutorId,
           },
+          include: {
+            Users: {
+              select: {
+                id: true,
+                first_name: true,
+                last_name: true,
+              },
+            },
+            MeetingAttendees: {
+              select: {
+                id: true,
+                meeting_status: true,
+              },
+            },
+          },
         });
       case 'principal':
+      case "Principal":
         return await ctx.prisma.students.findMany({
           where: {
-            school: userSchool,
+            school: {
+              in: Array.isArray(userSchool) ? userSchool : [userSchool], // userSchool should be an array of school names
+            },
+          },
+          include: {
+            Users: {
+              select: {
+                id: true,
+                first_name: true,
+                last_name: true,
+              },
+            },
+            MeetingAttendees: {
+              select: {
+                id: true,
+                meeting_status: true,
+              },
+            },
           },
         });
       case 'admin':
-        return await ctx.prisma.students.findMany();
+      case "Admin":
+        return await ctx.prisma.students.findMany({
+          include: {
+            Users: {
+              select: {
+                id: true,
+                first_name: true,
+                last_name: true,
+              },
+            },
+            MeetingAttendees: {
+              select: {
+                id: true,
+                meeting_status: true,
+              },
+            },
+          },
+        });
       default:
         // Handle default case or throw an error
         return [];
@@ -43,6 +110,21 @@ export const studentsRouter = createTRPCRouter({
         where: {
           school: input,
         },
+        include: {
+          Users: {
+            select: {
+              id: true,
+              first_name: true,
+              last_name: true,
+            },
+          },
+          MeetingAttendees: {
+            select: {
+              id: true,
+              meeting_status: true,
+            },
+          },
+        },
       });
     }),
 
@@ -52,6 +134,21 @@ export const studentsRouter = createTRPCRouter({
       return await ctx.prisma.students.findMany({
         where: {
           id: input,
+        },
+        include: {
+          Users: {
+            select: {
+              id: true,
+              first_name: true,
+              last_name: true,
+            },
+          },
+          MeetingAttendees: {
+            select: {
+              id: true,
+              meeting_status: true,
+            },
+          },
         },
       });
     }),
@@ -63,52 +160,53 @@ export const studentsRouter = createTRPCRouter({
         where: {
           tutor_id: input,
         },
+        include: {
+          Users: {
+            select: {
+              id: true,
+              first_name: true,
+              last_name: true,
+            },
+          },
+          MeetingAttendees: {
+            select: {
+              id: true,
+              meeting_status: true,
+            },
+          },
+        },
       });
     }),
 
   createStudent: publicProcedure
     .input(
       z.object({
-        id: z.number().int(),
-        school: z.string(),
-        first_name: z.string(),
-        last_name: z.string(),
-        grade: z.string(),
-        home_room_teacher: z.string(),
-        tutor_id: z.number().int(),
-        intervention_program: z.string(),
-        level_lesson: z.string(),
-        date_intervention_began: z.date(),
-        services: z.string(),
-        new_student: z.boolean(),
-        moved: z.boolean(),
-        new_location: z.string(),
-        withdrew: z.boolean(),
-        additional_comments: z.string(),
-        last_edited: z.date(),
-        created_at: z.date(),
+        school: z.string().optional(),
+        first_name: z.string().optional(),
+        last_name: z.string().optional(),
+        student_assigned_id: z.string().optional(),
+        grade: z.string().optional(),
+        home_room_teacher: z.string().optional(),
+        tutor_id: z.number().int().nullable().optional(),
+        intervention_program: z.string().optional(),
+        services: z.string().optional(),
+        new_student: z.boolean().optional(),
+        created_at: z.date().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return ctx.prisma.students.create({
         data: {
-          id: input.id,
           school: input.school,
           first_name: input.first_name,
           last_name: input.last_name,
+          student_assigned_id: input.student_assigned_id,
           grade: input.grade,
           home_room_teacher: input.home_room_teacher,
           tutor_id: input.tutor_id,
           intervention_program: input.intervention_program,
-          level_lesson: input.level_lesson,
-          date_intervention_began: input.date_intervention_began,
           services: input.services,
           new_student: input.new_student,
-          moved: input.moved,
-          new_location: input.new_location,
-          withdrew: input.withdrew,
-          additional_comments: input.additional_comments,
-          last_edited: input.last_edited,
         },
       });
     }),
@@ -127,7 +225,7 @@ export const studentsRouter = createTRPCRouter({
       });
     }),
 
-  updateStudent: publicProcedure
+  updateStudentRow: publicProcedure
     .input(
       z
         .object({
@@ -135,19 +233,12 @@ export const studentsRouter = createTRPCRouter({
           school: z.string().optional(),
           first_name: z.string().optional(),
           last_name: z.string().optional(),
+          student_assigned_id: z.string().optional(),
           grade: z.string().optional(),
           home_room_teacher: z.string().optional(),
-          tutor_id: z.number().int(),
+          tutor_id: z.number().int().nullable(),
           intervention_program: z.string().optional(),
-          level_lesson: z.string().optional(),
-          date_intervention_began: z.date().optional(),
           services: z.string().optional(),
-          new_student: z.boolean().optional(),
-          moved: z.boolean().optional(),
-          new_location: z.string().optional().optional(),
-          withdrew: z.boolean().optional(),
-          additional_comments: z.string().optional().optional(),
-          last_edited: z.date().optional(),
         })
         .partial()
     )
@@ -160,75 +251,48 @@ export const studentsRouter = createTRPCRouter({
           school: input.school,
           first_name: input.first_name,
           last_name: input.last_name,
+          student_assigned_id: input.student_assigned_id,
           grade: input.grade,
           home_room_teacher: input.home_room_teacher,
           tutor_id: input.tutor_id,
-          intervention_program: input.intervention_program,
+          services: input.services,
+        },
+      });
+    }),
+
+  updateStudentExtraData: publicProcedure
+    .input(
+      z
+        .object({
+          id: z.number().int(),
+          level_lesson: z.string().optional().nullable(),
+          date_intervention_began: z.date().optional().nullable(),
+          new_student: z.boolean().optional(),
+          moved: z.boolean().optional(),
+          new_location: z.string().optional().nullable(),
+          withdrew: z.boolean().optional(),
+          graduated: z.boolean().optional(),
+          additional_comments: z.string().optional().nullable(),
+          last_edited: z.date().optional(),
+        })
+        .partial()
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.prisma.students.update({
+        where: {
+          id: input.id,
+        },
+        data: {
           level_lesson: input.level_lesson,
           date_intervention_began: input.date_intervention_began,
-          services: input.services,
           new_student: input.new_student,
           moved: input.moved,
           new_location: input.new_location,
           withdrew: input.withdrew,
+          graduated: input.graduated,
           additional_comments: input.additional_comments,
           last_edited: new Date(),
         },
       });
     }),
-
-  // getScheduleByStudentId: publicProcedure
-  //   .input(
-  //     z.object({
-  //       id: z.number(),
-  //     })
-  //   )
-  //   .query(async ({ ctx, input }) => {
-  //     return ctx.prisma.students.findUnique({
-  //       where: {
-  //         id: input.id,
-  //       },
-  //       select: {
-  //         schedule: true,
-  //       },
-  //     });
-  //   }),
-
-  // addStudentSchedule: publicProcedure
-  //   .input(
-  //     z.object({
-  //       id: z.number().int(),
-  //       schedule: z.string(),
-  //     })
-  //   )
-  //   .mutation(async ({ ctx, input }) => {
-  //     return await ctx.prisma.students.update({
-  //       where: {
-  //         id: input.id,
-  //       },
-  //       data: {
-  //         schedule: input.schedule,
-  //       },
-  //     });
-  //   }),
-
-  // editStudentSchedule: publicProcedure
-  //   .input(
-  //     z
-  //       .object({
-  //         id: z.number().int(),
-  //         schedule: z.string(),
-  //       })
-  //       .partial()
-  //   )
-  //   .mutation(async ({ ctx, input }) => {
-  //     return await ctx.prisma.students.update({
-  //       where: {
-  //         id: input.id,
-  //       },
-  //       data: {
-  //         schedule: input.schedule,
-  //       },
-  //     });
-  //   }),
 });

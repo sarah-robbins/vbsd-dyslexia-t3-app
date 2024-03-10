@@ -23,8 +23,7 @@ declare module 'next-auth' {
       role: string;
       view: string;
       school: string;
-      // ...other properties
-      // role: UserRole;
+      phone: string;
     } & DefaultSession['user'];
   }
 }
@@ -56,6 +55,7 @@ export const authOptions: NextAuthOptions = {
       const userFromDb = await prisma.users.findFirst({
         where: { email: user.email },
       });
+      const appSettings = await prisma.appSettings.findFirst();
 
       if (userFromDb !== undefined) {
         return {
@@ -67,7 +67,9 @@ export const authOptions: NextAuthOptions = {
             role: (userFromDb as UsersList).role,
             view: (userFromDb as UsersList).view,
             school: (userFromDb as UsersList).school,
+            phone: (userFromDb as UsersList).phone,
           },
+          appSettings: appSettings,
         };
       } else {
         // Handle the case where userFromDb is undefined, possibly returning a session with default values or an error.

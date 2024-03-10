@@ -2,41 +2,14 @@ import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '@/server/api/trpc';
 
 export const attendeesRouter = createTRPCRouter({
-  //get all users
-  getAllAttendees: publicProcedure.query(async ({ ctx }) => {
-    return await ctx.prisma.meetingAttendees.findMany();
-  }),
-
-  // getAttendeesByStudent
-  getAttendeesByStudent: publicProcedure
-    .input(z.number().int())
-    .query(async ({ ctx, input }) => {
-      return await ctx.prisma.meetingAttendees.findMany({
-        where: {
-          student_id: input,
-        },
-      });
-    }),
-
-  // getAttendeesByMeeting
-  getAttendeesByMeeting: publicProcedure
-    .input(z.number().int())
-    .query(async ({ ctx, input }) => {
-      return await ctx.prisma.meetingAttendees.findMany({
-        where: {
-          meeting_id: input,
-        },
-      });
-    }),
-
   //create user
   createAttendee: publicProcedure
     .input(
       z.object({
-        student_id: z.number().int(),
         meeting_id: z.number().int(),
-        meeting_status: z.string(),
-        created_at: z.string(),
+        student_id: z.number().int(),
+        meeting_status: z.string().optional(),
+        created_at: z.date(),
       })
     )
     .mutation(async ({ ctx, input }) => {

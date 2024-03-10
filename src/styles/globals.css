@@ -11,6 +11,10 @@
   color-scheme: light;
 }
 
+.p-multiselect-label {
+  color: #495057 !important;
+}
+
 /* Override PrimeReact Components */
 .p-button {
   background: var(--primary-color) !important;
@@ -251,6 +255,14 @@ main {
   height: auto;
 }
 
+.css-13424xc-MuiButtonBase-root-MuiMenuItem-root:hover {
+  background-color: transparent !important;
+}
+
+.css-13424xc-MuiButtonBase-root-MuiMenuItem-root.Mui-focusVisible {
+  background-color: transparent !important;
+}
+
 button.mobile-menu-toggle {
   margin-left: 12px;
 }
@@ -383,4 +395,29 @@ button.mobile-menu-toggle {
 
 .MuiFormControl-root:has(> .Mui-disabled) {
   opacity: 0.5;
+}
+
+.user-profile-dropdown {
+  margin: 1rem;
+  min-width: 300px;
+}
+
+.expansion-row {
+  display: flex;
+  width: 100%;
+  gap: 1rem;
+  justify-content: space-between;
+  .expansion-row__item {
+    width: 50%;
+  }
+}
+
+@media  screen and (min-width: 960px) {
+  .expansion-row {
+    flex-direction: column;
+    .expansion-row__item {
+      width: 100%;
+    }
+  }
+  
 }

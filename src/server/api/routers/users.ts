@@ -1,5 +1,8 @@
 import { z } from 'zod';
-import { createTRPCRouter, publicProcedure } from '@/server/api/trpc';
+import {   createTRPCRouter,
+  publicProcedure,
+  protectedProcedure,
+ } from '@/server/api/trpc';
 
 export const usersRouter = createTRPCRouter({
   //get all users
@@ -22,35 +25,62 @@ export const usersRouter = createTRPCRouter({
       });
     }),
 
+  getUsersForRole: protectedProcedure.query(async ({ ctx }) => {
+    const userRole = ctx.session?.user?.role;
+    const userSchool = ctx.session?.user?.school;
+
+    switch (userRole) {
+      case 'tutor':
+      case "Tutor":
+        return await ctx.prisma.users.findMany({
+          where: {
+            school: {
+              in: Array.isArray(userSchool) ? userSchool : [userSchool], // userSchool should be an array of school names
+            },
+          },
+        });
+      case 'Principal':
+      case 'principal':
+        return await ctx.prisma.users.findMany({
+          where: {
+            school: {
+              in: Array.isArray(userSchool) ? userSchool : [userSchool], // userSchool should be an array of school names
+            },
+          },
+        });
+      case 'admin':
+      case "Admin":
+        return await ctx.prisma.users.findMany({
+        });
+      default:
+        // Handle default case or throw an error
+        return [];
+    }
+  }),
+
   //create user
   createUser: publicProcedure
     .input(
       z.object({
-        id: z.number().int(),
         first_name: z.string(),
         last_name: z.string(),
         school: z.string(),
         email: z.string(),
         phone: z.string(),
         role: z.string(),
-        // super_admin_role: z.string(),
-        // picture: z.string(),
-        created_at: z.string(),
+        created_at: z.date(),
         view: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return ctx.prisma.users.create({
         data: {
-          id: input.id,
           first_name: input.first_name,
           last_name: input.last_name,
           school: input.school,
           email: input.email,
           phone: input.phone,
           role: input.role,
-          // super_admin_role: input.super_admin_role,
-          // picture: input.picture,
           created_at: new Date(),
           view: input.view,
         },
@@ -84,8 +114,6 @@ export const usersRouter = createTRPCRouter({
           email: z.string(),
           phone: z.string(),
           role: z.string(),
-          // super_admin_role: z.string(),
-          // picture: z.string(),
           view: z.string(),
         })
         .partial()
@@ -102,8 +130,6 @@ export const usersRouter = createTRPCRouter({
           email: input.email,
           phone: input.phone,
           role: input.role,
-          // super_admin_role: input.super_admin_role,
-          // picture: input.picture,
           view: input.view,
         },
       });

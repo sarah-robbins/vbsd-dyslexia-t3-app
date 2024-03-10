@@ -51,30 +51,20 @@ const Meetings = () => {
   const dateToQuery =
     selectedDate && dayjs.isDayjs(selectedDate) ? selectedDate : dayjs();
 
+  // TODO: This needs to be a query that gets meetings by date but also by role (myDatedMeetings)
   const { data: getDatedMeetings } = api.meetings.getMeetingsByDate.useQuery(
     dateToQuery.toDate()
   ) as { data: MeetingWithAttendees[] };
 
-  /* -------------------------------------------------------------------------- */
-  /* --- TODO: insert function to assign students depending on session role --- */
-  /* -------------------------------------------------------------------------- */
+  const { data: myStudents } = api.students.getStudentsForRole.useQuery() as {
+    data: Student[];
+  };
 
-  // Students by tutor doesn't exist yet. I need to update the session to store the users.id as userId in the User table. Then I can use that to query the Tutor table to get the tutor_id. Then I can use that to query the Students table to get the students for that tutor.
-  const { data: getStudentsForTutor } =
-    api.students.getStudentsForTutor.useQuery(sessionData?.userId ?? 0) as {
-      data: Student[];
-    };
-  const { data: getStudentsBySchool } =
-    api.students.getStudentsBySchool.useQuery(sessionData?.school ?? '') as {
-      data: Student[];
-    };
   useEffect(() => {
-    if (sessionData?.role === 'tutor' && getStudentsForTutor) {
-      setStudents(getStudentsForTutor);
-    } else if (sessionData?.role === 'principal' && getStudentsBySchool) {
-      setStudents(getStudentsBySchool);
+    if (myStudents) {
+      setStudents(myStudents);
     }
-  }, [sessionData, getStudentsForTutor, getStudentsBySchool]);
+  }, [myStudents]);
 
   const { data: getMeetingsByTutorId } =
     api.meetings.getMeetingsByTutorId.useQuery({
@@ -86,9 +76,7 @@ const Meetings = () => {
       school: sessionData?.school ?? '',
     });
 
-  const convertMeetings = (
-    meetings: MeetingWithAttendees[]
-  ): MeetingWithAttendees[] => {
+  const convertMeetings = (meetings: Meeting[]): MeetingWithAttendees[] => {
     return meetings.map((meeting) => {
       let start, end, edited_on, recorded_on;
 
@@ -122,31 +110,43 @@ const Meetings = () => {
         end,
         edited_on,
         recorded_on,
-        attendees: [],
+        attendees: [], // Add the attendees property
       };
     });
   };
 
+  // useEffect(() => {
+  //   if (getMeetingsBySchool && sessionData?.role === 'principal') {
+  //     const convertedData = convertMeetings(
+  //       getMeetingsBySchool as unknown as MeetingWithAttendees[]
+  //     );
+  //     setMeetings(convertedData);
+  //   }
+  //   if (getMeetingsByTutorId && sessionData?.role === 'tutor') {
+  //     const convertedData = convertMeetings(
+  //       getMeetingsByTutorId as unknown as MeetingWithAttendees[]
+  //     );
+  //     setMeetings(convertedData);
+  //   }
+  // }, [
+  //   getAllMeetings.data,
+  //   getAllMeetings.isSuccess,
+  //   getMeetingsBySchool,
+  //   getMeetingsByTutorId,
+  //   sessionData?.role,
+  // ]);
+
+  // Database Call: Fetch meetings based on user role
+  const { data: roleBasedMeetings } =
+    api.meetings.getMeetingsForRole.useQuery();
+
   useEffect(() => {
-    if (getMeetingsBySchool && sessionData?.role === 'principal') {
-      const convertedData = convertMeetings(
-        getMeetingsBySchool as unknown as MeetingWithAttendees[]
-      );
-      setMeetings(convertedData);
+    if (roleBasedMeetings) {
+      // Convert dates to Dayjs objects and update state
+      const convertedMeetings = convertMeetings(roleBasedMeetings);
+      setMeetings(convertedMeetings);
     }
-    if (getMeetingsByTutorId && sessionData?.role === 'tutor') {
-      const convertedData = convertMeetings(
-        getMeetingsByTutorId as unknown as MeetingWithAttendees[]
-      );
-      setMeetings(convertedData);
-    }
-  }, [
-    getAllMeetings.data,
-    getAllMeetings.isSuccess,
-    getMeetingsBySchool,
-    getMeetingsByTutorId,
-    sessionData?.role,
-  ]);
+  }, [roleBasedMeetings]);
 
   return (
     <div className="flex flex-column justify-content-center gap-4">
@@ -173,7 +173,7 @@ const Meetings = () => {
         <MeetingForm
           meetings={meetings}
           setMeetings={setMeetings}
-          getStudentsBySchool={getStudentsBySchool}
+          students={students}
           getDatedMeetings={getDatedMeetings}
           selectedMeetings={selectedMeetings}
           setSelectedMeetings={setSelectedMeetings}
@@ -186,7 +186,7 @@ const Meetings = () => {
         />
         <MeetingList
           meetings={meetings}
-          getStudentsBySchool={getStudentsBySchool}
+          students={students}
           selectedDate={selectedDate}
           getDatedMeetings={getDatedMeetings}
           selectedMeetings={selectedMeetings}

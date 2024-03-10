@@ -1,44 +1,45 @@
-import { type Session } from 'next-auth';
-import { SessionProvider } from 'next-auth/react';
-import { type AppType } from 'next/app';
-import { api } from '@/utils/api';
-import '@/styles/globals.css';
-import '@/styles/primeflex.scss';
+import { type Session } from "next-auth";
+import { type customSession } from "@/types";
+import { SessionProvider } from "next-auth/react";
+import { type AppType } from "next/app";
+import { api } from "@/utils/api";
+import "@/styles/globals.css";
+import "@/styles/primeflex.scss";
 // PrimeReact theme
 // import 'primereact/resources/themes/lara-light-blue/theme.css';
-import '@/styles/themes/vb-green/theme.css';
+import "@/styles/themes/vb-green/theme.css";
 // PrimeReact core
-import 'primereact/resources/primereact.min.css';
+import "primereact/resources/primereact.min.css";
 // PrimeFlex
-import '/node_modules/primeflex/primeflex.css';
+import "/node_modules/primeflex/primeflex.css";
 // PrimeIcons
-import 'primeicons/primeicons.css';
-import React from 'react';
+import "primeicons/primeicons.css";
+import React from "react";
 import {
   createTheme,
   ThemeProvider as MuiThemeProvider,
-} from '@mui/material/styles';
-import darkTheme from '../styles/themes/darkTheme';
-import lightTheme from '../styles/themes/lightTheme';
-import { routingContext } from '@/context/AllContext';
+} from "@mui/material/styles";
+import darkTheme from "../styles/themes/darkTheme";
+import lightTheme from "../styles/themes/lightTheme";
+import { routingContext } from "@/context/AllContext";
 
 const ColorModeContext = React.createContext({
   // toggleColorMode: () => {},
   toggleColorMode: () => {
-    console.log('toggleColorMode');
+    console.log("toggleColorMode");
   },
 });
 
-const MyApp: AppType<{ session: Session | null }> = ({
+const MyApp: AppType<{ session: customSession | null }> = ({
   Component,
   pageProps: { session, ...pageProps },
 }) => {
-  const [routing, setRouting] = React.useState<string>('');
-  const [mode, setMode] = React.useState<'light' | 'dark'>('dark');
+  const [routing, setRouting] = React.useState<string>("");
+  const [mode, setMode] = React.useState<"light" | "dark">("dark");
   const colorMode = React.useMemo(
     () => ({
       toggleColorMode: () => {
-        setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+        setMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
       },
     }),
     []
@@ -61,10 +62,11 @@ const MyApp: AppType<{ session: Session | null }> = ({
 
   return (
     <React.StrictMode>
-      {' '}
+      {" "}
       <ColorModeContext.Provider value={colorMode}>
         <MuiThemeProvider
-          theme={mode === 'light' ? darkThemeChosen : lightThemeChosen}>
+          theme={mode === "light" ? darkThemeChosen : lightThemeChosen}
+        >
           <SessionProvider session={session}>
             <routingContext.Provider value={{ routing, setRouting }}>
               <Component {...pageProps} />

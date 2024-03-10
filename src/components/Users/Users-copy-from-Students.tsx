@@ -19,7 +19,7 @@ import {
   type MultiSelectChangeEvent,
 } from "primereact/multiselect";
 import AddIcon from "@mui/icons-material/Add";
-import { IconButton } from "@mui/material";
+import { FormControlLabel, IconButton, Switch, TextField } from "@mui/material";
 import { Button } from "primereact/button";
 import { useSession } from "next-auth/react";
 
@@ -29,6 +29,7 @@ const Users: React.FC = () => {
   const toast = useRef<Toast>(null);
   // use the session to get appSettings
   const { data: session } = useSession();
+  // const currentUserData = session?.user;
   const appSettings = (session as customSession)?.appSettings;
   const [filters, setFilters] = useState<DataTableFilterMeta>({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -42,45 +43,16 @@ const Users: React.FC = () => {
   });
   const [globalFilterValue, setGlobalFilterValue] = useState<string>("");
 
-  // useEffect(() => {
-  //   if (getAllUsers.data) {
-  //     setUsers(getAllUsers.data);
-  //     console.log("getAllUsers.data", getAllUsers.data);
-  //   }
-  // }, [getAllUsers.data]);
-
-  const { data: myUsers } = api.users.getUsersForRole.useQuery() as {
-    data: User[];
-  };
-
-  const processSchool = (
-    school: string | string[] | null | undefined
-  ): string[] => {
-    if (Array.isArray(school)) {
-      return school;
-    } else if (typeof school === "string") {
-      // Split the string by comma, then trim each element
-      return school.split(",").map((sch) => sch.trim());
-    } else {
-      return [];
+  useEffect(() => {
+    if (getAllUsers.data) {
+      setUsers(getAllUsers.data);
+      console.log("getAllUsers.data", getAllUsers.data);
     }
-  };
+  }, [getAllUsers.data]);
 
-  const schoolsTemplate = (rowData: User) => {
-    // Check if schools is an array
-    if (Array.isArray(rowData.school)) {
-      // Alphabetize the array of schools and then convert it to a comma-separated string
-      return rowData.school.sort().join(", ");
-    } else if (typeof rowData.school === "string") {
-      // If school is a string, ensure it's formatted with spaces after commas
-      return rowData.school
-        .split(",")
-        .map((s) => s.trim())
-        .join(", ");
-    }
-    // If schools is a string, just return it as is
-    return rowData.school;
-  };
+  // const { data: myUsers } = api.users.getUsersBySchool.useQuery("King") as {
+  //   data: User[];
+  // };
 
   const [editingRows, setEditingRows] = useState({});
   const addNewUser = () => {
@@ -88,17 +60,16 @@ const Users: React.FC = () => {
       // id: null, // Temporary ID for the new row
       first_name: "First Name",
       last_name: "Last Name",
-      school: "Unassigned",
+      school: "School",
       email: "Email",
       phone: "Phone",
-      role: "",
-      view: "",
+      role: "Role",
+      view: "View",
       super_admin_role: null,
       picture: null,
       created_at: new Date(),
     };
     setUsers((prev) => [...prev, newUser]);
-    console.log("users", users);
     setEditingRows({ "-1": true });
   };
 
@@ -112,6 +83,8 @@ const Users: React.FC = () => {
     setFilters(_filters);
     setGlobalFilterValue(value);
   };
+
+  // const schools = ['King', 'Northridge', 'Oliver Springs'];
 
   const textEditor = (options: ColumnEditorOptions) => {
     const value = options.value as string;
@@ -128,12 +101,11 @@ const Users: React.FC = () => {
   };
 
   const schoolEditor = (options: ColumnEditorOptions) => {
-    console.log("🚀 ~ schoolEditor ~ options:", options);
-    const value = options.value as string | string[] | null | undefined;
-    console.log("🚀 ~ schoolEditor ~ value:", value);
-
-    const currentValue = processSchool(value);
-    console.log("🚀 ~ schoolEditor ~ currentValue:", currentValue);
+    const currentValue = Array.isArray(options.value)
+      ? options.value
+      : options.value
+      ? [options.value]
+      : [];
 
     const handleSchoolChange = (e: MultiSelectChangeEvent) => {
       // Explicitly cast e.value to string[]
@@ -158,66 +130,18 @@ const Users: React.FC = () => {
         onChange={handleSchoolChange}
         placeholder="Schools"
         optionLabel="label"
-        className="text-black"
       />
     );
   };
-
-  const formatSchoolsForSave = (
-    school: string | string[] | null | undefined
-  ): string => {
-    // If school is a string, split it into an array
-    // If school is null or undefined, use an empty array
-    const schoolArray =
-      typeof school === "string"
-        ? school.split(", ").map((s) => s.trim())
-        : school || [];
-    return Array.from(new Set(schoolArray)).join(", ");
-  };
-  useEffect(() => {
-    console.log("**********Updated Users: ", users);
-  }, [users]);
-
-  useEffect(() => {
-    if (myUsers) {
-      const processedUsers = myUsers.map((user) => ({
-        ...user,
-        school: processSchool(user.school).toString(),
-        // Other fields...
-      }));
-      setUsers(processedUsers);
+  const schoolsTemplate = (rowData: User) => {
+    // Check if schools is an array
+    if (Array.isArray(rowData.school)) {
+      // Alphabetize the array of schools and then convert it to a comma-separated string
+      return rowData.school.sort().join(", ");
+    } else {
+      // If schools is a string, just return it as is
+      return rowData.school;
     }
-    console.log("++++++users", users);
-  }, [myUsers]);
-
-  const roleEditor = (options: ColumnEditorOptions) => {
-    const value = options.value as string;
-    return (
-      <Dropdown
-        value={value}
-        options={appSettings.user_role_options}
-        onChange={(e: DropdownChangeEvent) => options.editorCallback?.(e.value)}
-        placeholder="Role"
-        itemTemplate={(option) => {
-          return <span>{option}</span>;
-        }}
-      />
-    );
-  };
-
-  const viewEditor = (options: ColumnEditorOptions) => {
-    const value = options.value as string;
-    return (
-      <Dropdown
-        value={value}
-        options={appSettings.initial_view_options}
-        onChange={(e: DropdownChangeEvent) => options.editorCallback?.(e.value)}
-        placeholder="View"
-        itemTemplate={(option) => {
-          return <span>{option}</span>;
-        }}
-      />
-    );
   };
 
   const updateUserMutation = api.users.updateUser.useMutation();
@@ -225,10 +149,7 @@ const Users: React.FC = () => {
 
   const onRowEditComplete = (e: DataTableRowEditCompleteEvent) => {
     console.log("🚀 ~ onRowEditComplete ~ e:", e);
-    // let newData = e.data as User;
     let { newData } = e as { newData: User };
-
-    console.log("🚀 ~ onRowEditComplete ~ newData", newData);
 
     // Transform the schools array back into a string
     if (Array.isArray(newData.school)) {
@@ -240,17 +161,15 @@ const Users: React.FC = () => {
 
     // Handle saving the edited data
     let updatedUsers = users;
-
-    if (newData.id === undefined) {
+    if (e.data.id === undefined) {
       // Handling new row
       updatedUsers = users.map((user) =>
-        user.id === -1 ? ({ ...e.data, id: 0 } as User) : user
+        user.id === -1 ? { ...e.data, id: 0 } : user
       );
-      console.log("🚀 ~ onRowEditComplete END OF NEW ~ newData", newData);
 
       const dataForSave = {
         ...newData,
-        school: formatSchoolsForSave(newData.school),
+        school: newData.school ?? "",
         first_name: newData.first_name ?? "",
         last_name: newData.last_name ?? "",
         email: newData.email ?? "",
@@ -259,6 +178,7 @@ const Users: React.FC = () => {
         view: newData.view ?? "",
         super_admin_role: newData.super_admin_role ?? null,
         picture: newData.picture ?? null,
+        last_edited: new Date(),
         created_at: new Date(),
       };
       createUserMutation.mutate(dataForSave, {
@@ -269,7 +189,6 @@ const Users: React.FC = () => {
             summary: "Success",
             detail: "User saved",
           });
-          setUsers(myUsers);
         },
         onError: (error) => {
           console.log("error", error);
@@ -284,14 +203,12 @@ const Users: React.FC = () => {
     } else {
       // Handling existing row update
       updatedUsers = users.map((user) =>
-        user.id === e.data.id ? ({ ...e.data } as User) : user
+        user.id === e.data.id ? { ...e.data } : user
       );
-      console.log("🚀 ~ onRowEditComplete ~ updatedUsers:", updatedUsers);
-      console.log("🚀 ~ onRowEditComplete END OF SAVE ~ newData", newData);
 
       const dataForSave = {
         ...newData,
-        school: formatSchoolsForSave(newData.school),
+        school: newData.school ?? "",
         first_name: newData.first_name ?? "",
         last_name: newData.last_name ?? "",
         email: newData.email ?? "",
@@ -300,6 +217,7 @@ const Users: React.FC = () => {
         view: newData.view ?? "",
         super_admin_role: newData.super_admin_role ?? null,
         picture: newData.picture ?? null,
+        last_edited: new Date(),
         created_at: new Date(),
       };
 
@@ -312,7 +230,6 @@ const Users: React.FC = () => {
             summary: "Success",
             detail: "User updated",
           });
-          setUsers(myUsers);
         },
         onError: (error) => {
           console.log("error", error);
@@ -403,6 +320,17 @@ const Users: React.FC = () => {
     console.log("e", e);
   };
 
+  // style the row based on conditions
+  const newRowClass = (data: User) => {
+    return {
+      "bg-primary":
+        data.super_admin_role === true && data.id !== undefined && data.id > -2,
+      "bg-red-100": data.first_name === "First Name",
+      "text-white":
+        data.super_admin_role === true && data.id !== undefined && data.id > -2,
+    };
+  };
+
   return (
     <Card className="card">
       <Toast ref={toast} />
@@ -413,9 +341,9 @@ const Users: React.FC = () => {
         editingRows={editingRows}
         onRowEditComplete={onRowEditComplete}
         dataKey="id"
-        key="id"
         stripedRows
         removableSort
+        rowClassName={newRowClass}
         onRowSelect={rowSelected}
         tableStyle={{ minWidth: "60rem" }}
         filters={filters}
@@ -445,7 +373,7 @@ const Users: React.FC = () => {
           sortable
         />
         <Column
-          field="school"
+          field="schools"
           header="Schools"
           body={schoolsTemplate}
           editor={(options) => schoolEditor(options)}
@@ -466,13 +394,13 @@ const Users: React.FC = () => {
         <Column
           field="role"
           header="Role"
-          editor={(options) => roleEditor(options)}
+          editor={(options) => textEditor(options)}
           sortable
         />
         <Column
           field="view"
           header="View"
-          editor={(options) => viewEditor(options)}
+          editor={(options) => textEditor(options)}
           sortable
         />
         <Column
