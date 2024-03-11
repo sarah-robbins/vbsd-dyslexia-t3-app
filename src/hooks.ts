@@ -1,25 +1,25 @@
-import { useEffect, useState } from 'react';
-import type { Meeting, MeetingAttendees } from './types';
-import { api } from './utils/api';
+// import { useEffect, useState } from 'react';
+// import type { Meeting, MeetingAttendees } from './types';
+// import { api } from './utils/api';
 
-const useCurrentAttendees = (selectedMeetings: Meeting[]) => {
-  const [currentAttendees, setCurrentAttendees] = useState<MeetingAttendees[]>(
-    []
-  );
+// const useCurrentAttendees = (selectedMeetings: Meeting[]) => {
+//   const [currentAttendees, setCurrentAttendees] = useState<MeetingAttendees[]>(
+//     []
+//   );
 
-  useEffect(() => {
-    if (selectedMeetings.length > 0) {
-      const selectedMeeting: Meeting = selectedMeetings[0] ?? ({} as Meeting);
-      const { data: getCurrentAttendees } =
-        api.attendees.getAttendeesByMeeting.useQuery(selectedMeeting.id) as {
-          data: MeetingAttendees[];
-        };
-      console.log('currentAttendees: ', currentAttendees);
-      setCurrentAttendees(getCurrentAttendees);
-    }
-  }, [currentAttendees, selectedMeetings]);
+//   useEffect(() => {
+//     if (selectedMeetings.length > 0) {
+//       const selectedMeeting: Meeting = selectedMeetings[0] ?? ({} as Meeting);
+//       const { data: getCurrentAttendees } =
+//         api.attendees.getAttendeesByMeeting.useQuery(selectedMeeting.id) as {
+//           data: MeetingAttendees[];
+//         };
+//       console.log('currentAttendees: ', currentAttendees);
+//       setCurrentAttendees(getCurrentAttendees);
+//     }
+//   }, [currentAttendees, selectedMeetings]);
 
-  console.log('CURRENT ATTENDEES FROM THE HOOK: ', currentAttendees);
-};
+//   console.log('CURRENT ATTENDEES FROM THE HOOK: ', currentAttendees);
+// };
 
-export default useCurrentAttendees;
+// export default useCurrentAttendees;
