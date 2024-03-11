@@ -107,6 +107,7 @@ export const meetingsRouter = createTRPCRouter({
       z.object({
         meeting_id: z.number(),
         student_id: z.number(),
+        meeting_status: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -114,6 +115,7 @@ export const meetingsRouter = createTRPCRouter({
         data: {
           meeting_id: input.meeting_id,
           student_id: input.student_id,
+          meeting_status: input.meeting_status ?? '',
         },
       });
     }),
@@ -282,7 +284,7 @@ export const meetingsRouter = createTRPCRouter({
           await ctx.prisma.meetingAttendees.create({
             data: {
               student_id: attendee.student_id,
-              meeting_status: attendee.meeting_status,
+              meeting_status: attendee.meeting_status ?? '',
               meeting_id: meeting.id,
               created_at: attendee.created_at,
             },
@@ -373,7 +375,7 @@ export const meetingsRouter = createTRPCRouter({
             data: {
               meeting_id: input.id,
               student_id: attendee.student_id,
-              meeting_status: attendee.meeting_status,
+              meeting_status: attendee.meeting_status ?? '',
             },
           });
         }

@@ -17,7 +17,7 @@ export const attendeesRouter = createTRPCRouter({
         data: {
           student_id: input.student_id,
           meeting_id: input.meeting_id,
-          meeting_status: input.meeting_status,
+          meeting_status: input.meeting_status ?? '',
           created_at: new Date(),
         },
       });
