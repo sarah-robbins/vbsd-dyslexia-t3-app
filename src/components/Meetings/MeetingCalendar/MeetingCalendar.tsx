@@ -1,13 +1,9 @@
-import React, { SyntheticEvent, useEffect, useMemo } from "react";
-import {
-  Calendar,
-  type CalendarViewChangeEvent,
-  type CalendarDateTemplateEvent,
-} from "primereact/calendar";
+import React, { type SyntheticEvent, useEffect, useMemo } from "react";
+import { Calendar, type CalendarDateTemplateEvent } from "primereact/calendar";
 import { Card } from "primereact/card";
 import dayjs, { type Dayjs } from "dayjs";
 import { type Meeting } from "@/types";
-import { FormEvent } from "primereact/ts-helpers";
+import { type FormEvent } from "primereact/ts-helpers";
 
 interface Props {
   date: Dayjs | null;

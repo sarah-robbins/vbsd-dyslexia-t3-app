@@ -1,18 +1,18 @@
-import { useState, useEffect } from 'react';
-import MeetingForm from './MeetingForm/MeetingForm';
-import MeetingCalendar from './MeetingCalendar/MeetingCalendar';
-import MeetingList from './MeetingList/MeetingList';
-import MeetingsTitleBar from './MeetingsTitleBar/MeetingsTitleBar';
-import dayjs, { type Dayjs } from 'dayjs';
-import { api } from '@/utils/api';
+import { useState, useEffect } from "react";
+import MeetingForm from "./MeetingForm/MeetingForm";
+import MeetingCalendar from "./MeetingCalendar/MeetingCalendar";
+import MeetingList from "./MeetingList/MeetingList";
+import MeetingsTitleBar from "./MeetingsTitleBar/MeetingsTitleBar";
+import dayjs, { type Dayjs } from "dayjs";
+import { api } from "@/utils/api";
 import {
   type Student,
   type Meeting,
   type MeetingAttendees,
   type MeetingWithAttendees,
-} from '@/types';
-import Students from '../Students/Students';
-import { useSession } from 'next-auth/react';
+} from "@/types";
+import Students from "../Students/Students";
+import { useSession } from "next-auth/react";
 // import StudentsInProgress from '../Students/Students-in-progress';
 
 const Meetings = () => {
@@ -38,7 +38,7 @@ const Meetings = () => {
   function getFirstMonthInView() {
     const currentDate = dayjs();
     // Set to first day of previous month
-    const firstDayOfMonth = currentDate.subtract(1, 'month').startOf('month');
+    const firstDayOfMonth = currentDate.subtract(1, "month").startOf("month");
     return firstDayOfMonth;
   }
 
@@ -46,7 +46,7 @@ const Meetings = () => {
   const [uniqueKey, setUniqueKey] = useState<number>(1); // add uniqueKey state
 
   // Database Calls
-  const getAllMeetings = api.meetings.getAllMeetings.useQuery(); // getAllMeetings
+  // const getAllMeetings = api.meetings.getAllMeetings.useQuery(); // getAllMeetings
 
   const dateToQuery =
     selectedDate && dayjs.isDayjs(selectedDate) ? selectedDate : dayjs();
@@ -66,15 +66,15 @@ const Meetings = () => {
     }
   }, [myStudents]);
 
-  const { data: getMeetingsByTutorId } =
-    api.meetings.getMeetingsByTutorId.useQuery({
-      tutorId: sessionData?.userId ?? 0,
-    });
+  // const { data: getMeetingsByTutorId } =
+  //   api.meetings.getMeetingsByTutorId.useQuery({
+  //     tutorId: sessionData?.userId ?? 0,
+  //   });
 
-  const { data: getMeetingsBySchool } =
-    api.meetings.getMeetingsBySchool.useQuery({
-      school: sessionData?.school ?? '',
-    });
+  // const { data: getMeetingsBySchool } =
+  //   api.meetings.getMeetingsBySchool.useQuery({
+  //     school: sessionData?.school ?? '',
+  //   });
 
   const convertMeetings = (meetings: Meeting[]): MeetingWithAttendees[] => {
     return meetings.map((meeting) => {
