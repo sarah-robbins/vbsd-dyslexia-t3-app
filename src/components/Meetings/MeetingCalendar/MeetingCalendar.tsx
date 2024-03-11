@@ -1,12 +1,13 @@
-import React, { useMemo } from 'react';
+import React, { SyntheticEvent, useEffect, useMemo } from "react";
 import {
   Calendar,
-  type CalendarChangeEvent,
+  type CalendarViewChangeEvent,
   type CalendarDateTemplateEvent,
-} from 'primereact/calendar';
-import { Card } from 'primereact/card';
-import dayjs, { type Dayjs } from 'dayjs';
-import { type Meeting } from '@/types';
+} from "primereact/calendar";
+import { Card } from "primereact/card";
+import dayjs, { type Dayjs } from "dayjs";
+import { type Meeting } from "@/types";
+import { FormEvent } from "primereact/ts-helpers";
 
 interface Props {
   date: Dayjs | null;
@@ -24,13 +25,13 @@ const MeetingCalendar: React.FC<Props> = ({
   setSelectedDate,
   uniqueKey,
   viewDate,
-  date,
-  setDate,
+  // date,
+  // setDate,
 }) => {
   const meetingDates: string[] = useMemo(() => {
     if (meetings) {
       const uniqueDates = new Set(
-        meetings.map((meeting) => dayjs(meeting.start).format('YYYY-MM-DD'))
+        meetings.map((meeting) => dayjs(meeting.start).format("YYYY-MM-DD"))
       );
       return Array.from(uniqueDates);
     }
@@ -41,21 +42,28 @@ const MeetingCalendar: React.FC<Props> = ({
   //   value: string;
   // }
 
-  const handleDateChange = (e: CalendarChangeEvent) => {
+  const handleDateChange = (
+    event: FormEvent<Date, SyntheticEvent<Element, Event>>
+  ) => {
     let selected: Dayjs;
 
-    if (Array.isArray(e.value)) {
+    if (Array.isArray(event.value)) {
       // Handle multiple dates
-      selected = dayjs(e.value[0]); // Use first date
+      selected = dayjs(event.value); // Use first date
     } else {
       // Handle single date
-      selected = dayjs(e.value);
+      selected = dayjs(event.value);
     }
 
+    // const newDate = new Date(selected);
     setSelectedDate(selected);
+    return dayjs(selectedDate).toDate();
   };
 
-  // useEffect(() => {}, [meetingDates]);
+  useEffect(() => {
+    console.log("what is the selecteddate?", selectedDate);
+    console.log("what is the date type?", typeof selectedDate);
+  }, [selectedDate]);
 
   // interface CalendarDate {
   //   year: string;
@@ -65,15 +73,14 @@ const MeetingCalendar: React.FC<Props> = ({
   const dateTemplate = (date: CalendarDateTemplateEvent) => {
     const dayFormatted =
       date.year.toString() +
-      '-' +
-      (Number(date.month) + 1).toString().padStart(2, '0') +
-      '-' +
-      date.day.toString().padStart(2, '0');
+      "-" +
+      (Number(date.month) + 1).toString().padStart(2, "0") +
+      "-" +
+      date.day.toString().padStart(2, "0");
 
     if (meetingDates.includes(dayFormatted)) {
       return <span className="meeting-day">{date.day}</span>;
     }
-
     return date.day;
   };
 
@@ -87,9 +94,7 @@ const MeetingCalendar: React.FC<Props> = ({
           value={selectedDateValue}
           // value={date}
           onChange={handleDateChange}
-          // onChange={(e) => {
-          //   setDate(e.value);
-          // }}
+          // onChange={(e) => setSelectedDate(e.value)}
           numberOfMonths={3}
           inline
           className="w-full"
