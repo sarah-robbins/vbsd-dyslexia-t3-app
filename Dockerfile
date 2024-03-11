@@ -46,12 +46,12 @@ ENV NODE_ENV production
 
 # ENV NEXT_TELEMETRY_DISABLED 1
 
-COPY --from=builder /src/next.config.js ./
-COPY --from=builder /src/public ./public
-COPY --from=builder /src/package.json ./package.json
+COPY --from=builder /next.config.js ./
+COPY --from=builder /public ./public
+COPY --from=builder /package.json ./package.json
 
-COPY --from=builder /src/.next/standalone ./
-COPY --from=builder /src/.next/static ./.next/static
+COPY --from=builder /.next/standalone ./
+COPY --from=builder /.next/static ./.next/static
 
 EXPOSE 3000
 ENV PORT 3000
