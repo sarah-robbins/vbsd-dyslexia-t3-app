@@ -23,7 +23,6 @@ RUN \
 
 FROM --platform=linux/amd64 node:20-alpine AS builder
 ARG DATABASE_URL
-ARG NEXT_PUBLIC_CLIENTVAR
 WORKDIR /src
 COPY --from=deps /src/node_modules ./node_modules
 COPY . .

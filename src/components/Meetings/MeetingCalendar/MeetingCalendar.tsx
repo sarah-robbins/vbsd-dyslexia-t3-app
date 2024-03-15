@@ -56,10 +56,7 @@ const MeetingCalendar: React.FC<Props> = ({
     return dayjs(selectedDate).toDate();
   };
 
-  useEffect(() => {
-    console.log("what is the selecteddate?", selectedDate);
-    console.log("what is the date type?", typeof selectedDate);
-  }, [selectedDate]);
+  useEffect(() => {}, [selectedDate]);
 
   // interface CalendarDate {
   //   year: string;

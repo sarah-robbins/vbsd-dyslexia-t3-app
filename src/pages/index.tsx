@@ -1,32 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 // import styles from './index.module.css';
 // import { signIn, signOut, useSession } from 'next-auth/react';
-import { type NextPage } from 'next';
-import Head from 'next/head';
+import { type NextPage } from "next";
+import Head from "next/head";
 // import { api } from '@/utils/api';
 // import SplashSpeedDial from '@/components/SplashSpeedDial/SplashSpeedDial';
-import { useSession } from 'next-auth/react';
-import LoginButton from '@/components/LoginButton/LoginButton';
-import { api } from '@/utils/api';
-import { type AppSettings } from '@/types';
+// import { useSession } from "next-auth/react";
+import LoginButton from "@/components/LoginButton/LoginButton";
+import { api } from "@/utils/api";
+import { type AppSettings } from "@/types";
 
 const Home: NextPage = () => {
   // const hello = api.example.hello.useQuery({ text: "from tRPC" });
 
-  const { data: sessionData } = useSession();
+  // const { data: sessionData } = useSession();
   const getAppSettings = api.settings.getAllSettings.useQuery();
   const [settings, setSettings] = useState<AppSettings[] | undefined>([]);
 
   useEffect(() => {
     // if (!getAppSettings.data) return;
     setSettings(getAppSettings.data);
-    console.log('settings: ', settings);
-    console.log('getAppSettings.data: ', getAppSettings.data);
-    console.log('getAppSettings.error: ', getAppSettings.error);
-    console.log('getAppSettings.status: ', getAppSettings.status);
-    console.log('getAppSettings.isLoading: ', getAppSettings.isLoading);
-    console.log('getAppSettings.isSuccess: ', getAppSettings.isSuccess);
-    console.log('getAppSettings.isError: ', getAppSettings.isError);
   }, [getAppSettings]);
 
   useEffect(() => {
@@ -34,13 +27,9 @@ const Home: NextPage = () => {
       // Convert the settings object to a string
       const settingsStr = JSON.stringify(settings);
       // Save to session storage
-      sessionStorage.setItem('settings', settingsStr);
+      sessionStorage.setItem("settings", settingsStr);
     }
   }, [settings]);
-
-  console.log('sessionData', sessionData);
-  console.log('getAppSettings', getAppSettings);
-  console.log('settings', settings);
 
   return (
     <>

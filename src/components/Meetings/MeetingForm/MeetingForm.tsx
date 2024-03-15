@@ -133,8 +133,6 @@ const MeetingForm: React.FC<Props> = ({
     MeetingAttendees[]
   >([]);
 
-  console.log("name", name);
-  console.log("namesForSelect", namesForSelect);
   // useEffect(() => {
   //   console.log('students: ', students);
   //   console.log('selectedMeetings: ', selectedMeetings);
@@ -377,7 +375,6 @@ const MeetingForm: React.FC<Props> = ({
   const programs = [...programOptions];
 
   const [selectedProgram, setSelectedProgram] = useState<string>("");
-  console.log("selectedProgram", selectedProgram);
   const handleProgramChange = (event: SelectChangeEvent) => {
     const selectedProgram = event.target.value; // selected id
     setFormValues({ ...formValues, program: selectedProgram });
@@ -631,8 +628,6 @@ const MeetingForm: React.FC<Props> = ({
           };
         }),
       };
-
-      console.log("removedAttendees: ", removedAttendees);
 
       // Use removedAttendees as is, since it's already an array of numbers
       const attendeeIdsToRemove = {

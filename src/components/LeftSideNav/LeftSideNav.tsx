@@ -115,7 +115,6 @@ const MiniDrawer = styled(MuiDrawer, {
 
 const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
   const { data: session } = useSession();
-  console.log(session);
   // const theme = useTheme();
   const { setRouting }: RoutingContextType = React.useContext(routingContext);
 

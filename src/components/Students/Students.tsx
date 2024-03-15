@@ -133,7 +133,6 @@ const Students: React.FC = () => {
       setStudents(processedStudents);
       setSelectedTutorIds(initialTutorIds); // Set the initial tutor IDs
     }
-    console.log("🚀 ~ useEffect ~ myStudents", myStudents);
   }, [myStudents]);
 
   // Fetch all tutors (separate API call)
@@ -327,7 +326,6 @@ const Students: React.FC = () => {
     const rowData = options.rowData as Student;
     const studentId = rowData.id as number;
     const currentTutorId = selectedTutorIds[studentId];
-    console.log("🚀 ~ tutorEditor ~ currentTutorId:", currentTutorId);
 
     // const currentTutorId = formattedTutors.find(
     //   (tutor) => tutor.label === rowData.tutorFullName
@@ -335,7 +333,6 @@ const Students: React.FC = () => {
 
     const handleTutorChange = (studentId: number, e: DropdownChangeEvent) => {
       const newTutorId = e.value as number;
-      console.log("🚀 ~ handleTutorChange ~ newTutorId:", newTutorId);
       setSelectedTutorIds((prevSelectedTutorIds) => ({
         ...prevSelectedTutorIds,
         [studentId]: newTutorId,
@@ -343,7 +340,6 @@ const Students: React.FC = () => {
       const newTutorLabel = formattedTutors.find(
         (tutor) => tutor.value === newTutorId
       )?.label;
-      console.log("🚀 ~ handleTutorChange ~ newTutorLabel:", newTutorLabel);
 
       setStudents((prevStudents) =>
         prevStudents.map((student) =>
@@ -359,15 +355,6 @@ const Students: React.FC = () => {
               }
             : student
         )
-      );
-      console.log("🚀 new Student Data?", students);
-      console.log(
-        "🚀 ~ handleTutorChange ~ rowData.tutorInfo:",
-        rowData.tutorInfo
-      );
-      console.log(
-        "🚀 ~ handleTutorChange ~ rowData.tutorInfo.value:",
-        rowData?.tutorInfo?.value
       );
       // Update the rowData for immediate feedback in the UI
       options.editorCallback?.({
@@ -399,9 +386,7 @@ const Students: React.FC = () => {
   const createStudentMutation = api.students.createStudent.useMutation();
 
   const onRowEditComplete = (e: DataTableRowEditCompleteEvent) => {
-    console.log("🚀 ~ onRowEditComplete ~ e:", e);
     let { newData } = e as { newData: Student };
-    console.log("🚀 ~ onRowEditComplete ~ newData", newData);
     // Transform the services array back into a string
     if (Array.isArray(newData.services)) {
       newData = {
@@ -448,7 +433,6 @@ const Students: React.FC = () => {
         last_edited: new Date(),
         created_at: new Date(),
       };
-      console.log("🚀 ~ onRowEditComplete ~ newData:", newData);
       createStudentMutation.mutate(dataForSave, {
         onSuccess: () => {
           // On success, maybe refresh the data or show a success toast
@@ -459,12 +443,11 @@ const Students: React.FC = () => {
           });
         },
         onError: (error) => {
-          console.log("error", error);
           // On error, show an error toast
           toast.current?.show({
             severity: "error",
             summary: "Error",
-            detail: "Save failed",
+            detail: error.message,
           });
         },
       });
@@ -473,7 +456,7 @@ const Students: React.FC = () => {
       updatedStudents = students.map((student) =>
         student.id === e.data.id ? { ...e.data } : student
       );
-      console.log("🚀 ~ onRowEditComplete ~ updatedStudents:", updatedStudents);
+      console.log(updatedStudents);
 
       const dataForSave = {
         ...newData,
@@ -509,12 +492,11 @@ const Students: React.FC = () => {
           });
         },
         onError: (error) => {
-          console.log("error", error);
           // On error, show an error toast
           toast.current?.show({
             severity: "error",
             summary: "Error",
-            detail: "Update failed",
+            detail: error.message,
           });
         },
       });
@@ -558,11 +540,10 @@ const Students: React.FC = () => {
           });
         },
         onError: (error) => {
-          console.error("Error updating student extra data:", error);
           toast.current?.show({
             severity: "error",
             summary: "Error",
-            detail: "Update failed",
+            detail: error.message,
           });
         },
       }
@@ -894,11 +875,10 @@ const Students: React.FC = () => {
         },
         onError: (error) => {
           // On error, show an error message
-          console.error("Error deleting student:", error);
           toast.current?.show({
             severity: "error",
             summary: "Error",
-            detail: "Delete failed",
+            detail: error.message,
           });
         },
       }

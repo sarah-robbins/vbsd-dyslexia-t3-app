@@ -98,7 +98,6 @@ const Users: React.FC = () => {
       created_at: new Date(),
     };
     setUsers((prev) => [...prev, newUser]);
-    console.log("users", users);
     setEditingRows({ "-1": true });
   };
 
@@ -128,12 +127,9 @@ const Users: React.FC = () => {
   };
 
   const schoolEditor = (options: ColumnEditorOptions) => {
-    console.log("🚀 ~ schoolEditor ~ options:", options);
     const value = options.value as string | string[] | null | undefined;
-    console.log("🚀 ~ schoolEditor ~ value:", value);
 
     const currentValue = processSchool(value);
-    console.log("🚀 ~ schoolEditor ~ currentValue:", currentValue);
 
     const handleSchoolChange = (e: MultiSelectChangeEvent) => {
       // Explicitly cast e.value to string[]
@@ -187,7 +183,6 @@ const Users: React.FC = () => {
       }));
       setUsers(processedUsers);
     }
-    console.log("++++++users", users);
   }, [myUsers]);
 
   const roleEditor = (options: ColumnEditorOptions) => {
@@ -224,11 +219,8 @@ const Users: React.FC = () => {
   const createUserMutation = api.users.createUser.useMutation();
 
   const onRowEditComplete = (e: DataTableRowEditCompleteEvent) => {
-    console.log("🚀 ~ onRowEditComplete ~ e:", e);
     // let newData = e.data as User;
     let { newData } = e as { newData: User };
-
-    console.log("🚀 ~ onRowEditComplete ~ newData", newData);
 
     // Transform the schools array back into a string
     if (Array.isArray(newData.school)) {
@@ -246,7 +238,6 @@ const Users: React.FC = () => {
       updatedUsers = users.map((user) =>
         user.id === -1 ? ({ ...e.data, id: 0 } as User) : user
       );
-      console.log("🚀 ~ onRowEditComplete END OF NEW ~ newData", newData);
 
       const dataForSave = {
         ...newData,
@@ -286,8 +277,7 @@ const Users: React.FC = () => {
       updatedUsers = users.map((user) =>
         user.id === e.data.id ? ({ ...e.data } as User) : user
       );
-      console.log("🚀 ~ onRowEditComplete ~ updatedUsers:", updatedUsers);
-      console.log("🚀 ~ onRowEditComplete END OF SAVE ~ newData", newData);
+      console.log("updatedUsers", updatedUsers);
 
       const dataForSave = {
         ...newData,

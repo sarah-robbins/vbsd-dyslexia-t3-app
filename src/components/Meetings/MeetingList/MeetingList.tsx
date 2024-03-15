@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Card } from 'primereact/card';
-import { DataTable } from 'primereact/datatable';
-import { Column } from 'primereact/column';
-import Chip from '@mui/material/Chip';
-import Checkbox from '@mui/material/Checkbox';
-import dayjs, { type Dayjs } from 'dayjs';
-import { type Meeting, type Student, type MeetingWithAttendees } from '@/types';
+import React, { useState, useEffect, useRef } from "react";
+import { Card } from "primereact/card";
+import { DataTable } from "primereact/datatable";
+import { Column } from "primereact/column";
+import Chip from "@mui/material/Chip";
+import Checkbox from "@mui/material/Checkbox";
+import dayjs, { type Dayjs } from "dayjs";
+import { type Meeting, type Student, type MeetingWithAttendees } from "@/types";
 
 interface Props {
   selectedDate: Dayjs;
@@ -38,11 +38,11 @@ const MeetingList: React.FC<Props> = ({
       const filtered = datedMeetingsWithAttendees
         .map((meeting) => ({
           ...meeting,
-          dateString: dayjs(meeting.start).format('YYYY-MM-DD'),
+          dateString: dayjs(meeting.start).format("YYYY-MM-DD"),
         }))
         .filter((meeting) => {
           const meetingDate = dayjs(meeting.start);
-          return meetingDate.isSame(selectedDate, 'day');
+          return meetingDate.isSame(selectedDate, "day");
         });
       setFilteredMeetings(filtered);
     }
@@ -59,33 +59,33 @@ const MeetingList: React.FC<Props> = ({
 
   const headerTemplate = (data: Meeting) => {
     const originalDate = dayjs(data.start);
-    const newDate = originalDate.startOf('day').toDate();
+    const newDate = originalDate.startOf("day").toDate();
 
     const options: Intl.DateTimeFormatOptions = {
-      weekday: 'long',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     };
 
     const getOrdinalSuffix = (day: number) => {
       if (day >= 11 && day <= 13) {
-        return 'th';
+        return "th";
       }
       const lastDigit = day % 10;
       switch (lastDigit) {
         case 1:
-          return 'st';
+          return "st";
         case 2:
-          return 'nd';
+          return "nd";
         case 3:
-          return 'rd';
+          return "rd";
         default:
-          return 'th';
+          return "th";
       }
     };
 
-    const formatter = new Intl.DateTimeFormat('en-US', options);
+    const formatter = new Intl.DateTimeFormat("en-US", options);
     const formattedDate = formatter.format(newDate);
     const dayOfMonth = newDate.getDate();
     const ordinalSuffix = getOrdinalSuffix(dayOfMonth);
@@ -103,8 +103,8 @@ const MeetingList: React.FC<Props> = ({
           </div>
           <div>
             <div className="flex justify-content-end font-bold w-full">
-              Total Meetings:{' '}
-              {calculateMeetingTotal(data.start?.toString() ?? '')}
+              Total Meetings:{" "}
+              {calculateMeetingTotal(data.start?.toString() ?? "")}
             </div>
           </div>
         </div>
@@ -125,11 +125,11 @@ const MeetingList: React.FC<Props> = ({
     // Map each attendee to a Chip with their status
     return rowData.attendees.map((attendee, index) => (
       <React.Fragment key={attendee.id}>
-        {' '}
+        {" "}
         <Chip
           key={index}
-          color={getStatusColorForTable(attendee.meeting_status ?? '')}
-          label={attendee.meeting_status ?? 'Unknown Status'}
+          color={getStatusColorForTable(attendee.meeting_status ?? "")}
+          label={attendee.meeting_status ?? "Unknown Status"}
           className="meeting-status-chips"
         />
         <br />
@@ -147,8 +147,8 @@ const MeetingList: React.FC<Props> = ({
 
       const isPM = hours >= 12;
       const formattedHours = isPM ? hours % 12 || 12 : hours;
-      const formattedMinutes = minutes.toString().padStart(2, '0');
-      const period = isPM ? 'pm' : 'am';
+      const formattedMinutes = minutes.toString().padStart(2, "0");
+      const period = isPM ? "pm" : "am";
 
       return `${formattedHours}:${formattedMinutes}${period}`;
     };
@@ -198,9 +198,7 @@ const MeetingList: React.FC<Props> = ({
     return total;
   };
 
-  useEffect(() => {
-    console.log('selectedMeetings: ', selectedMeetings);
-  }, [selectedMeetings]);
+  useEffect(() => {}, [selectedMeetings]);
 
   const getName = (rowData: MeetingWithAttendees) => {
     if (!datedMeetingsWithAttendees || !rowData) {
@@ -215,20 +213,20 @@ const MeetingList: React.FC<Props> = ({
 
   const getStatusColorForTable = (getStatusForTable: string) => {
     switch (getStatusForTable) {
-      case 'Met':
-        return 'primary';
+      case "Met":
+        return "primary";
 
-      case 'Student Absent':
-        return 'secondary';
+      case "Student Absent":
+        return "secondary";
 
-      case 'Tutor Absent':
-        return 'secondary';
+      case "Tutor Absent":
+        return "secondary";
 
-      case 'Student Unavailable':
-        return 'secondary';
+      case "Student Unavailable":
+        return "secondary";
 
-      case 'Tutor Unavailable':
-        return 'secondary';
+      case "Tutor Unavailable":
+        return "secondary";
     }
   };
 
@@ -277,10 +275,11 @@ const MeetingList: React.FC<Props> = ({
         rowGroupFooterTemplate={footerTemplate}
         dataKey="id"
         stripedRows
-        tableStyle={{ minWidth: '20rem' }}
+        tableStyle={{ minWidth: "20rem" }}
         rowClassName={(rowData: MeetingWithAttendees) =>
-          isCheckboxChecked(rowData) ? 'row-selected' : ''
-        }>
+          isCheckboxChecked(rowData) ? "row-selected" : ""
+        }
+      >
         <Column
           header={() => (
             <Checkbox
@@ -301,27 +300,27 @@ const MeetingList: React.FC<Props> = ({
               onChange={() => toggleCheckbox(rowData)}
             />
           )}
-          style={{ width: '3rem' }}
-          headerStyle={{ width: '3rem' }}
+          style={{ width: "3rem" }}
+          headerStyle={{ width: "3rem" }}
         />
         <Column
           field="time"
           header="Time"
           body={formatMeetingTime}
-          style={{ minWidth: '170px', maxWidth: 'calc(170px + 1.5rem)' }}
+          style={{ minWidth: "170px", maxWidth: "calc(170px + 1.5rem)" }}
           sortable
         />
         <Column
           body={getName}
           header="Name"
-          style={{ minWidth: '150px' }}
+          style={{ minWidth: "150px" }}
           sortable
         />
         <Column
           field="meeting_status"
           header="Meeting Status"
           body={statusBodyTemplate}
-          style={{ minWidth: '130px', maxWidth: '180px' }}
+          style={{ minWidth: "130px", maxWidth: "180px" }}
           className="meeting-status"
           sortable
         />

@@ -280,7 +280,6 @@ export const meetingsRouter = createTRPCRouter({
         });
 
         for (const attendee of input.attendees) {
-          console.log('attendee from trpc', attendee);
           await ctx.prisma.meetingAttendees.create({
             data: {
               student_id: attendee.student_id,

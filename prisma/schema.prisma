@@ -133,7 +133,7 @@ model Users {
   last_name        String
   school           String
   email            String
-  phone            String
+  phone            String?
   role             String
   super_admin_role Boolean?
   picture          String?
