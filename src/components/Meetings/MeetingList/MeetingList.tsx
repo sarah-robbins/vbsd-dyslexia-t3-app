@@ -198,7 +198,9 @@ const MeetingList: React.FC<Props> = ({
     return total;
   };
 
-  useEffect(() => {}, [selectedMeetings]);
+  useEffect(() => {
+    console.log("selectedMeetings: ", selectedMeetings);
+  }, [selectedMeetings]);
 
   const getName = (rowData: MeetingWithAttendees) => {
     if (!datedMeetingsWithAttendees || !rowData) {

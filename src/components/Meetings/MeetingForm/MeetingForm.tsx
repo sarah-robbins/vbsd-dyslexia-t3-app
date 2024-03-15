@@ -132,6 +132,8 @@ const MeetingForm: React.FC<Props> = ({
   const [selectedAttendees, setSelectedAttendees] = useState<
     MeetingAttendees[]
   >([]);
+  console.log(name);
+  console.log(namesForSelect);
 
   // useEffect(() => {
   //   console.log('students: ', students);
@@ -360,9 +362,9 @@ const MeetingForm: React.FC<Props> = ({
     setIndividualStatuses((prev) => ({ ...prev, [studentName]: status }));
   };
 
-  const isMetStatusPresent = () => {
-    return Object.values(individualStatuses).some((status) => status === "Met");
-  };
+  // const isMetStatusPresent = () => {
+  //   return Object.values(individualStatuses).some((status) => status === "Met");
+  // };
 
   // const isEditable = isMetStatusPresent();
 
@@ -375,6 +377,7 @@ const MeetingForm: React.FC<Props> = ({
   const programs = [...programOptions];
 
   const [selectedProgram, setSelectedProgram] = useState<string>("");
+  console.log(selectedProgram);
   const handleProgramChange = (event: SelectChangeEvent) => {
     const selectedProgram = event.target.value; // selected id
     setFormValues({ ...formValues, program: selectedProgram });

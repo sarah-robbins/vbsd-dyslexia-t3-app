@@ -12,12 +12,12 @@ import {
   type MeetingWithAttendees,
 } from "@/types";
 import Students from "../Students/Students";
-import { useSession } from "next-auth/react";
+// import { useSession } from "next-auth/react";
 // import StudentsInProgress from '../Students/Students-in-progress';
 
 const Meetings = () => {
-  const { data: session } = useSession();
-  const sessionData = session?.user;
+  // const { data: session } = useSession();
+  // const sessionData = session?.user;
   // State
   const [meetings, setMeetings] = useState<MeetingWithAttendees[]>([]);
   const [date, setDate] = useState<Dayjs | null>(dayjs());
@@ -25,14 +25,12 @@ const Meetings = () => {
   const [selectedMeetings, setSelectedMeetings] = useState<
     MeetingWithAttendees[]
   >([]);
-  const [selectedMeetingAttendees, setSelectedMeetingAttendees] = useState<
-    MeetingAttendees[]
-  >([]);
+  const [selectedMeetingAttendees] = useState<MeetingAttendees[]>([]);
   // const [attendees, setAttendees] = useState<MeetingAttendees[]>([]);
   const [datedMeetingsWithAttendees, setDatedMeetingsWithAttendees] = useState<
     MeetingWithAttendees[]
   >([]);
-  const [attendeesName, setAttendeesName] = useState<string[]>([]);
+  const [attendeesName] = useState<string[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
 
   function getFirstMonthInView() {
