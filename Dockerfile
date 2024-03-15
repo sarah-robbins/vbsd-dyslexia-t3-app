@@ -38,21 +38,25 @@ RUN \
 
 ##### RUNNER
 
-FROM --platform=linux/amd64 gcr.io/distroless/nodejs20-debian12 AS runner
+FROM --platform=linux/amd64 node:20-alpine AS runner
 WORKDIR /src
 
 ENV NODE_ENV production
 
 # ENV NEXT_TELEMETRY_DISABLED 1
 
-COPY --from=builder /next.config.js ./
-COPY --from=builder /public ./public
-COPY --from=builder /package.json ./package.json
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-COPY --from=builder /.next/standalone ./
-COPY --from=builder /.next/static ./.next/static
+COPY --from=builder /src/next.config.mjs ./
+COPY --from=builder /src/public ./public
+COPY --from=builder /src/package.json ./package.json
 
+COPY --from=builder --chown=nextjs:nodejs /src/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /src/.next/static ./.next/static
+
+USER nextjs
 EXPOSE 3000
 ENV PORT 3000
 
-CMD ["server.js"]
+CMD ["node", "server.js"]
