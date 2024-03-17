@@ -30,6 +30,9 @@
     0 1px 2px 0 rgb(0, 0, 0) !important;
 }
 
+.p-datatable .p-column-header-content {
+  white-space: nowrap;
+}
 .p-datatable .p-datatable-tbody > tr > td .p-row-toggler:focus,
 .p-datatable .p-datatable-tbody > tr > td .p-row-editor-init:focus,
 .p-datatable .p-datatable-tbody > tr > td .p-row-editor-save:focus,
@@ -72,6 +75,10 @@ main {
   main {
     max-width: calc(100% - 4rem);
   }
+}
+
+button, .p-button {
+  text-transform: uppercase;
 }
 
 .logo-speeddial .p-button:focus {
@@ -420,4 +427,8 @@ button.mobile-menu-toggle {
     }
   }
   
+}
+
+.bg-new-student {
+  background: purple;
 }

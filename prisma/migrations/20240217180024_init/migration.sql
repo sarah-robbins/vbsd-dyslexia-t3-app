@@ -128,7 +128,7 @@ CREATE TABLE "Users" (
     "last_name" TEXT NOT NULL,
     "school" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "phone" TEXT NOT NULL,
+    "phone" TEXT,
     "role" TEXT NOT NULL,
     "super_admin_role" TEXT,
     "picture" TEXT,

@@ -23,7 +23,7 @@ declare module 'next-auth' {
       role: string;
       view: string;
       school: string;
-      phone: string;
+      phone: string | null;
     } & DefaultSession['user'];
   }
 }

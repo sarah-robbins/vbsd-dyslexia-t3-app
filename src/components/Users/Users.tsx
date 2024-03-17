@@ -18,10 +18,10 @@ import {
   MultiSelect,
   type MultiSelectChangeEvent,
 } from "primereact/multiselect";
-import AddIcon from "@mui/icons-material/Add";
 import { IconButton } from "@mui/material";
-import { Button } from "primereact/button";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { useSession } from "next-auth/react";
+import { Button } from "primereact/button";
 
 const Users: React.FC = () => {
   const getAllUsers = api.users.getAllUsers.useQuery();
@@ -97,7 +97,7 @@ const Users: React.FC = () => {
       picture: null,
       created_at: new Date(),
     };
-    setUsers((prev) => [...prev, newUser]);
+    setUsers((prev) => [newUser, ...prev]);
     setEditingRows({ "-1": true });
   };
 
@@ -353,20 +353,16 @@ const Users: React.FC = () => {
     if (typeof rowData.id !== "number") {
       return null;
     }
-    return <Button onClick={() => handleDeleteUser(rowData.id)}>Delete</Button>;
+    return (
+      <DeleteIcon color="error" onClick={() => handleDeleteUser(rowData.id)} />
+    );
   };
 
   const renderHeader = () => {
     return (
       <div className="flex justify-content-between">
         <div className="flex align-items-center">
-          <IconButton
-            color="secondary"
-            aria-label="add a new user"
-            onClick={addNewUser}
-          >
-            <AddIcon color="primary" fontSize="large" />
-          </IconButton>
+          <Button label="Add" onClick={addNewUser} text />
         </div>
         <div className="flex justify-content-end">
           <span className="p-input-icon-left">
@@ -393,9 +389,18 @@ const Users: React.FC = () => {
     console.log("e", e);
   };
 
+  const newRowClass = (data: User) => {
+    return {
+      "bg-red-50": data.first_name === "First Name",
+    };
+  };
+
   return (
     <Card className="card">
       <Toast ref={toast} />
+      <div className="meeting-list-name-select flex justify-content-between align-items-center gap-4">
+        <h3>Users</h3>
+      </div>
       <DataTable
         value={users}
         editMode="row"
@@ -406,10 +411,10 @@ const Users: React.FC = () => {
         key="id"
         stripedRows
         removableSort
+        rowClassName={newRowClass}
         onRowSelect={rowSelected}
         tableStyle={{ minWidth: "60rem" }}
         filters={filters}
-        filterDisplay="row"
         globalFilterFields={[
           "first_name",
           "last_name",
@@ -421,6 +426,7 @@ const Users: React.FC = () => {
         ]}
         header={header}
         emptyMessage="No users match your search."
+        showGridlines
       >
         <Column
           field="first_name"
@@ -466,11 +472,13 @@ const Users: React.FC = () => {
           sortable
         />
         <Column
+          header="Edit"
           rowEditor
           headerStyle={{ width: "10%", minWidth: "8rem" }}
           bodyStyle={{ textAlign: "center" }}
         ></Column>
         <Column
+          header="Delete"
           headerStyle={{ width: "5rem", textAlign: "center" }}
           bodyStyle={{ textAlign: "center", overflow: "visible" }}
           body={actionBodyTemplate}

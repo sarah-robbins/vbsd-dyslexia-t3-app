@@ -20,8 +20,8 @@ import {
   MultiSelect,
   type MultiSelectChangeEvent,
 } from "primereact/multiselect";
-import AddIcon from "@mui/icons-material/Add";
-import { FormControlLabel, IconButton, Switch, TextField } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { FormControlLabel, Switch, TextField } from "@mui/material";
 import { Button } from "primereact/button";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -173,7 +173,7 @@ const Students: React.FC = () => {
         label: "",
       },
     };
-    setStudents((prev) => [...prev, newStudent]);
+    setStudents((prev) => [newStudent, ...prev]);
     setEditingRows({ "-1": true });
   };
 
@@ -322,6 +322,7 @@ const Students: React.FC = () => {
   const [selectedTutorIds, setSelectedTutorIds] = useState<{
     [key: number]: number;
   }>({});
+
   const tutorEditor = (options: ColumnEditorOptions) => {
     const rowData = options.rowData as Student;
     const studentId = rowData.id as number;
@@ -890,30 +891,24 @@ const Students: React.FC = () => {
       return null;
     }
     return (
-      <Button onClick={() => handleDeleteStudent(rowData.id)}>Delete</Button>
+      <DeleteIcon
+        color="error"
+        onClick={() => handleDeleteStudent(rowData.id)}
+      />
     );
   };
 
   const renderHeader = () => {
     return (
-      <div className="flex justify-content-between">
-        <div className="flex align-items-center">
-          <IconButton
-            color="secondary"
-            aria-label="add a new student"
-            onClick={addNewStudent}
-          >
-            <AddIcon color="primary" fontSize="large" />
-          </IconButton>
+      <div className="flex flex-row justify-content-between">
+        <div className="flex justify-content-start gap-2">
+          <div className="flex align-items-center">
+            <Button label="Add" onClick={addNewStudent} text />
+          </div>
+          <Button label="Expand All" onClick={expandAll} text />
+          <Button label="Collapse All" onClick={collapseAll} text />
         </div>
-        <Button icon="pi pi-plus" label="Expand All" onClick={expandAll} text />
-        <Button
-          icon="pi pi-minus"
-          label="Collapse All"
-          onClick={collapseAll}
-          text
-        />
-        <div className="flex justify-content-end">
+        <div className="flex">
           <span className="p-input-icon-left">
             <i className="pi pi-search" />
             <InputText
@@ -941,10 +936,11 @@ const Students: React.FC = () => {
   // style the row based on conditions
   const newRowClass = (data: Student) => {
     return {
-      "bg-primary":
+      // FIXME: cannot get the right color of green to match the header
+      "bg-green-50":
         data.new_student === true && data.id !== undefined && data.id > -2,
       "bg-red-100": data.first_name === "First Name",
-      "text-white":
+      "text-primary":
         data.new_student === true && data.id !== undefined && data.id > -2,
     };
   };
@@ -952,6 +948,9 @@ const Students: React.FC = () => {
   return (
     <Card className="card">
       <Toast ref={toast} />
+      <div className="meeting-list-name-select flex justify-content-between align-items-center gap-4">
+        <h3>Students</h3>
+      </div>
       <DataTable
         value={students}
         editMode="row"
@@ -970,7 +969,6 @@ const Students: React.FC = () => {
         onRowSelect={rowSelected}
         tableStyle={{ minWidth: "60rem" }}
         filters={filters}
-        filterDisplay="row"
         globalFilterFields={[
           "first_name",
           "last_name",
@@ -985,8 +983,13 @@ const Students: React.FC = () => {
         ]}
         header={header}
         emptyMessage="No students match your search."
+        showGridlines
       >
-        <Column expander={allowExpansion} style={{ width: "5rem" }} />
+        <Column
+          expander={allowExpansion}
+          style={{ width: "5rem" }}
+          header="Expand"
+        />
         <Column
           field="student_assigned_id"
           header="Student ID #"
@@ -1049,11 +1052,13 @@ const Students: React.FC = () => {
           sortable
         />
         <Column
+          header="Edit"
           rowEditor
           headerStyle={{ width: "10%", minWidth: "8rem" }}
           bodyStyle={{ textAlign: "center" }}
         ></Column>
         <Column
+          header="Delete"
           headerStyle={{ width: "5rem", textAlign: "center" }}
           bodyStyle={{ textAlign: "center", overflow: "visible" }}
           body={actionBodyTemplate}
