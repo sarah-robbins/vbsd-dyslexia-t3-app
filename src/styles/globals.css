@@ -429,6 +429,7 @@ button.mobile-menu-toggle {
   
 }
 
-.bg-new-student {
-  background: purple;
+.p-datatable-wrapper {
+  padding: 10px !important;
+  border: 1px solid #dee2e6;
 }

@@ -942,6 +942,8 @@ const Students: React.FC = () => {
       "bg-red-100": data.first_name === "First Name",
       "text-primary":
         data.new_student === true && data.id !== undefined && data.id > -2,
+      "border-color-primary":
+        data.new_student === true && data.id !== undefined && data.id > -2,
     };
   };
 

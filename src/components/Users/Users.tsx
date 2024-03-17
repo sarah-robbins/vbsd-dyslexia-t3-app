@@ -474,12 +474,12 @@ const Users: React.FC = () => {
         <Column
           header="Edit"
           rowEditor
-          headerStyle={{ width: "10%", minWidth: "8rem" }}
+          headerStyle={{ width: "1%", minWidth: "2rem" }}
           bodyStyle={{ textAlign: "center" }}
         ></Column>
         <Column
           header="Delete"
-          headerStyle={{ width: "5rem", textAlign: "center" }}
+          headerStyle={{ textAlign: "center", width: "1%" }}
           bodyStyle={{ textAlign: "center", overflow: "visible" }}
           body={actionBodyTemplate}
         />
