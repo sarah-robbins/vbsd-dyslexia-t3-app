@@ -72,7 +72,7 @@ export type Meeting = {
   recorded_by?: string | null;
   recorded_on?: Date | Dayjs | null;
   tutor_id?: number | null;
-  MeetingAttendees?: MeetingAttendees[] | null;
+  MeetingAttendees?: MeetingAttendees[];
 };
 
 export type MeetingAttendees = {
@@ -82,6 +82,7 @@ export type MeetingAttendees = {
   meeting_status?: string;
   created_at?: Date | Dayjs;
   name?: string;
+  tutor_id?: number | null;
 };
 
 export type MeetingAttendeesArray = [
@@ -92,6 +93,7 @@ export type MeetingAttendeesArray = [
     meeting_status?: string;
     created_at?: Date | Dayjs;
     name?: string;
+    tutor_id?: number | null;
   }
 ];
 
@@ -117,6 +119,7 @@ export interface MeetingWithAttendees extends Meeting {
     meeting_status: string;
     created_at?: Dayjs;
     name: string;
+    tutor_id?: number | null;
   }[];
 }
 

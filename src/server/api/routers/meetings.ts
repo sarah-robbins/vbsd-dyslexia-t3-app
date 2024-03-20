@@ -4,6 +4,7 @@ import {
   protectedProcedure,
   publicProcedure,
 } from '@/server/api/trpc';
+import { TRPCError } from '@trpc/server';
 
 export const meetingsRouter = createTRPCRouter({
   //get all meetings
@@ -97,8 +98,17 @@ export const meetingsRouter = createTRPCRouter({
           },
         },
         include: {
-          MeetingAttendees: true,
-        },
+          MeetingAttendees: {
+            select: {
+              id: true,
+              meeting_status: true,
+              name: true,
+              student_id: true,
+              created_at: true,
+              tutor_id: true,
+            },
+          },
+      },
       });
     }),
 
@@ -154,23 +164,6 @@ export const meetingsRouter = createTRPCRouter({
       });
     }),
 
-  // getMeetingsBySchool: publicProcedure
-  //   .input(
-  //     z.object({
-  //       id: z.number(),
-  //     })
-  //   )
-  //   .query(async ({ ctx, input }) => {
-  //     return ctx.prisma.meetings.findUnique({
-  //       where: {
-  //         MeetingAttendees.student.id: input,
-  //       },
-  //       include: {
-  //         MeetingAttendees: true,
-  //       },
-  //     });
-  //   }),
-
   getMeetingsByStudentId: publicProcedure
     .input(z.object({ studentId: z.number() }))
     .query(async ({ ctx, input }) => {
@@ -225,23 +218,6 @@ export const meetingsRouter = createTRPCRouter({
         },
       });
     }),
-
-  // getMeetingsForTutor: publicProcedure
-  //   .input(
-  //     z.object({
-  //       id: z.number(),
-  //     })
-  //   )
-  //   .query(async ({ ctx, input }) => {
-  //     return ctx.prisma.meetings.findUnique({
-  //       where: {
-  //         id: input.id,
-  //       },
-  //       include: {
-  //         MeetingAttendees: true,
-  //       },
-  //     });
-  //   }),
 
   //create meeting
   createMeeting: publicProcedure
@@ -423,4 +399,99 @@ export const meetingsRouter = createTRPCRouter({
         },
       });
     }),
+
+  getMeetingsByRoleAndDate: publicProcedure
+    .input(z.date())
+    .query(async ({ ctx, input }) => {
+      // Date filtering logic
+      const startDate = new Date(input);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(input);
+      endDate.setHours(23, 59, 59, 999);
+      const userRole = ctx.session?.user?.role;
+      const tutorId = ctx.session?.user?.userId;
+      const userSchool = ctx.session?.user?.school;
+    
+      // Convert roles to a ranked list (higher index = higher priority)
+      const rolesHierarchy = ['tutor', 'principal', 'admin'];
+      const highestRole = rolesHierarchy.find(role => userRole?.toLowerCase().includes(role));
+    
+      switch (highestRole) {
+        case 'tutor':
+          return await ctx.prisma.meetings.findMany({
+            where: {
+              AND: [
+                { tutor_id: tutorId },
+                { start: { gte: startDate, lte: endDate } },
+              ],
+            },
+            include: {
+              MeetingAttendees: {
+                select: {
+                  id: true,
+                  meeting_status: true,
+                  name: true,
+                  student_id: true,
+                  created_at: true,
+                  tutor_id: true,
+                },
+              },
+          },
+              });
+        case 'principal':
+          return await ctx.prisma.meetings.findMany({
+            where: {
+              AND: [
+                {
+                  MeetingAttendees: {
+                    some: {
+                      Students: {
+                        school: userSchool,
+                      },
+                    },
+                  },
+                },
+                { start: { gte: startDate, lte: endDate } },
+              ],
+            },
+            include: {
+              MeetingAttendees: {
+                select: {
+                  id: true,
+                  meeting_status: true,
+                  name: true,
+                  student_id: true,
+                  created_at: true,
+                  tutor_id: true,
+                },
+              },
+          },
+              });
+        case 'admin':
+          return await ctx.prisma.meetings.findMany({
+            where: {
+              start: {
+                gte: startDate,
+                lte: endDate,
+              },
+            },
+            include: {
+              MeetingAttendees: {
+                select: {
+                  id: true,
+                  meeting_status: true,
+                  name: true,
+                  student_id: true,
+                  created_at: true,
+                  tutor_id: true,
+                },
+              },
+          },
+              });
+        default:
+          // If no recognized role is found, you might want to throw an error
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Unauthorized access' });
+      }
+    }),
 });
+

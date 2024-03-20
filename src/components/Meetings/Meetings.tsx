@@ -50,14 +50,15 @@ const Meetings = () => {
   const dateToQuery =
     selectedDate && dayjs.isDayjs(selectedDate) ? selectedDate : dayjs();
 
-  // TODO: This needs to be a query that gets meetings by date but also by role (myDatedMeetings)
   const { data: getDatedMeetings } = api.meetings.getMeetingsByDate.useQuery(
     dateToQuery.toDate()
   ) as { data: MeetingWithAttendees[] };
+  console.log("getDatedMeetings from Meetings page", getDatedMeetings);
 
   const { data: myStudents } = api.students.getStudentsForRole.useQuery() as {
     data: Student[];
   };
+  console.log("myStudents from Meetings page", myStudents);
 
   useEffect(() => {
     if (myStudents) {

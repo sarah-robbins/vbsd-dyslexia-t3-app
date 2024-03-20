@@ -119,9 +119,48 @@ const MeetingForm: React.FC<Props> = ({
           }[];
           return { ...meeting, attendees };
         });
-
       setDatedMeetingsWithAttendees(datedMeetingsWithAttendees);
     }
+    // if (selectedDate && getDatedMeetings && isOnStudentsPage) {
+    //   const datedMeetingsWithAttendees: MeetingWithAttendees[] =
+    //     getDatedMeetings
+    //       .map((meeting): MeetingWithAttendees => {
+    //         const attendees = (meeting.MeetingAttendees ?? [])
+    //           .map((attendee) => {
+    //             const student = students?.find(
+    //               (s) => s.id === attendee.student_id
+    //             );
+    //             if (!student) return;
+    //             return {
+    //               ...attendee,
+    //               id: attendee.student_id,
+    //               name: `${student.first_name ?? ""} ${
+    //                 student.last_name ?? ""
+    //               }`,
+    //             };
+    //           })
+    //           .filter(
+    //             (
+    //               a
+    //             ): a is {
+    //               id: number;
+    //               meeting_id: number;
+    //               student_id: number;
+    //               meeting_status: string;
+    //               created_at: Dayjs;
+    //               name: string;
+    //             } => Boolean(a)
+    //           );
+
+    //         return { ...meeting, attendees };
+    //       })
+    //       // Here we filter the meetings to only include those with attendees that match the idOfStudent
+    //       .filter((meeting) =>
+    //         meeting.attendees?.some((attendee) => idOfStudent === attendee.id)
+    //       );
+
+    //   setDatedMeetingsWithAttendees(datedMeetingsWithAttendees);
+    // }
   }, [getDatedMeetings, students, selectedDate, setDatedMeetingsWithAttendees]);
 
   /* -------------------------------------------------------------------------- */

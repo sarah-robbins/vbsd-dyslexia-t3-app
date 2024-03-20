@@ -127,10 +127,10 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   const dateToQuery =
     selectedDate && dayjs.isDayjs(selectedDate) ? selectedDate : dayjs();
 
-  // TODO: This needs to be a query that gets meetings by date but also by role (myDatedMeetings)
-  const { data: getDatedMeetings } = api.meetings.getMeetingsByDate.useQuery(
-    dateToQuery.toDate()
-  ) as { data: MeetingWithAttendees[] };
+  const { data: getDatedMeetings } =
+    api.meetings.getMeetingsByRoleAndDate.useQuery(dateToQuery.toDate()) as {
+      data: MeetingWithAttendees[];
+    };
 
   const convertMeetings = (meetings: Meeting[]): MeetingWithAttendees[] => {
     return meetings.map((meeting) => {
@@ -763,11 +763,19 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       updateStudentExtraData(updateData);
     };
 
+    console.log("*********** row ID: ", data.id);
+    console.log("*********** getDatedMeetings: ", getDatedMeetings);
+    const studentMeetings = getDatedMeetings?.filter((meeting) =>
+      meeting.MeetingAttendees?.some(
+        (attendee) => attendee.student_id === data.id
+      )
+    );
+    console.log("*********** studentMeetings: ", studentMeetings);
     return (
       <>
         <div className="expansion-row flex flex-row gap-3">
           <Card className="expansion-row__item w-6">
-            <h3>Additional Info</h3>
+            <h3>Additional Info {data.first_name}</h3>
             <div className="flex gap-4">
               <TextField
                 id="outlined-multiline-flexible"
@@ -994,7 +1002,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
             meetings={meetings}
             setMeetings={setMeetings}
             students={students}
-            getDatedMeetings={getDatedMeetings}
+            getDatedMeetings={studentMeetings}
             selectedMeetings={selectedMeetings}
             setSelectedMeetings={setSelectedMeetings}
             isMeetingSelected={!!selectedMeetings}
@@ -1008,9 +1016,9 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
           <MeetingList
             meetings={meetings}
             students={students}
-            selectedDate={dayjs()}
+            selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
-            getDatedMeetings={getDatedMeetings}
+            getDatedMeetings={studentMeetings}
             selectedMeetings={selectedMeetings}
             setSelectedMeetings={setSelectedMeetings}
             datedMeetingsWithAttendees={datedMeetingsWithAttendees}
