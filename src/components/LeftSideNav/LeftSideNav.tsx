@@ -222,6 +222,22 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
   // const theme = useTheme();
   // const isMdAndUp = useMediaQuery(theme.breakpoints.up('md'));
 
+  // TODO: initial code to hide certain links based on user role && add multiple roles
+  const filteredLinks = React.useMemo(() => {
+    if (session?.user.role === "Tutor") {
+      return links.filter(
+        (link) => link.text !== "Users" && link.text !== "Students"
+      );
+    }
+    if (session?.user.role === "Principal") {
+      return links.filter((link) => link.text !== "Meetings");
+    }
+    if (session?.user.role === "Admin") {
+      return links.filter((link) => link.text !== "Meetings");
+    }
+    return links;
+  }, [session?.user.role]);
+
   const drawer = (
     <div
       className="flex flex-column justify-content-between"
@@ -248,7 +264,7 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
         </div>
         <Divider />
         <List>
-          {links.map((link) => (
+          {filteredLinks.map((link) => (
             <ListItem key={link.text} disablePadding sx={{ display: "block" }}>
               <ListItemButton
                 onClick={() => {
@@ -306,7 +322,7 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
     <div className="flex flex-column justify-content-center align-items-center gap-3">
       {/* I need to add a box to edit the user's phone number, then a place that displays the email, but doesn't not allow the user to edit it. */}
       <TextField
-        value={phone}
+        value={session ? session.user.phone : ""}
         onChange={handlePhoneChange}
         label="Phone Number"
         className="w-12"
@@ -318,9 +334,20 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
         label="Email"
         className="w-12"
       />
-      <Button variant="contained" color="primary" onClick={handleSavePhone}>
-        Save
-      </Button>
+      <div className="profile-btns flex align-items-start gap-2 w-full">
+        <Button variant="contained" color="primary" onClick={handleSavePhone}>
+          Save
+        </Button>
+        <Button
+          variant="outlined"
+          color="primary"
+          onClick={() => {
+            void signOut({ callbackUrl: "/" });
+          }}
+        >
+          Logout
+        </Button>
+      </div>
     </div>
   );
 
@@ -417,13 +444,6 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
               onClose={handleCloseUserMenu}
             >
               <div className="user-profile-dropdown">{userProfile}</div>
-              <MenuItem
-                onClick={() => {
-                  void signOut({ callbackUrl: "/" });
-                }}
-              >
-                <Typography textAlign="center">Logout</Typography>
-              </MenuItem>
             </Menu>
           </Box>
         </Toolbar>

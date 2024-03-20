@@ -132,7 +132,7 @@ model Users {
   first_name       String
   last_name        String
   school           String
-  email            String
+  email            String     @unique
   phone            String?
   role             String
   super_admin_role Boolean?

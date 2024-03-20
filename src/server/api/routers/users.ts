@@ -25,11 +25,21 @@ export const usersRouter = createTRPCRouter({
       });
     }),
 
+  
   getUsersForRole: protectedProcedure.query(async ({ ctx }) => {
     const userRole = ctx.session?.user?.role;
     const userSchool = ctx.session?.user?.school;
 
-    switch (userRole) {
+    let highestPriorityRole = '';
+
+    if (userRole.includes('Admin' || 'admin')) {
+      highestPriorityRole = 'Admin';
+    } else if (userRole.includes('Principal' || 'principal')) {
+      highestPriorityRole = 'Principal';
+    } else if (userRole.includes('Tutor' || 'tutor')) {
+      highestPriorityRole = 'Tutor';
+    }
+    switch (highestPriorityRole) {
       case 'tutor':
       case "Tutor":
         return await ctx.prisma.users.findMany({
@@ -50,7 +60,7 @@ export const usersRouter = createTRPCRouter({
         });
       case 'admin':
       case "Admin":
-        return await ctx.prisma.users.findMany({
+          return await ctx.prisma.users.findMany({
         });
       default:
         // Handle default case or throw an error

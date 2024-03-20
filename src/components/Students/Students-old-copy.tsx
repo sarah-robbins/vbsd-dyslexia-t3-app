@@ -8,24 +8,12 @@ import {
   type DataTableRowEvent,
 } from "primereact/datatable";
 import { FilterMatchMode } from "primereact/api";
-import {
-  Column,
-  type ColumnBodyOptions,
-  type ColumnEditorOptions,
-} from "primereact/column";
+import { Column, type ColumnEditorOptions } from "primereact/column";
 import { api } from "@/utils/api";
 import { Toast } from "primereact/toast";
 import { Card } from "primereact/card";
 
-import type {
-  User,
-  Student,
-  FormValues,
-  customSession,
-  MeetingAttendees,
-  MeetingWithAttendees,
-  Meeting,
-} from "@/types";
+import type { User, Student, FormValues, customSession } from "@/types";
 import { InputText } from "primereact/inputtext";
 import { Dropdown, type DropdownChangeEvent } from "primereact/dropdown";
 import {
@@ -33,23 +21,12 @@ import {
   type MultiSelectChangeEvent,
 } from "primereact/multiselect";
 import DeleteIcon from "@mui/icons-material/Delete";
-import CreateIcon from "@mui/icons-material/Create";
-import CloseIcon from "@mui/icons-material/Close";
-import CheckIcon from "@mui/icons-material/Check";
-import {
-  CircularProgress,
-  FormControlLabel,
-  Switch,
-  TextField,
-} from "@mui/material";
+import { FormControlLabel, Switch, TextField } from "@mui/material";
 import { Button } from "primereact/button";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { type Dayjs } from "dayjs";
 import { useSession } from "next-auth/react";
-import { Skeleton } from "primereact/skeleton";
-import MeetingForm from "@/components/Meetings/MeetingForm/MeetingForm";
-import MeetingList from "@/components/Meetings/MeetingList/MeetingList";
 // import { useSession } from 'next-auth/react';
 
 interface TutorOption {
@@ -57,19 +34,7 @@ interface TutorOption {
   value: number | undefined;
 }
 
-interface Props {
-  isOnMeetingsPage: boolean;
-}
-
-const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
-  let hiddenOnMeetingsPage = "";
-  if (isOnMeetingsPage) {
-    hiddenOnMeetingsPage = "hidden";
-  } else if (!isOnMeetingsPage) {
-    hiddenOnMeetingsPage = "flex";
-  }
-  console.log("isOnMeetingsPage from Students: ", isOnMeetingsPage);
-
+const Students: React.FC = () => {
   const getAllStudents = api.students.getAllStudents.useQuery();
   const [students, setStudents] = useState<Student[]>([]);
   const [expandedRows, setExpandedRows] = useState<
@@ -102,19 +67,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   });
   const [globalFilterValue, setGlobalFilterValue] = useState<string>("");
 
-  const [meetings, setMeetings] = useState<MeetingWithAttendees[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
-  const [selectedMeetings, setSelectedMeetings] = useState<
-    MeetingWithAttendees[]
-  >([]);
-  const [selectedMeetingAttendees] = useState<MeetingAttendees[]>([]);
-  // const [attendees, setAttendees] = useState<MeetingAttendees[]>([]);
-  const [datedMeetingsWithAttendees, setDatedMeetingsWithAttendees] = useState<
-    MeetingWithAttendees[]
-  >([]);
-  const [attendeesName] = useState<string[]>([]);
-  const [isOnStudentsPage] = useState<boolean>(true);
-
   const { data: myStudents } = api.students.getStudentsForRole.useQuery() as {
     data: Student[];
   };
@@ -123,65 +75,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     data: User[];
   };
   const [formattedTutors, setFormattedTutors] = useState<TutorOption[]>([]);
-
-  const dateToQuery =
-    selectedDate && dayjs.isDayjs(selectedDate) ? selectedDate : dayjs();
-
-  // TODO: This needs to be a query that gets meetings by date but also by role (myDatedMeetings)
-  const { data: getDatedMeetings } = api.meetings.getMeetingsByDate.useQuery(
-    dateToQuery.toDate()
-  ) as { data: MeetingWithAttendees[] };
-
-  const convertMeetings = (meetings: Meeting[]): MeetingWithAttendees[] => {
-    return meetings.map((meeting) => {
-      let start, end, edited_on, recorded_on;
-
-      if (meeting.start && meeting.start instanceof Date) {
-        start = dayjs(meeting.start);
-      } else {
-        start = meeting.start;
-      }
-
-      if (meeting.end && meeting.end instanceof Date) {
-        end = dayjs(meeting.end);
-      } else {
-        end = meeting.end;
-      }
-
-      if (meeting.edited_on && meeting.edited_on instanceof Date) {
-        edited_on = dayjs(meeting.edited_on);
-      } else {
-        edited_on = meeting.edited_on;
-      }
-
-      if (meeting.recorded_on && meeting.recorded_on instanceof Date) {
-        recorded_on = dayjs(meeting.recorded_on);
-      } else {
-        recorded_on = meeting.recorded_on;
-      }
-
-      return {
-        ...meeting,
-        start,
-        end,
-        edited_on,
-        recorded_on,
-        attendees: [], // Add the attendees property
-      };
-    });
-  };
-
-  const { data: roleBasedMeetings } =
-    api.meetings.getMeetingsForRole.useQuery();
-
-  useEffect(() => {
-    if (roleBasedMeetings) {
-      console.log("Role based meetings: ", roleBasedMeetings);
-      // Convert dates to Dayjs objects and update state
-      const convertedMeetings = convertMeetings(roleBasedMeetings);
-      setMeetings(convertedMeetings);
-    }
-  }, [roleBasedMeetings]);
 
   const processServices = (
     services: string | string[] | null | undefined
@@ -294,6 +187,27 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     setFilters(_filters);
     setGlobalFilterValue(value);
   };
+
+  // const schools = ['King', 'Northridge', 'Oliver Springs'];
+
+  // const grades = [
+  //   'K',
+  //   '1',
+  //   '2',
+  //   '3',
+  //   '4',
+  //   '5',
+  //   '6',
+  //   '7',
+  //   '8',
+  //   '9',
+  //   '10',
+  //   '11',
+  //   '12',
+  // ];
+
+  // const programs = ['Barton', 'Connections', 'Foundations'];
+  // const services = ['504', 'IEP', 'Other', 'None'];
 
   const textEditor = (options: ColumnEditorOptions) => {
     const value = options.value as string;
@@ -705,6 +619,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   };
 
   const [endingSearchDate, setEndingSearchDate] = useState<Dayjs>(dayjs());
+
   const handleEndingSearchDateChange = (date: Dayjs | null) => {
     if (date) {
       setEndingSearchDate(date);
@@ -764,262 +679,184 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     };
 
     return (
-      <>
-        <div className="expansion-row flex flex-row gap-3">
-          <Card className="expansion-row__item w-6">
-            <h3>Additional Info</h3>
-            <div className="flex gap-4">
-              <TextField
-                id="outlined-multiline-flexible"
-                value={data?.level_lesson}
-                onChange={(e) =>
-                  setAdditionalFormValues({
-                    ...additionalFormValues,
-                    level_lesson: e.target.value,
-                  })
-                }
-                label="Level/Lesson"
-                className="w-12"
-                inputProps={{
-                  readOnly: !session?.user.role
-                    .split(",")
-                    .map((role) => role.trim())
-                    .some((role) => ["Admin", "Principal"].includes(role)),
-                }}
-              />
-              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <DatePicker
-                  label="Date Intervention Began"
-                  className="w-12"
-                  value={dayjs(data.date_intervention_began)}
-                  onChange={handleInterventionDateChange}
-                  readOnly={
-                    !session?.user.role
-                      .split(",")
-                      .map((role) => role.trim())
-                      .some((role) => ["Admin", "Principal"].includes(role))
-                  }
-                />
-              </LocalizationProvider>
-            </div>
-            <div className="flex">
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={data.new_student || false}
-                    onChange={(e) =>
-                      handleSwitchChange("new_student", e.target.checked)
-                    }
-                    inputProps={{
-                      disabled: !session?.user.role
-                        .split(",")
-                        .map((role) => role.trim())
-                        .some((role) => ["Admin", "Principal"].includes(role)),
-                    }}
-                  />
-                }
-                label="New"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={data.withdrew === true}
-                    onChange={(e) =>
-                      handleSwitchChange("withdrew", e.target.checked)
-                    }
-                    inputProps={{
-                      disabled: !session?.user.role
-                        .split(",")
-                        .map((role) => role.trim())
-                        .some((role) => ["Admin", "Principal"].includes(role)),
-                    }}
-                  />
-                }
-                label="Withdrew"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={data.graduated === true}
-                    onChange={(e) =>
-                      handleSwitchChange("graduated", e.target.checked)
-                    }
-                    inputProps={{
-                      disabled: !session?.user.role
-                        .split(",")
-                        .map((role) => role.trim())
-                        .some((role) => ["Admin", "Principal"].includes(role)),
-                    }}
-                  />
-                }
-                label="Graduated"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={data.moved === true}
-                    onChange={(e) =>
-                      handleSwitchChange("moved", e.target.checked)
-                    }
-                    inputProps={{
-                      disabled: !session?.user.role
-                        .split(",")
-                        .map((role) => role.trim())
-                        .some((role) => ["Admin", "Principal"].includes(role)),
-                    }}
-                  />
-                }
-                label="Moved"
-              />
-
-              <TextField
-                id="outlined-multiline-flexible"
-                value={data?.new_location}
-                onChange={(e) =>
-                  setAdditionalFormValues({
-                    ...additionalFormValues,
-                    new_location: e.target.value,
-                  })
-                }
-                label="Location Moved To"
-                className="w-12"
-                inputProps={{
-                  readOnly: !session?.user.role
-                    .split(",")
-                    .map((role) => role.trim())
-                    .some((role) => ["Admin", "Principal"].includes(role)),
-                }}
-              />
-            </div>
+      <div className="expansion-row flex flex-row">
+        <Card className="expansion-row__item">
+          <h5>
+            Additional Info for {data.first_name} {data.last_name}
+          </h5>
+          <div className="flex gap-4">
             <TextField
               id="outlined-multiline-flexible"
-              value={data?.additional_comments}
+              value={data?.level_lesson}
               onChange={(e) =>
                 setAdditionalFormValues({
                   ...additionalFormValues,
-                  additional_comments: e.target.value,
+                  level_lesson: e.target.value,
                 })
               }
-              label="Additional Comments"
-              className="w-12"
-              multiline
-              inputProps={{
-                readOnly: !session?.user.role
-                  .split(",")
-                  .map((role) => role.trim())
-                  .some((role) => ["Admin", "Principal"].includes(role)),
-              }}
+              label="Level/Lesson"
+              className="w-12 sm:w-6"
             />
-            <div>
-              <Button onClick={handleUpdateClick}>Save</Button>
-            </div>
-          </Card>
-          <Card className="expansion-row__item w-6">
-            <h3>Meeting Stats</h3>
-            <div className="flex gap-4 justify-content-between text-center">
-              <div className="flex w-10">
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DatePicker
-                    label="Start Date"
-                    className="w-full"
-                    value={beginningSearchDate}
-                    onChange={handleBeginningSearchDateChange}
-                  />
-                </LocalizationProvider>
-              </div>
-              <div className="flex w-1 min-h-full align-items-center justify-content-center">
-                <span className="font-bold">To</span>
-              </div>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                label="Date Intervention Began"
+                className="w-12 sm:w-6"
+                value={dayjs(data.date_intervention_began)}
+                onChange={handleInterventionDateChange}
+              />
+            </LocalizationProvider>
+          </div>
+          <div className="flex">
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={data.new_student || false}
+                  onChange={(e) =>
+                    handleSwitchChange("new_student", e.target.checked)
+                  }
+                />
+              }
+              label="New"
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={data.withdrew === true}
+                  onChange={(e) =>
+                    handleSwitchChange("withdrew", e.target.checked)
+                  }
+                />
+              }
+              label="Withdrew"
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={data.graduated === true}
+                  onChange={(e) =>
+                    handleSwitchChange("graduated", e.target.checked)
+                  }
+                />
+              }
+              label="Graduated"
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={data.moved === true}
+                  onChange={(e) =>
+                    handleSwitchChange("moved", e.target.checked)
+                  }
+                />
+              }
+              label="Moved"
+            />
+            <TextField
+              id="outlined-multiline-flexible"
+              value={data?.new_location}
+              onChange={(e) =>
+                setAdditionalFormValues({
+                  ...additionalFormValues,
+                  new_location: e.target.value,
+                })
+              }
+              label="Location Moved To"
+              className="w-12"
+            />
+          </div>
 
-              <div className="flex w-10">
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DatePicker
-                    label="End Date"
-                    className="w-full"
-                    value={endingSearchDate}
-                    onChange={handleEndingSearchDateChange}
-                  />
-                </LocalizationProvider>
-              </div>
-            </div>
-            {/* The next part of this will need to show the different meeting statuses and how many occur for tha attendee during the time period in the search. */}
-            <div className="flex gap-4">
-              <div>
-                <span>Meetings</span>
-                <TextField
-                  id="outlined-multiline-flexible"
-                  value={calculateTotalMeetings}
-                  className="w-12"
-                />
-              </div>
-              <div>
-                <span>Student Absences</span>
-                <TextField
-                  id="outlined-multiline-flexible"
-                  value={calculateStudentAbsences}
-                  className="w-12"
-                />
-              </div>
-              <div>
-                <span>Tutor Absences</span>
-                <TextField
-                  id="outlined-multiline-flexible"
-                  value={calculateTutorAbsences}
-                  className="w-12"
-                />
-              </div>
-              <div>
-                <span>Student Unavailable</span>
-                <TextField
-                  id="outlined-multiline-flexible"
-                  value={calculateStudentUnavailable}
-                  className="w-12"
-                />
-              </div>
-              <div>
-                <span>Tutor Unavailable</span>
-                <TextField
-                  id="outlined-multiline-flexible"
-                  value={calculateTutorUnavailable}
-                  className="w-12"
-                />
-              </div>
-            </div>
-          </Card>
-        </div>
-        <div
-          className={`flex-column lg:flex-row gap-3 mt-3 ${hiddenOnMeetingsPage}`}
-        >
-          <MeetingForm
-            meetings={meetings}
-            setMeetings={setMeetings}
-            students={students}
-            getDatedMeetings={getDatedMeetings}
-            selectedMeetings={selectedMeetings}
-            setSelectedMeetings={setSelectedMeetings}
-            isMeetingSelected={!!selectedMeetings}
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-            setDatedMeetingsWithAttendees={setDatedMeetingsWithAttendees}
-            selectedMeetingAttendees={selectedMeetingAttendees}
-            isOnStudentsPage={isOnStudentsPage}
-            isOnMeetingsPage={false}
+          <TextField
+            id="outlined-multiline-flexible"
+            value={data?.additional_comments}
+            onChange={(e) =>
+              setAdditionalFormValues({
+                ...additionalFormValues,
+                additional_comments: e.target.value,
+              })
+            }
+            label="Additional Comments"
+            className="w-12"
+            multiline
           />
-          <MeetingList
-            meetings={meetings}
-            students={students}
-            selectedDate={dayjs()}
-            setSelectedDate={setSelectedDate}
-            getDatedMeetings={getDatedMeetings}
-            selectedMeetings={selectedMeetings}
-            setSelectedMeetings={setSelectedMeetings}
-            datedMeetingsWithAttendees={datedMeetingsWithAttendees}
-            attendeesName={attendeesName}
-            isOnStudentsPage={isOnStudentsPage}
-            isOnMeetingsPage={false}
-          />
-        </div>
-      </>
+          <div>
+            <Button onClick={handleUpdateClick}>Save</Button>
+          </div>
+        </Card>
+        <Card className="expansion-row__item">
+          <h5>
+            Meeting Stats for {data.first_name} {data.last_name}
+          </h5>
+          <div className="flex gap-4 justify-content-between text-center">
+            <div className="flex w-10">
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  label="Start Date"
+                  className="w-full"
+                  value={augustFirstLastYear}
+                  onChange={handleBeginningSearchDateChange}
+                />
+              </LocalizationProvider>
+            </div>
+            <div className="flex w-1 min-h-full align-items-center justify-content-center">
+              <span className="font-bold">To</span>
+            </div>
+
+            <div className="flex w-10">
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  label="End Date"
+                  className="w-full"
+                  value={dayjs()}
+                  onChange={handleEndingSearchDateChange}
+                />
+              </LocalizationProvider>
+            </div>
+          </div>
+          {/* The next part of this will need to show the different meeting statuses and how many occur for tha attendee during the time period in the search. */}
+          <div className="flex gap-4">
+            <div>
+              <span>Meetings</span>
+              <TextField
+                id="outlined-multiline-flexible"
+                value={calculateTotalMeetings}
+                className="w-12"
+              />
+            </div>
+            <div>
+              <span>Student Absences</span>
+              <TextField
+                id="outlined-multiline-flexible"
+                value={calculateStudentAbsences}
+                className="w-12"
+              />
+            </div>
+            <div>
+              <span>Tutor Absences</span>
+              <TextField
+                id="outlined-multiline-flexible"
+                value={calculateTutorAbsences}
+                className="w-12"
+              />
+            </div>
+            <div>
+              <span>Student Unavailable</span>
+              <TextField
+                id="outlined-multiline-flexible"
+                value={calculateStudentUnavailable}
+                className="w-12"
+              />
+            </div>
+            <div>
+              <span>Tutor Unavailable</span>
+              <TextField
+                id="outlined-multiline-flexible"
+                value={calculateTutorUnavailable}
+                className="w-12"
+              />
+            </div>
+          </div>
+        </Card>
+      </div>
     );
   };
   const deleteStudentMutation = api.students.deleteStudent.useMutation();
@@ -1055,27 +892,25 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     );
   };
 
-  // const actionBodyTemplate = (rowData: Student) => {
-  //   if (typeof rowData.id !== "number") {
-  //     return null;
-  //   }
-  //   return (
-  //     <DeleteIcon
-  //       color="error"
-  //       onClick={() => handleDeleteStudent(rowData.id)}
-  //     />
-  //   );
-  // };
+  const actionBodyTemplate = (rowData: Student) => {
+    if (typeof rowData.id !== "number") {
+      return null;
+    }
+    return (
+      <DeleteIcon
+        color="error"
+        onClick={() => handleDeleteStudent(rowData.id)}
+      />
+    );
+  };
 
   const renderHeader = () => {
     return (
       <div className="flex flex-row justify-content-between">
         <div className="flex justify-content-start gap-2">
-          {session?.user.role !== "Tutor" && (
-            <div className="flex align-items-center">
-              <Button label="Add" onClick={addNewStudent} text />
-            </div>
-          )}
+          <div className="flex align-items-center">
+            <Button label="Add" onClick={addNewStudent} text />
+          </div>
           <Button label="Expand All" onClick={expandAll} text />
           <Button label="Collapse All" onClick={collapseAll} text />
         </div>
@@ -1097,15 +932,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   // const rows = [editingRow, ...students].filter((r) => r != null);
 
   // load animation for the table
-  if (!getAllStudents.data)
-    return (
-      <div className="flex w-full h-full">
-        <CircularProgress
-          color="primary"
-          className="flex align-items-center justify-content-center"
-        />
-      </div>
-    );
+  if (!getAllStudents.data) return <p>Loading...</p>;
 
   // choose waht to do when a row in clicked
   const rowSelected = (e: DataTableRowEvent) => {
@@ -1121,192 +948,133 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       "bg-red-100": data.first_name === "First Name",
       "text-primary":
         data.new_student === true && data.id !== undefined && data.id > -2,
-      "border-8":
+      "border-color-primary":
         data.new_student === true && data.id !== undefined && data.id > -2,
     };
   };
 
-  const loadingTemplate = () => {
-    return <Skeleton />;
-  };
-
-  const editRowIcons = (rowData: Student, options: ColumnBodyOptions) => (
-    <>
-      {options.rowEditor?.editing ? (
-        <div className="flex gap-1 justify-content-center">
-          <CheckIcon
-            onClick={(e) =>
-              options.rowEditor?.onSaveClick &&
-              options.rowEditor?.onSaveClick(e)
-            }
-            color="primary"
-          />
-          <CloseIcon
-            onClick={(e) =>
-              options.rowEditor?.onCancelClick &&
-              options.rowEditor?.onCancelClick(e)
-            }
-            color="error"
-          />
-        </div>
-      ) : (
-        <div className="flex gap-1 justify-content-center">
-          <CreateIcon
-            onClick={(e) =>
-              options.rowEditor?.onInitClick &&
-              options.rowEditor?.onInitClick(e)
-            }
-            color="warning"
-          />
-          <DeleteIcon
-            color="error"
-            onClick={() => handleDeleteStudent(rowData.id)}
-          />
-        </div>
-      )}
-    </>
-  );
-
-  // function t(arg0: string): string | undefined {
-  //   throw new Error("Function not implemented.");
-  // }
-
-  // function confirmDialog(arg0: {
-  //   message: string;
-  //   header: string;
-  //   icon: string;
-  //   accept: () => any;
-  // }): void {
-  //   throw new Error("Function not implemented.");
-  // }
-
-  // function handleDelete(id: any) {
-  //   throw new Error("Function not implemented.");
-  // }
-
-  // function rowEditorTemplate(options: ColumnEditorOptions): React.ReactNode {
-  //   throw new Error("Function not implemented.");
-  // }
-
   return (
-    <Card className="card">
-      <Toast ref={toast} />
-      <div className="meeting-list-name-select flex justify-content-between align-items-center gap-4">
-        <h3>Students</h3>
-      </div>
-      <DataTable
-        className="students-table"
-        value={students}
-        editMode="row"
-        // onRowEditInit={(e) => setEditingRows(e.data.id)}
-        editingRows={editingRows}
-        onRowEditComplete={onRowEditComplete}
-        expandedRows={expandedRows}
-        onRowToggle={(e) => setExpandedRows(e.data)}
-        // onRowExpand={onRowExpand}
-        // onRowCollapse={onRowCollapse}
-        rowExpansionTemplate={rowExpansionTemplate}
-        dataKey="id"
-        stripedRows
-        removableSort
-        rowClassName={newRowClass}
-        onRowSelect={rowSelected}
-        tableStyle={{ minWidth: "60rem" }}
-        filters={filters}
-        globalFilterFields={[
-          "first_name",
-          "last_name",
-          "school",
-          "grade",
-          "home_room_teacher",
-          "intervention_program",
-          "tutorFullName",
-          "date_intervention_began",
-          "calculateTotalMeetings",
-          "services",
-        ]}
-        header={header}
-        emptyMessage="No students match your search."
-        showGridlines
-      >
-        <Column
-          expander={allowExpansion}
-          style={{ width: "5rem" }}
-          header="Expand"
-        />
-        <Column
-          field="student_assigned_id"
-          header="Student ID #"
-          editor={(options) => textEditor(options)}
-          sortable
-        />
-        <Column
-          field="first_name"
-          header="First Name"
-          editor={(options) => textEditor(options)}
-          sortable
-        />
-        <Column
-          field="last_name"
-          header="Last Name"
-          editor={(options) => textEditor(options)}
-          sortable
-        />
-        <Column
-          field="school"
-          header="School"
-          editor={(options) => schoolEditor(options)}
-          sortable
-        />
-        <Column
-          field="grade"
-          header="Grade"
-          editor={(options) => gradeEditor(options)}
-          sortable
-        />
-        <Column
-          field="home_room_teacher"
-          header="Home Room Teacher"
-          editor={(options) => textEditor(options)}
-          sortable
-        />
-        <Column
-          field="intervention_program"
-          header="Program"
-          editor={(options) => programEditor(options)}
-          sortable
-        />
-        <Column
-          field="tutorFullName"
-          header="Tutor"
-          style={{ whiteSpace: "nowrap" }}
-          editor={(options) => tutorEditor(options)}
-          sortable
-        />
-        <Column
-          field="calculateTotalMeetings"
-          header="Total Meetings"
-          sortable
-          body={!students ? loadingTemplate : null}
-        />
-        <Column
-          field="services"
-          header="Services"
-          body={servicesTemplate}
-          editor={(options) => serviceEditor(options)}
-          sortable
-        />
-        {session?.user.role !== "Tutor" && (
+    <>
+      <Card className="card">
+        <Toast ref={toast} />
+        <div className="meeting-list-name-select flex justify-content-between align-items-center gap-4">
+          <h3>Students</h3>
+        </div>
+        <DataTable
+          value={students}
+          editMode="row"
+          // onRowEditInit={(e) => setEditingRows(e.data.id)}
+          editingRows={editingRows}
+          onRowEditComplete={onRowEditComplete}
+          expandedRows={expandedRows}
+          onRowToggle={(e) => setExpandedRows(e.data)}
+          // onRowExpand={onRowExpand}
+          // onRowCollapse={onRowCollapse}
+          rowExpansionTemplate={rowExpansionTemplate}
+          dataKey="id"
+          stripedRows
+          removableSort
+          rowClassName={newRowClass}
+          onRowSelect={rowSelected}
+          tableStyle={{ minWidth: "60rem" }}
+          filters={filters}
+          globalFilterFields={[
+            "first_name",
+            "last_name",
+            "school",
+            "grade",
+            "home_room_teacher",
+            "intervention_program",
+            "tutorFullName",
+            "date_intervention_began",
+            "calculateTotalMeetings",
+            "services",
+          ]}
+          header={header}
+          emptyMessage="No students match your search."
+          showGridlines
+        >
           <Column
-            header="Actions"
+            expander={allowExpansion}
+            style={{ width: "5rem" }}
+            header="Expand"
+          />
+          <Column
+            field="student_assigned_id"
+            header="Student ID #"
+            editor={(options) => textEditor(options)}
+            sortable
+          />
+          <Column
+            field="first_name"
+            header="First Name"
+            editor={(options) => textEditor(options)}
+            sortable
+          />
+          <Column
+            field="last_name"
+            header="Last Name"
+            editor={(options) => textEditor(options)}
+            sortable
+          />
+          <Column
+            field="school"
+            header="School"
+            editor={(options) => schoolEditor(options)}
+            sortable
+          />
+          <Column
+            field="grade"
+            header="Grade"
+            editor={(options) => gradeEditor(options)}
+            sortable
+          />
+          <Column
+            field="home_room_teacher"
+            header="Home Room Teacher"
+            editor={(options) => textEditor(options)}
+            sortable
+          />
+          <Column
+            field="intervention_program"
+            header="Program"
+            editor={(options) => programEditor(options)}
+            sortable
+          />
+          <Column
+            field="tutorFullName"
+            header="Tutor"
+            style={{ whiteSpace: "nowrap" }}
+            editor={(options) => tutorEditor(options)}
+            sortable
+          />
+          <Column
+            field="calculateTotalMeetings"
+            header="Total Meetings"
+            sortable
+          />
+          <Column
+            field="services"
+            header="Services"
+            body={servicesTemplate}
+            editor={(options) => serviceEditor(options)}
+            sortable
+          />
+          <Column
+            header="Edit"
             rowEditor
-            body={editRowIcons}
-            headerStyle={{ width: "1%" }}
+            headerStyle={{ width: "10%", minWidth: "8rem" }}
             bodyStyle={{ textAlign: "center" }}
           ></Column>
-        )}
-      </DataTable>
-    </Card>
+          <Column
+            header="Delete"
+            headerStyle={{ width: "5rem", textAlign: "center" }}
+            bodyStyle={{ textAlign: "center", overflow: "visible" }}
+            body={actionBodyTemplate}
+          />
+        </DataTable>
+      </Card>
+    </>
   );
 };
 

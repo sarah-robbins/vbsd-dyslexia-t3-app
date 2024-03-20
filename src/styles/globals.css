@@ -81,8 +81,25 @@ button, .p-button {
   text-transform: uppercase;
 }
 
+.image-container {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+}
+.logo-speeddial {
+  position: relative;
+  margin: auto;
+  width: 245px !important;
+  height: 245px !important;
+}
 .logo-speeddial .p-button:focus {
   box-shadow: none !important;
+}
+
+@media screen and (min-width: 600px) {
+  .logo-speeddial {
+    width: 182px !important;
+    height: 182px !important;
+  }
 }
 
 .p-fieldset .p-fieldset-legend {
@@ -429,7 +446,78 @@ button.mobile-menu-toggle {
   
 }
 
-.p-datatable-wrapper {
-  padding: 10px !important;
-  border: 1px solid #dee2e6;
+.p-datatable .p-datatable-thead > tr > th {
+  border-top: 1px solid #dee2e6 !important;
+  border-left: 1px solid #dee2e6 !important;;
+  border-right: 1px solid #dee2e6 !important;;
+  border-bottom: 4px solid #dee2e6 !important;;
+}
+
+.p-datatable.students-table > .p-datatable-wrapper {
+  padding: 10px;
+  border: 2px solid #cacfd3;
+}
+/* .p-datatable .p-datatable-tbody > tr > td {
+  padding: 1.5rem 1.5rem !important;
+} */
+.relative-container {
+  position: relative;
+}
+.horizontal-line {
+  display: block;
+  /* position: absolute; */
+  border-top: 1px solid var(--secondary-color);
+  width: 100%;
+  margin: 0.5rem 0;
+}
+.vertical-line {
+  display: none;
+}
+@media screen and (min-width: 600px) {
+  .horizontal-line {
+    display: none;
+  }
+  .vertical-line {
+    position: absolute;
+    display: block;
+    border-left: 1px solid var(--secondary-color);
+    height: 100%;
+    left: calc(50% = 60px);
+    margin-left: -3px;
+    top: 0;
+  }
+}
+
+.landing-title {
+  font-size: 3rem !important;
+}
+/* VERSION BOX */
+.version-box {
+  position: relative;
+  border-radius: 4px;
+  padding: 1.5rem 1rem;
+  z-index: 999;
+}
+.version-box-green {
+  border: 2px solid var(--primary-color);
+  color: var(--primary-color)
+}
+.version-box-red {
+  border: 2px solid red;
+  color: red;
+}
+.current-version {
+  position: absolute;
+  top: -11px;
+  line-height: 16px;
+  font-weight: bold;
+  margin: 0;
+  padding: 0 6px;
+  background: #fff;
+}
+.current-version-green {
+  color: var(--primary-color);
+}
+.current-version-red {
+  color: red;
 }

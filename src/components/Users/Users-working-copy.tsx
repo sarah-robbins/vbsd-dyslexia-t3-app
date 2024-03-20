@@ -88,35 +88,6 @@ const Users: React.FC = () => {
     return rowData.school;
   };
 
-  const processRole = (
-    role: string | string[] | null | undefined
-  ): string[] => {
-    if (Array.isArray(role)) {
-      return role;
-    } else if (typeof role === "string") {
-      // Split the string by comma, then trim each element
-      return role.split(",").map((sch) => sch.trim());
-    } else {
-      return [];
-    }
-  };
-
-  const rolesTemplate = (rowData: User) => {
-    // Check if roles is an array
-    if (Array.isArray(rowData.role)) {
-      // Alphabetize the array of roles and then convert it to a comma-separated string
-      return rowData.role.sort().join(", ");
-    } else if (typeof rowData.role === "string") {
-      // If role is a string, ensure it's formatted with spaces after commas
-      return rowData.role
-        .split(",")
-        .map((s) => s.trim())
-        .join(", ");
-    }
-    // If roles is a string, just return it as is
-    return rowData.role;
-  };
-
   const [editingRows, setEditingRows] = useState({});
   const addNewUser = () => {
     const newUser: User = {
@@ -221,48 +192,18 @@ const Users: React.FC = () => {
   }, [myUsers]);
 
   const roleEditor = (options: ColumnEditorOptions) => {
-    const value = options.value as string | string[] | null | undefined;
-
-    const currentValue = processRole(value);
-
-    const handleRoleChange = (e: MultiSelectChangeEvent) => {
-      // Explicitly cast e.value to string[]
-      let selectedRoles: string[] = e.value as string[];
-
-      if (selectedRoles.includes("None") && selectedRoles.length > 1) {
-        selectedRoles = ["None"];
-      } else if (!selectedRoles.includes("None")) {
-        selectedRoles = selectedRoles.filter((role) => role !== "None");
-      }
-
-      options.editorCallback?.(selectedRoles);
-    };
-
+    const value = options.value as string;
     return (
-      <MultiSelect
-        value={currentValue}
-        options={appSettings.user_role_options.map((role) => ({
-          label: role,
-          value: role,
-        }))}
-        onChange={handleRoleChange}
-        placeholder="Roles"
-        optionLabel="label"
-        className="text-black"
+      <Dropdown
+        value={value}
+        options={appSettings.user_role_options}
+        onChange={(e: DropdownChangeEvent) => options.editorCallback?.(e.value)}
+        placeholder="Role"
+        itemTemplate={(option) => {
+          return <span>{option}</span>;
+        }}
       />
     );
-  };
-
-  const formatRolesForSave = (
-    role: string | string[] | null | undefined
-  ): string => {
-    // If role is a string, split it into an array
-    // If role is null or undefined, use an empty array
-    const roleArray =
-      typeof role === "string"
-        ? role.split(", ").map((s) => s.trim())
-        : role || [];
-    return Array.from(new Set(roleArray)).join(", ");
   };
 
   const viewEditor = (options: ColumnEditorOptions) => {
@@ -311,7 +252,7 @@ const Users: React.FC = () => {
         last_name: newData.last_name ?? "",
         email: newData.email ?? "",
         phone: newData.phone ?? "",
-        role: formatRolesForSave(newData.role),
+        role: newData.role ?? "",
         view: newData.view ?? "",
         super_admin_role: newData.super_admin_role ?? null,
         picture: newData.picture ?? null,
@@ -351,7 +292,7 @@ const Users: React.FC = () => {
         last_name: newData.last_name ?? "",
         email: newData.email ?? "",
         phone: newData.phone ?? "",
-        role: formatRolesForSave(newData.role),
+        role: newData.role ?? "",
         view: newData.view ?? "",
         super_admin_role: newData.super_admin_role ?? null,
         picture: newData.picture ?? null,
@@ -570,7 +511,6 @@ const Users: React.FC = () => {
         <Column
           field="role"
           header="Role"
-          body={rolesTemplate}
           editor={(options) => roleEditor(options)}
           sortable
         />

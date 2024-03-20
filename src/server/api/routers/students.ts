@@ -31,7 +31,16 @@ export const studentsRouter = createTRPCRouter({
     const tutorId = ctx.session?.user?.userId;
     const userSchool = ctx.session?.user?.school;
 
-    switch (userRole) {
+    let highestPriorityRole = '';
+
+    if (userRole.includes('Admin' || 'admin')) {
+      highestPriorityRole = 'Admin';
+    } else if (userRole.includes('Principal' || 'principal')) {
+      highestPriorityRole = 'Principal';
+    } else if (userRole.includes('Tutor' || 'tutor')) {
+      highestPriorityRole = 'Tutor';
+    }
+    switch (highestPriorityRole) {
       case 'tutor':
       case "Tutor":
         return await ctx.prisma.students.findMany({

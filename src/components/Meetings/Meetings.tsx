@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import MeetingForm from "./MeetingForm/MeetingForm";
 import MeetingCalendar from "./MeetingCalendar/MeetingCalendar";
+import MeetingForm from "./MeetingForm/MeetingForm";
 import MeetingList from "./MeetingList/MeetingList";
 import MeetingsTitleBar from "./MeetingsTitleBar/MeetingsTitleBar";
 import dayjs, { type Dayjs } from "dayjs";
@@ -32,6 +32,7 @@ const Meetings = () => {
   >([]);
   const [attendeesName] = useState<string[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
+  const [isOnMeetingsPage] = useState<boolean>(true);
 
   function getFirstMonthInView() {
     const currentDate = dayjs();
@@ -113,28 +114,6 @@ const Meetings = () => {
     });
   };
 
-  // useEffect(() => {
-  //   if (getMeetingsBySchool && sessionData?.role === 'principal') {
-  //     const convertedData = convertMeetings(
-  //       getMeetingsBySchool as unknown as MeetingWithAttendees[]
-  //     );
-  //     setMeetings(convertedData);
-  //   }
-  //   if (getMeetingsByTutorId && sessionData?.role === 'tutor') {
-  //     const convertedData = convertMeetings(
-  //       getMeetingsByTutorId as unknown as MeetingWithAttendees[]
-  //     );
-  //     setMeetings(convertedData);
-  //   }
-  // }, [
-  //   getAllMeetings.data,
-  //   getAllMeetings.isSuccess,
-  //   getMeetingsBySchool,
-  //   getMeetingsByTutorId,
-  //   sessionData?.role,
-  // ]);
-
-  // Database Call: Fetch meetings based on user role
   const { data: roleBasedMeetings } =
     api.meetings.getMeetingsForRole.useQuery();
 
@@ -180,21 +159,25 @@ const Meetings = () => {
           setSelectedDate={setSelectedDate}
           setDatedMeetingsWithAttendees={setDatedMeetingsWithAttendees}
           selectedMeetingAttendees={selectedMeetingAttendees}
-          // attendees={attendees}
+          isOnMeetingsPage={isOnMeetingsPage}
+          isOnStudentsPage={false}
         />
         <MeetingList
           meetings={meetings}
           students={students}
           selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
           getDatedMeetings={getDatedMeetings}
           selectedMeetings={selectedMeetings}
           setSelectedMeetings={setSelectedMeetings}
           datedMeetingsWithAttendees={datedMeetingsWithAttendees}
           attendeesName={attendeesName}
+          isOnMeetingsPage={isOnMeetingsPage}
+          isOnStudentsPage={false}
         />
       </div>
       {/* <StudentsInProgress /> */}
-      <Students />
+      <Students isOnMeetingsPage={isOnMeetingsPage} />
     </div>
   );
 };

@@ -33,25 +33,29 @@ import { useSession } from "next-auth/react";
 interface Props {
   meetings: MeetingWithAttendees[];
   setMeetings: (meetings: MeetingWithAttendees[]) => void;
+  students: Student[];
+  getDatedMeetings: MeetingWithAttendees[];
   selectedMeetings: MeetingWithAttendees[];
   setSelectedMeetings: (meetings: MeetingWithAttendees[]) => void;
-  getDatedMeetings: MeetingWithAttendees[];
+  isMeetingSelected: boolean;
   selectedDate: Dayjs;
   setSelectedDate: (date: Dayjs) => void;
-  students: Student[];
-  isMeetingSelected: boolean;
-  selectedMeetingAttendees: MeetingAttendees[];
   setDatedMeetingsWithAttendees: (meetings: MeetingWithAttendees[]) => void;
+  selectedMeetingAttendees: MeetingAttendees[];
+  isOnMeetingsPage: boolean;
+  isOnStudentsPage: boolean;
 }
 
 const MeetingForm: React.FC<Props> = ({
   meetings,
   setMeetings,
-  selectedDate,
   students = [],
   getDatedMeetings = [],
   selectedMeetings = [],
+  selectedDate,
   setDatedMeetingsWithAttendees,
+  isOnMeetingsPage,
+  isOnStudentsPage,
 }) => {
   const { data: session } = useSession();
   const sessionData = session?.user;
@@ -132,8 +136,6 @@ const MeetingForm: React.FC<Props> = ({
   const [selectedAttendees, setSelectedAttendees] = useState<
     MeetingAttendees[]
   >([]);
-  console.log(name);
-  console.log(namesForSelect);
 
   // useEffect(() => {
   //   console.log('students: ', students);
@@ -319,6 +321,12 @@ const MeetingForm: React.FC<Props> = ({
                   onChange={(e) =>
                     handleIndividualStatusChange(studentName, e.target.value)
                   }
+                  inputProps={{
+                    readOnly: !session?.user.role
+                      .split(",")
+                      .map((role) => role.trim())
+                      .some((role) => ["Admin", "Tutor"].includes(role)),
+                  }}
                 >
                   {options.map((option) => (
                     <MenuItem key={option} value={option}>
@@ -339,6 +347,12 @@ const MeetingForm: React.FC<Props> = ({
           <Select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
+            inputProps={{
+              readOnly: !session?.user.role
+                .split(",")
+                .map((role) => role.trim())
+                .some((role) => ["Admin", "Tutor"].includes(role)),
+            }}
           >
             {options.map((option) => (
               <MenuItem key={option} value={option}>
@@ -353,7 +367,12 @@ const MeetingForm: React.FC<Props> = ({
 
   useEffect(() => {
     renderStatusSelects();
-  }, [selectedNames]);
+    if (selectedStatus === "Met") {
+      setIsFormEditable(true);
+    } else {
+      setIsFormEditable(false);
+    }
+  }, [selectedNames, selectedStatus]);
 
   const handleIndividualStatusChange = (
     studentName: string,
@@ -377,7 +396,6 @@ const MeetingForm: React.FC<Props> = ({
   const programs = [...programOptions];
 
   const [selectedProgram, setSelectedProgram] = useState<string>("");
-  console.log(selectedProgram);
   const handleProgramChange = (event: SelectChangeEvent) => {
     const selectedProgram = event.target.value; // selected id
     setFormValues({ ...formValues, program: selectedProgram });
@@ -532,10 +550,10 @@ const MeetingForm: React.FC<Props> = ({
     setAttendees(getAttendees);
   }, [formValues.attendees]);
 
-  const handleAdd = (formValues: FormValues) => {
-    if (!selectedMeetings.length) {
-      return;
-    }
+  const handleAdd = async (formValues: FormValues) => {
+    // if (!selectedMeetings.length) {
+    //   return;
+    // }
 
     try {
       const validAttendees = attendees
@@ -558,7 +576,7 @@ const MeetingForm: React.FC<Props> = ({
         attendees: validAttendees,
       };
 
-      createMeetingMutation.mutate(newMeeting);
+      // createMeetingMutation.mutate(newMeeting);
 
       setName([]);
       setSelectedNames([]);
@@ -566,33 +584,36 @@ const MeetingForm: React.FC<Props> = ({
       setStartTime(dayjs());
       setEndTime(dayjs());
 
-      setFormValues({
-        name: [],
-        student_id: 0,
-        start: dayjs(),
-        end: dayjs(),
-        meeting_status: "",
-        program: "",
-        level_lesson: "",
-        meeting_notes: "",
-        recorded_by: "",
-        recorded_on: dayjs(),
-        edited_by: "",
-        edited_on: dayjs(),
-        attendees: [],
-      });
-      if (createMeetingMutation.isSuccess) {
+      const response = await createMeetingMutation.mutateAsync(newMeeting);
+
+      if (response.success) {
         toast.current?.show({
           severity: "success",
-          summary: "Meeting successfully updated.",
+          summary: "Meeting successfully added.",
           life: 3000,
+        });
+
+        setFormValues({
+          name: [],
+          student_id: 0,
+          start: dayjs(),
+          end: dayjs(),
+          meeting_status: "",
+          program: "",
+          level_lesson: "",
+          meeting_notes: "",
+          recorded_by: "",
+          recorded_on: dayjs(),
+          edited_by: "",
+          edited_on: dayjs(),
+          attendees: [],
         });
       }
     } catch (error) {
-      console.error("Error updating meeting:", error);
+      console.error("Error adding meeting:", error);
       toast.current?.show({
         severity: "error",
-        summary: "Error updating meeting.",
+        summary: "Error adding meeting.",
         life: 3000,
       });
     }
@@ -675,6 +696,8 @@ const MeetingForm: React.FC<Props> = ({
 
   const handleDelete = () => {
     const id = Number(selectedMeetings[0]?.id);
+    console.log("Deleting meeting with ID:", id);
+
     toastDelete.current?.show({
       severity: "error",
       summary: "Delete Meeting",
@@ -697,7 +720,9 @@ const MeetingForm: React.FC<Props> = ({
             <Button
               onClick={() => {
                 try {
+                  console.log("Deleting meeting with ID from try block:", id);
                   deleteMeetingMutation.mutate({ id: id });
+                  console.log("meeting list:", meetings);
                 } catch (error) {
                   console.error(`Error deleting this meeeting.`);
                 }
@@ -772,6 +797,46 @@ const MeetingForm: React.FC<Props> = ({
 
   const [isFormEditable, setIsFormEditable] = useState(false);
 
+  let hiddenButtonClass = "hidden"; // Default to hidden
+
+  if (isOnMeetingsPage && session?.user.role) {
+    const roles = session?.user?.role?.split(",").map((role) => role.trim());
+    if (roles.includes("Admin") || roles.includes("Tutor")) {
+      hiddenButtonClass = "";
+    } else {
+      hiddenButtonClass = "hidden";
+    }
+  }
+
+  if (isOnStudentsPage && session?.user.role) {
+    const roles = session?.user?.role?.split(",").map((role) => role.trim());
+    if (roles.includes("Admin")) {
+      hiddenButtonClass = "";
+    } else {
+      hiddenButtonClass = "hidden";
+    }
+  }
+
+  let hiddenFieldClass = "hidden"; // Default to hidden
+
+  if (isOnMeetingsPage && session?.user.role) {
+    const roles = session?.user?.role?.split(",").map((role) => role.trim());
+    if (roles.includes("Tutor")) {
+      hiddenFieldClass = "";
+    } else {
+      hiddenFieldClass = "hidden";
+    }
+  }
+
+  if (isOnStudentsPage && session?.user.role) {
+    const roles = session?.user?.role?.split(",").map((role) => role.trim());
+    if (roles.includes("Admin")) {
+      hiddenFieldClass = "";
+    } else {
+      hiddenFieldClass = "hidden";
+    }
+  }
+
   /* ------------------------------------------------------------- */
   /*                           HTML RETURN                         */
   /* ------------------------------------------------------------- */
@@ -801,6 +866,12 @@ const MeetingForm: React.FC<Props> = ({
               onChange={handleNameChange}
               input={<OutlinedInput label="Tag" />}
               renderValue={(selected) => selected.join(", ")}
+              inputProps={{
+                readOnly: !session?.user.role
+                  .split(",")
+                  .map((role) => role.trim())
+                  .some((role) => ["Admin", "Tutor"].includes(role)),
+              }}
             >
               {studentNames.map((name) => (
                 <MenuItem key={name} value={name}>
@@ -813,7 +884,7 @@ const MeetingForm: React.FC<Props> = ({
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
               label="Date"
-              className="w-12"
+              className={`w-12 ${hiddenFieldClass}`}
               value={formDate}
               onChange={handleFormDateChange}
             />
@@ -825,12 +896,24 @@ const MeetingForm: React.FC<Props> = ({
                 value={startTime}
                 onChange={handleStartTime}
                 className="w-6"
+                readOnly={
+                  !session?.user.role
+                    .split(",")
+                    .map((role) => role.trim())
+                    .some((role) => ["Admin", "Tutor"].includes(role))
+                }
               />
               <TimePicker
                 label="End Time"
                 value={endTime}
                 onChange={handleEndTime}
                 className="w-6"
+                readOnly={
+                  !session?.user.role
+                    .split(",")
+                    .map((role) => role.trim())
+                    .some((role) => ["Admin", "Tutor"].includes(role))
+                }
               />
             </div>
           </LocalizationProvider>
@@ -845,6 +928,12 @@ const MeetingForm: React.FC<Props> = ({
                 label="Program"
                 disabled={!isFormEditable}
                 onChange={handleProgramChange}
+                inputProps={{
+                  readOnly: !session?.user.role
+                    .split(",")
+                    .map((role) => role.trim())
+                    .some((role) => ["Admin", "Tutor"].includes(role)),
+                }}
               >
                 {programs.map((option) => (
                   <MenuItem key={option} value={option}>
@@ -862,6 +951,12 @@ const MeetingForm: React.FC<Props> = ({
               }
               label="Level/Lesson"
               className="w-6"
+              inputProps={{
+                readOnly: !session?.user.role
+                  .split(",")
+                  .map((role) => role.trim())
+                  .some((role) => ["Admin", "Tutor"].includes(role)),
+              }}
             />
           </div>
           <TextField
@@ -873,8 +968,15 @@ const MeetingForm: React.FC<Props> = ({
             label="Meeting Notes"
             multiline
             rows={4}
+            // Technically correct, but does it take into account multiple possible roles?
+            inputProps={{
+              readOnly: !session?.user.role
+                .split(",")
+                .map((role) => role.trim())
+                .some((role) => ["Admin", "Tutor"].includes(role)),
+            }}
           />
-          <Stack direction="row" spacing={2}>
+          <Stack direction="row" spacing={2} className={hiddenButtonClass}>
             <Button
               variant="contained"
               color="primary"
@@ -884,6 +986,8 @@ const MeetingForm: React.FC<Props> = ({
                   : Promise.resolve(handleAdd(formValues));
                 action
                   .then(() => {
+                    console.log(formValues);
+                    console.log("Action completed successfully");
                     // Handle successful response here, if needed
                   })
                   .catch((error) => {

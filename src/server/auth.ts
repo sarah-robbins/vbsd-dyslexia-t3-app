@@ -77,6 +77,24 @@ export const authOptions: NextAuthOptions = {
         return session;
       }
     },
+    // Add signIn callback here
+    async signIn({ user }) {
+      if (!user.email) {
+        // Log the issue, return an error, or handle as appropriate
+        console.error("User email is undefined or null");
+        return false; // Prevent the sign-in
+      }
+      const isUserAllowedToSignIn = await prisma.users.findUnique({
+        where: { email: user.email },
+      });
+
+      if (isUserAllowedToSignIn) {
+        return true; // Continue the sign-in process
+      } else {
+        // Optionally, log the attempted sign-in or notify an admin here
+        return false; // Prevent the sign-in
+      }
+    },
   },
   adapter: PrismaAdapter(prisma),
   providers: [

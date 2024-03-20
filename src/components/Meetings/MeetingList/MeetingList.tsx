@@ -6,33 +6,54 @@ import Chip from "@mui/material/Chip";
 import Checkbox from "@mui/material/Checkbox";
 import dayjs, { type Dayjs } from "dayjs";
 import { type Meeting, type Student, type MeetingWithAttendees } from "@/types";
+import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 interface Props {
-  selectedDate: Dayjs;
-  getDatedMeetings: MeetingWithAttendees[];
   meetings: MeetingWithAttendees[];
   students: Student[];
+  selectedDate: Dayjs;
+  getDatedMeetings: MeetingWithAttendees[];
   selectedMeetings: MeetingWithAttendees[];
+  setSelectedDate: (date: Dayjs) => void;
   setSelectedMeetings: (meetings: MeetingWithAttendees[]) => void;
   datedMeetingsWithAttendees: MeetingWithAttendees[];
   attendeesName: string[];
+  isOnMeetingsPage: boolean;
+  isOnStudentsPage: boolean;
 }
 
 const MeetingList: React.FC<Props> = ({
+  meetings = [],
   selectedDate,
+  setSelectedDate,
   getDatedMeetings = [],
   selectedMeetings = [],
-  meetings = [],
   // students = [],
   setSelectedMeetings = () => {
     meetings;
   },
   datedMeetingsWithAttendees = [],
+  isOnMeetingsPage,
+  isOnStudentsPage,
 }) => {
+  const hiddenOnMeetingPage = isOnMeetingsPage ? "hidden" : "";
+  const showOnStudentsPage = isOnStudentsPage ? "" : "hidden";
+  console.log("isOnMeetingsPage: ", isOnMeetingsPage);
+  console.log("isOnStudentsPage: ", isOnStudentsPage);
   const [filteredMeetings, setFilteredMeetings] = useState<
     MeetingWithAttendees[]
   >([]);
   const selectAllCheckboxRef = useRef<HTMLInputElement>(null);
+  const [formDate, setFormDate] = useState(selectedDate);
+
+  const handleFormDateChange = (date: Dayjs | null) => {
+    if (date) {
+      setFormDate(date);
+      setSelectedDate(date);
+    }
+  };
+
   useEffect(() => {
     if (selectedDate) {
       const filtered = datedMeetingsWithAttendees
@@ -262,6 +283,20 @@ const MeetingList: React.FC<Props> = ({
     <Card className="lg:w-7 flex-order-1 lg:flex-order-2 elevate-item">
       <div className="meeting-list-name-select flex justify-content-between align-items-center gap-4">
         <h3>Meetings</h3>
+      </div>
+      <div
+        className={`selectDate ${hiddenOnMeetingPage} ${showOnStudentsPage}`}
+      >
+        <span>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="Date"
+              className="w-12"
+              value={formDate}
+              onChange={handleFormDateChange}
+            />
+          </LocalizationProvider>
+        </span>
       </div>
       <DataTable
         value={filteredMeetings}

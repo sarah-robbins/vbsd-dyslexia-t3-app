@@ -289,12 +289,14 @@ export const meetingsRouter = createTRPCRouter({
             },
           });
         }
-
-        return meeting;
+        
+        return { success: true };
+        // return meeting;
       } catch (error) {
         console.error('Error creating meeting:', error);
         throw new Error('Failed to create meeting and attendees');
       }
+
     }),
 
   //delete meeting

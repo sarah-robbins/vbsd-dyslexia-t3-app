@@ -9,6 +9,24 @@ interface Props {
 }
 
 const LoginButton: React.FC<Props> = ({ disabled }) => {
+  const updateAppButton =
+    disabled === false ? (
+      <Button
+        className="w-full"
+        variant="contained"
+        color="primary"
+        onClick={() => {
+          void signIn("google", { callbackUrl: "/dashboard" });
+        }}
+      >
+        Login
+      </Button>
+    ) : (
+      <Button className="w-full" variant="contained" color="error">
+        Update
+      </Button>
+    );
+
   return (
     <>
       <div className="logo-speeddial card p-card-grey p-overlay-badge shadow-5 border-round-lg p-3 background-primary">
@@ -20,28 +38,19 @@ const LoginButton: React.FC<Props> = ({ disabled }) => {
               void signIn("google", { callbackUrl: "/dashboard" });
             }}
             disabled={disabled}
+            className="image-container relative-container"
           >
             <Image
               src="/logo.svg"
-              width={150}
-              height={150}
+              // width={245}
+              // height={245}
+              fill={true}
               alt="dropdown icon"
             />
           </Link>
         </div>
       </div>
-      <div className="mt-4">
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => {
-            void signIn("google", { callbackUrl: "/dashboard" });
-          }}
-          disabled={disabled}
-        >
-          Login
-        </Button>
-      </div>
+      <div className="mt-4 w-full">{updateAppButton}</div>
     </>
   );
 };
