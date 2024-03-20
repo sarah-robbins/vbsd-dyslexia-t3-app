@@ -84,7 +84,7 @@ export const authOptions: NextAuthOptions = {
         console.error("User email is undefined or null");
         return false; // Prevent the sign-in
       }
-      const isUserAllowedToSignIn = await prisma.users.findUnique({
+      const isUserAllowedToSignIn = await prisma.users.findMany({
         where: { email: user.email },
       });
 
