@@ -763,14 +763,12 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       updateStudentExtraData(updateData);
     };
 
-    console.log("*********** row ID: ", data.id);
-    console.log("*********** getDatedMeetings: ", getDatedMeetings);
     const studentMeetings = getDatedMeetings?.filter((meeting) =>
       meeting.MeetingAttendees?.some(
         (attendee) => attendee.student_id === data.id
       )
     );
-    console.log("*********** studentMeetings: ", studentMeetings);
+
     return (
       <>
         <div className="expansion-row flex flex-row gap-3">

@@ -29,7 +29,7 @@ const MeetingList: React.FC<Props> = ({
   setSelectedDate,
   getDatedMeetings = [],
   selectedMeetings = [],
-  // students = [],
+  students = [],
   setSelectedMeetings = () => {
     meetings;
   },
@@ -57,7 +57,61 @@ const MeetingList: React.FC<Props> = ({
   };
 
   useEffect(() => {
-    if (selectedDate) {
+    if (selectedDate && isOnMeetingsPage) {
+      console.log(
+        "***datedMeetingsWithAttendees*** ",
+        datedMeetingsWithAttendees
+      );
+      const filtered = datedMeetingsWithAttendees
+        .map((meeting) => ({
+          ...meeting,
+          dateString: dayjs(meeting.start).format("YYYY-MM-DD"),
+        }))
+        .filter((meeting) => {
+          const meetingDate = dayjs(meeting.start);
+          return meetingDate.isSame(selectedDate, "day");
+        });
+      setFilteredMeetings(filtered);
+    }
+    if (selectedDate && isOnStudentsPage) {
+      const datedMeetingsWithAttendees: MeetingWithAttendees[] =
+        getDatedMeetings.map((meeting): MeetingWithAttendees => {
+          // const students = getStudentsBySchool;
+          const attendees = (meeting.MeetingAttendees ?? [])
+            .map((attendee) => {
+              const student = students?.find(
+                (s) => s.id === attendee.student_id
+              );
+              if (!student) return;
+              return {
+                ...attendee,
+                id: attendee.student_id,
+                name: `${student.first_name ?? ""} ${student.last_name ?? ""}`,
+              };
+            })
+            .filter(
+              (
+                a
+              ): a is {
+                id: number;
+                meeting_id: number;
+                student_id: number;
+                meeting_status: string;
+                created_at: Dayjs;
+                name: string;
+              } => Boolean(a)
+            ) as {
+            id: number;
+            meeting_id: number;
+            student_id: number;
+            meeting_status: string;
+            created_at: Dayjs;
+            name: string;
+          }[];
+          return { ...meeting, attendees };
+        });
+
+      console.log("***getDatedMeetings*** ", getDatedMeetings);
       const filtered = datedMeetingsWithAttendees
         .map((meeting) => ({
           ...meeting,
