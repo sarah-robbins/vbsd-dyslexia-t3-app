@@ -12,6 +12,7 @@ import {
   type MeetingWithAttendees,
 } from "@/types";
 import Students from "../Students/Students";
+import { get } from "http";
 // import { useSession } from "next-auth/react";
 // import StudentsInProgress from '../Students/Students-in-progress';
 
@@ -53,12 +54,10 @@ const Meetings = () => {
   const { data: getDatedMeetings } = api.meetings.getMeetingsByDate.useQuery(
     dateToQuery.toDate()
   ) as { data: MeetingWithAttendees[] };
-  console.log("getDatedMeetings from Meetings page", getDatedMeetings);
 
   const { data: myStudents } = api.students.getStudentsForRole.useQuery() as {
     data: Student[];
   };
-  console.log("myStudents from Meetings page", myStudents);
 
   useEffect(() => {
     if (myStudents) {
@@ -116,15 +115,19 @@ const Meetings = () => {
   };
 
   const { data: roleBasedMeetings } =
-    api.meetings.getMeetingsForRole.useQuery();
+    api.meetings.getMeetingsForRole.useQuery() as {
+      data: Meeting[];
+    };
 
   useEffect(() => {
     if (roleBasedMeetings) {
+      console.log("roleBasedMeetings", roleBasedMeetings);
       // Convert dates to Dayjs objects and update state
       const convertedMeetings = convertMeetings(roleBasedMeetings);
       setMeetings(convertedMeetings);
     }
-  }, [roleBasedMeetings]);
+    setMeetings(getDatedMeetings);
+  }, [getDatedMeetings, roleBasedMeetings]);
 
   return (
     <div className="flex flex-column justify-content-center gap-4">
@@ -158,6 +161,7 @@ const Meetings = () => {
           isMeetingSelected={!!selectedMeetings}
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
+          datedMeetingsWithAttendees={datedMeetingsWithAttendees}
           setDatedMeetingsWithAttendees={setDatedMeetingsWithAttendees}
           selectedMeetingAttendees={selectedMeetingAttendees}
           isOnMeetingsPage={isOnMeetingsPage}

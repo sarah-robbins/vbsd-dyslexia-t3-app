@@ -101,14 +101,14 @@ export type User = {
   id?: number;
   first_name?: string;
   last_name?: string;
-  school?: string;
+  school?: string | null;
   email?: string;
   phone?: string;
-  role?: string;
+  role?: string | null;
   super_admin_role?: boolean | null;
   picture?: string | null;
   created_at?: Dayjs | Date | null;
-  view?: string;
+  view?: string | null;
 };
 
 export interface MeetingWithAttendees extends Meeting {

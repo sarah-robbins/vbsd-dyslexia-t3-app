@@ -40,6 +40,7 @@ interface Props {
   isMeetingSelected: boolean;
   selectedDate: Dayjs;
   setSelectedDate: (date: Dayjs) => void;
+  datedMeetingsWithAttendees: MeetingWithAttendees[];
   setDatedMeetingsWithAttendees: (meetings: MeetingWithAttendees[]) => void;
   selectedMeetingAttendees: MeetingAttendees[];
   isOnMeetingsPage: boolean;
@@ -82,6 +83,7 @@ const MeetingForm: React.FC<Props> = ({
   });
 
   useEffect(() => {
+    console.log("meetings from MeetingForm", meetings);
     if (selectedDate && getDatedMeetings) {
       const datedMeetingsWithAttendees: MeetingWithAttendees[] =
         getDatedMeetings.map((meeting): MeetingWithAttendees => {
@@ -161,7 +163,13 @@ const MeetingForm: React.FC<Props> = ({
 
     //   setDatedMeetingsWithAttendees(datedMeetingsWithAttendees);
     // }
-  }, [getDatedMeetings, students, selectedDate, setDatedMeetingsWithAttendees]);
+  }, [
+    getDatedMeetings,
+    meetings,
+    students,
+    selectedDate,
+    setDatedMeetingsWithAttendees,
+  ]);
 
   /* -------------------------------------------------------------------------- */
   /*                             HANDLE NAME CHANGE                             */
@@ -175,24 +183,6 @@ const MeetingForm: React.FC<Props> = ({
   const [selectedAttendees, setSelectedAttendees] = useState<
     MeetingAttendees[]
   >([]);
-
-  // useEffect(() => {
-  //   console.log('students: ', students);
-  //   console.log('selectedMeetings: ', selectedMeetings);
-  //   console.log('attendees', attendees);
-  //   console.log('formValues: ', formValues);
-  //   console.log('selectedAttendees: ', selectedAttendees);
-  //   console.log('selectedNames: ', selectedNames);
-  //   console.log('removedAttendees: ', removedAttendees);
-  // }, [
-  //   selectedMeetings,
-  //   attendees,
-  //   formValues,
-  //   students,
-  //   selectedAttendees,
-  //   selectedNames,
-  //   removedAttendees,
-  // ]);
 
   const meeting_id = selectedMeetings[0]?.id ?? 0;
   const { data: mySelectedAttendees } =
@@ -257,9 +247,9 @@ const MeetingForm: React.FC<Props> = ({
     setRemovedAttendees(updatedRemovedAttendees);
   };
 
-  useEffect(() => {
-    console.log("removedAttendees updated: ", removedAttendees);
-  }, [removedAttendees]);
+  // useEffect(() => {
+  //   console.log("removedAttendees updated: ", removedAttendees);
+  // }, [removedAttendees]);
 
   /* -------------------------------------------------------------------------- */
   /*                            HANDLE DATE AND TIME                            */
@@ -405,13 +395,13 @@ const MeetingForm: React.FC<Props> = ({
   };
 
   useEffect(() => {
-    renderStatusSelects();
-    if (selectedStatus === "Met") {
-      setIsFormEditable(true);
-    } else {
-      setIsFormEditable(false);
-    }
-  }, [selectedNames, selectedStatus]);
+    const anyMetStatus =
+      selectedNames.length > 1
+        ? Object.values(individualStatuses).some((status) => status === "Met")
+        : selectedStatus === "Met";
+
+    setIsFormEditable(anyMetStatus);
+  }, [selectedNames, selectedStatus, individualStatuses]); // Ensure individualStatuses is tracked for changes
 
   const handleIndividualStatusChange = (
     studentName: string,
@@ -455,7 +445,6 @@ const MeetingForm: React.FC<Props> = ({
     setStudentNames(allStudentNames);
   }, [allStudentNames]);
 
-  // TODO: This useEffect hook is not correctly setting isFormEditable. It is not updating when the selectedMeetings state changes.
   useEffect(() => {
     const getAttendeeNames = (): string[] => {
       return selectedMeetings.flatMap(
@@ -466,8 +455,6 @@ const MeetingForm: React.FC<Props> = ({
     setName(names);
     setSelectedNames(names);
   }, [selectedMeetings]);
-
-  // useEffect(() => {}, [getDatedMeetings.length, meetings]);
 
   useEffect(() => {
     if (selectedMeetings.length > 0) {
@@ -590,6 +577,8 @@ const MeetingForm: React.FC<Props> = ({
   }, [formValues.attendees]);
 
   const handleAdd = async (formValues: FormValues) => {
+    console.log("Submitting with attendees:", formValues.attendees);
+
     // if (!selectedMeetings.length) {
     //   return;
     // }
@@ -758,54 +747,38 @@ const MeetingForm: React.FC<Props> = ({
           <div className="flex gap-2">
             <Button
               onClick={() => {
-                try {
-                  console.log("Deleting meeting with ID from try block:", id);
-                  deleteMeetingMutation.mutate({ id: id });
-                  console.log("meeting list:", meetings);
-                } catch (error) {
-                  console.error(`Error deleting this meeeting.`);
-                }
+                deleteMeetingMutation.mutate(
+                  { id: id },
+                  {
+                    onSuccess: () => {
+                      // This code runs after the mutation succeeds
+                      setMeetings(
+                        meetings.filter((meeting) => meeting.id !== id)
+                      );
+                      setDatedMeetingsWithAttendees(
+                        meetings.filter((meeting) => meeting.id !== id)
+                      );
+                      console.log("*****meeting list*****:", meetings);
+                      toast.current?.show({
+                        severity: "success",
+                        summary: "This meeting has been deleted.",
+                        life: 3000,
+                      });
+                      // Reset form values or other state updates here
 
-                if (deleteMeetingMutation.isSuccess) {
-                  toast.current?.show({
-                    severity: "success",
-                    summary: "This meeting has been deleted.",
-                    life: 3000,
-                  });
-                  setName([]);
-                  setSelectedStatus("");
-                  setStartTime(dayjs());
-                  setEndTime(dayjs());
-
-                  setFormValues({
-                    id: 0,
-                    name: [],
-                    student_id: 0,
-                    start: dayjs(),
-                    end: dayjs(),
-                    meeting_status: "",
-                    program: "",
-                    level_lesson: "",
-                    meeting_notes: "",
-                    recorded_by: "",
-                    recorded_on: dayjs(),
-                    edited_by: "",
-                    edited_on: dayjs(),
-                    attendees: [],
-                  });
-
-                  setMeetings(meetings.filter((meeting) => meeting.id !== id));
-                  toastDelete.current?.clear();
-                }
-
-                if (deleteMeetingMutation.isError) {
-                  toast.current?.show({
-                    severity: "error",
-                    summary:
-                      "There was an error, and this meeting was not deleted.",
-                    life: 3000,
-                  });
-                }
+                      toastDelete.current?.clear();
+                    },
+                    onError: () => {
+                      // This code runs if the mutation fails
+                      toast.current?.show({
+                        severity: "error",
+                        summary:
+                          "There was an error, and this meeting was not deleted.",
+                        life: 3000,
+                      });
+                    },
+                  }
+                );
               }}
               variant="contained"
               color="error"
@@ -1025,7 +998,6 @@ const MeetingForm: React.FC<Props> = ({
                   : Promise.resolve(handleAdd(formValues));
                 action
                   .then(() => {
-                    console.log(formValues);
                     console.log("Action completed successfully");
                     // Handle successful response here, if needed
                   })

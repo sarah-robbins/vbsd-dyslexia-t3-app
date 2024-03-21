@@ -521,3 +521,19 @@ button.mobile-menu-toggle {
 .current-version-red {
   color: red;
 }
+
+.p-paginator .p-paginator-pages .p-paginator-page {
+  min-width: 2.5rem;
+  height: 2.5rem;
+  margin: 0.143rem;
+}
+.p-paginator .p-paginator-pages .p-paginator-page.p-highlight {
+  background: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: #fff !important;
+}
+
+.p-paginator {
+  /* padding: 2rem auto !important; */
+  margin: .5rem auto !important;
+}

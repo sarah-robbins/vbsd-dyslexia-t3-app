@@ -1,5 +1,5 @@
 import React from "react";
-import { version } from "package.json";
+import pkg from "@/../package.json";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
 
@@ -8,6 +8,7 @@ interface Props {
 }
 
 const VersionBox: React.FC<Props> = ({ updateStatus }) => {
+  const version = pkg.version;
   // Determine the class names based on updateStatus
   const versionBoxClass = `relative-container version-box ${
     updateStatus ? "version-box-green" : "version-box-red"

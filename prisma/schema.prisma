@@ -129,16 +129,16 @@ model Students {
 
 model Users {
   id               Int        @id(map: "dummyUsers_pkey") @unique @default(autoincrement())
-  first_name       String
-  last_name        String
-  school           String
-  email            String     @unique
+  first_name       String?
+  last_name        String?
+  school           String?
+  email            String?    @unique
   phone            String?
-  role             String
+  role             String?
   super_admin_role Boolean?
   picture          String?
   created_at       DateTime   @default(now()) @db.Timestamptz(6)
-  view             String
+  view             String?
   Students         Students[]
   User             User?
 }

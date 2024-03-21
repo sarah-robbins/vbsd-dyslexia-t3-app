@@ -26,9 +26,11 @@ const MeetingCalendar: React.FC<Props> = ({
 }) => {
   const meetingDates: string[] = useMemo(() => {
     if (meetings) {
+      console.log("Unique meeting", meetings);
       const uniqueDates = new Set(
         meetings.map((meeting) => dayjs(meeting.start).format("YYYY-MM-DD"))
       );
+      console.log("Unique meeting dates", uniqueDates);
       return Array.from(uniqueDates);
     }
     return [];
@@ -66,18 +68,18 @@ const MeetingCalendar: React.FC<Props> = ({
   //   month: number;
   //   day: string;
   // }
-  const dateTemplate = (date: CalendarDateTemplateEvent) => {
+  const dateTemplate = (event: CalendarDateTemplateEvent) => {
     const dayFormatted =
-      date.year.toString() +
+      event.year.toString() +
       "-" +
-      (Number(date.month) + 1).toString().padStart(2, "0") +
+      (Number(event.month) + 1).toString().padStart(2, "0") +
       "-" +
-      date.day.toString().padStart(2, "0");
+      event.day.toString().padStart(2, "0");
 
     if (meetingDates.includes(dayFormatted)) {
-      return <span className="meeting-day">{date.day}</span>;
+      return <span className="meeting-day">{event.day}</span>;
     }
-    return date.day;
+    return event.day;
   };
 
   const selectedDateValue = dayjs(selectedDate).toDate();

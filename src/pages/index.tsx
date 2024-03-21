@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { version } from "package.json";
+import pkg from "@/../package.json";
 import { type NextPage } from "next";
 import Head from "next/head";
 // import SplashSpeedDial from '@/components/SplashSpeedDial/SplashSpeedDial';
@@ -11,6 +11,8 @@ import { Card } from "primereact/card";
 import VersionBox from "@/components/VersionBox/VersionBox";
 
 const Home: NextPage = () => {
+  const version = pkg.version;
+
   // const { data: sessionData } = useSession();
   const getAppSettings = api.settings.getAllSettings.useQuery();
   const [settings, setSettings] = useState<AppSettings[] | undefined>([]);
@@ -33,7 +35,7 @@ const Home: NextPage = () => {
 
   useEffect(() => {
     console.log("version", version.toString());
-    const appVersion = "2.0.0 - alpha";
+    const appVersion = "2.0.1 - alpha";
     if (appVersion !== version.toString()) {
       setAppIsUpdated(false);
     }

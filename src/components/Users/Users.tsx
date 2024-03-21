@@ -27,10 +27,13 @@ import CreateIcon from "@mui/icons-material/Create";
 import CloseIcon from "@mui/icons-material/Close";
 import CheckIcon from "@mui/icons-material/Check";
 import { useSession } from "next-auth/react";
-import { Button } from "primereact/button";
+// import { Button } from "primereact/button";
+import Button from "@mui/material/Button";
 
 const Users: React.FC = () => {
-  const getAllUsers = api.users.getAllUsers.useQuery();
+  const toastDelete = useRef<Toast>(null);
+  // const getAllUsers = api.users.getAllUsers.useQuery();
+
   const [users, setUsers] = useState<User[]>([]);
   const toast = useRef<Toast>(null);
   // use the session to get appSettings
@@ -47,13 +50,6 @@ const Users: React.FC = () => {
     view: { value: null, matchMode: FilterMatchMode.CONTAINS },
   });
   const [globalFilterValue, setGlobalFilterValue] = useState<string>("");
-
-  // useEffect(() => {
-  //   if (getAllUsers.data) {
-  //     setUsers(getAllUsers.data);
-  //     console.log("getAllUsers.data", getAllUsers.data);
-  //   }
-  // }, [getAllUsers.data]);
 
   const { data: myUsers } = api.users.getUsersForRole.useQuery() as {
     data: User[];
@@ -89,13 +85,13 @@ const Users: React.FC = () => {
   };
 
   const processRole = (
-    role: string | string[] | null | undefined
+    roles: string | string[] | null | undefined
   ): string[] => {
-    if (Array.isArray(role)) {
-      return role;
-    } else if (typeof role === "string") {
+    if (Array.isArray(roles)) {
+      return roles;
+    } else if (typeof roles === "string") {
       // Split the string by comma, then trim each element
-      return role.split(",").map((sch) => sch.trim());
+      return roles.split(",").map((role) => role.trim());
     } else {
       return [];
     }
@@ -118,22 +114,32 @@ const Users: React.FC = () => {
   };
 
   const [editingRows, setEditingRows] = useState({});
+  const generateTempId = () =>
+    Number(
+      `-000${Math.floor(Math.random() * 1000)
+        .toString()
+        .padStart(3, "0")}`
+    );
   const addNewUser = () => {
+    const tempId = generateTempId();
     const newUser: User = {
-      // id: null, // Temporary ID for the new row
-      first_name: "First Name",
-      last_name: "Last Name",
-      school: "Unassigned",
-      email: "Email",
-      phone: "Phone",
-      role: "",
-      view: "",
+      id: tempId,
+      first_name: "",
+      last_name: "",
+      school: null,
+      email: "",
+      phone: "",
+      role: null,
+      view: null,
       super_admin_role: null,
       picture: null,
       created_at: new Date(),
     };
     setUsers((prev) => [newUser, ...prev]);
-    setEditingRows({ "-1": true });
+    setEditingRows((prevEditingRows) => ({
+      ...prevEditingRows,
+      [tempId]: true,
+    }));
   };
 
   const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -147,13 +153,55 @@ const Users: React.FC = () => {
     setGlobalFilterValue(value);
   };
 
-  const textEditor = (options: ColumnEditorOptions) => {
+  const firstNameEditor = (options: ColumnEditorOptions) => {
     const value = options.value as string;
     return (
       <InputText
         type="text"
         value={value}
-        placeholder="Enter a value"
+        placeholder="First Name"
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          options.editorCallback?.(e.target.value)
+        }
+      />
+    );
+  };
+
+  const lastNameEditor = (options: ColumnEditorOptions) => {
+    const value = options.value as string;
+    return (
+      <InputText
+        type="text"
+        value={value}
+        placeholder="Last Name"
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          options.editorCallback?.(e.target.value)
+        }
+      />
+    );
+  };
+
+  const emailEditor = (options: ColumnEditorOptions) => {
+    const value = options.value as string;
+    return (
+      <InputText
+        type="text"
+        value={value}
+        placeholder="Email"
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          options.editorCallback?.(e.target.value)
+        }
+      />
+    );
+  };
+
+  const phoneEditor = (options: ColumnEditorOptions) => {
+    const value = options.value as string;
+    return (
+      <InputText
+        type="text"
+        value={value}
+        placeholder="Phone"
         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
           options.editorCallback?.(e.target.value)
         }
@@ -190,6 +238,9 @@ const Users: React.FC = () => {
         placeholder="Schools"
         optionLabel="label"
         className="text-black"
+        filter
+        resetFilterOnHide
+        selectAllLabel="All"
       />
     );
   };
@@ -221,9 +272,9 @@ const Users: React.FC = () => {
   }, [myUsers]);
 
   const roleEditor = (options: ColumnEditorOptions) => {
-    const value = options.value as string | string[] | null | undefined;
+    const value = options.value as string | string[] | undefined;
 
-    const currentValue = processRole(value);
+    const currentValue = processRole(value) as string[] | undefined;
 
     const handleRoleChange = (e: MultiSelectChangeEvent) => {
       // Explicitly cast e.value to string[]
@@ -248,6 +299,7 @@ const Users: React.FC = () => {
         onChange={handleRoleChange}
         placeholder="Roles"
         optionLabel="label"
+        selectAllLabel="All"
         className="text-black"
       />
     );
@@ -298,7 +350,7 @@ const Users: React.FC = () => {
     // Handle saving the edited data
     let updatedUsers = users;
 
-    if (newData.id === undefined) {
+    if (newData.id === undefined || e.data.id < 0) {
       // Handling new row
       updatedUsers = users.map((user) =>
         user.id === -1 ? ({ ...e.data, id: 0 } as User) : user
@@ -320,12 +372,26 @@ const Users: React.FC = () => {
       createUserMutation.mutate(dataForSave, {
         onSuccess: () => {
           // On success, maybe refresh the data or show a success toast
+          setUsers((prevUsers) => {
+            const index = prevUsers.findIndex(
+              (user) => user.id === dataForSave.id
+            );
+
+            if (index !== -1) {
+              // User exists, update their information
+              const newUsers = [...prevUsers];
+              newUsers[index] = dataForSave;
+              return newUsers;
+            } else {
+              // New user, add them to the list
+              return [dataForSave, ...prevUsers];
+            }
+          });
           toast.current?.show({
             severity: "success",
             summary: "Success",
             detail: "User saved",
           });
-          setUsers(myUsers);
         },
         onError: (error) => {
           console.log("error", error);
@@ -362,12 +428,26 @@ const Users: React.FC = () => {
       updateUserMutation.mutate(dataForSave, {
         onSuccess: () => {
           // On success, maybe refresh the data or show a success toast
+          setUsers((prevUsers) => {
+            const index = prevUsers.findIndex(
+              (user) => user.id === dataForSave.id
+            );
+
+            if (index !== -1) {
+              // User exists, update their information
+              const newUsers = [...prevUsers];
+              newUsers[index] = dataForSave;
+              return newUsers;
+            } else {
+              // New user, add them to the list
+              return [dataForSave, ...prevUsers];
+            }
+          });
           toast.current?.show({
             severity: "success",
             summary: "Success",
             detail: "User updated",
           });
-          setUsers(myUsers);
         },
         onError: (error) => {
           console.log("error", error);
@@ -386,41 +466,73 @@ const Users: React.FC = () => {
 
   const handleDeleteUser = (userId?: number) => {
     const id = userId || 0;
-    // Call the TRPC mutation to delete the user
-    deleteUserMutation.mutate(
-      { id },
-      {
-        onSuccess: () => {
-          // On success, filter out the deleted user from the local state
-          setUsers((users) => users.filter((user) => user.id !== userId));
 
-          // Optionally, show a success message
-          toast.current?.show({
-            severity: "success",
-            summary: "Success",
-            detail: "User deleted",
-          });
-        },
-        onError: (error) => {
-          // On error, show an error message
-          console.error("Error deleting user:", error);
-          toast.current?.show({
-            severity: "error",
-            summary: "Error",
-            detail: "Delete failed",
-          });
-        },
-      }
-    );
-  };
+    toastDelete.current?.show({
+      severity: "error",
+      summary: "Delete Meeting",
+      sticky: true,
+      content: (
+        <div
+          className="flex flex-column align-items-center"
+          style={{ flex: "1" }}
+        >
+          <div className="text-center">
+            <i
+              className="pi pi-exclamation-triangle"
+              style={{ fontSize: "3rem" }}
+            ></i>
+            <div className="font-bold text-xl my-3">
+              Are you sure you want to delete this student?
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => {
+                try {
+                  console.log("Deleting meeting with ID from try block:", id);
+                  deleteUserMutation.mutate({ id: id });
+                  toastDelete.current?.clear();
+                } catch (error) {
+                  console.error(`Error deleting this meeeting.`);
+                }
 
-  const actionBodyTemplate = (rowData: User) => {
-    if (typeof rowData.id !== "number") {
-      return null;
-    }
-    return (
-      <DeleteIcon color="error" onClick={() => handleDeleteUser(rowData.id)} />
-    );
+                if (deleteUserMutation.isSuccess) {
+                  setUsers((users) => users.filter((user) => user.id !== id));
+                  console.log("user list:", users);
+
+                  // Optionally, show a success message
+                  toast.current?.show({
+                    severity: "success",
+                    summary: "Success",
+                    detail: "User deleted",
+                  });
+                }
+
+                if (deleteUserMutation.isError) {
+                  console.error("Error deleting user.");
+                  toast.current?.show({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "Delete failed",
+                  });
+                }
+              }}
+              variant="contained"
+              color="error"
+            >
+              Confirm
+            </Button>
+            <Button
+              onClick={() => toastDelete.current?.clear()}
+              variant="contained"
+              color="secondary"
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      ),
+    });
   };
 
   const renderHeader = () => {
@@ -428,7 +540,9 @@ const Users: React.FC = () => {
       <div className="flex justify-content-between">
         <div className="flex align-items-center">
           {session?.user.role !== "Tutor" && (
-            <Button label="Add" onClick={addNewUser} text />
+            <Button onClick={addNewUser} variant="contained">
+              Add
+            </Button>
           )}
         </div>
         <div className="flex justify-content-end">
@@ -449,7 +563,7 @@ const Users: React.FC = () => {
   // const rows = [editingRow, ...users].filter((r) => r != null);
 
   // load animation for the table
-  if (!getAllUsers.data) return <p>Loading...</p>;
+  // if (!getAllUsers.data) return <p>Loading...</p>;
 
   // choose waht to do when a row in clicked
   const rowSelected = (e: DataTableRowEvent) => {
@@ -458,7 +572,7 @@ const Users: React.FC = () => {
 
   const newRowClass = (data: User) => {
     return {
-      "bg-red-50": data.first_name === "First Name",
+      "bg-red-50": data.first_name === "",
     };
   };
 
@@ -478,11 +592,7 @@ const Users: React.FC = () => {
               options.rowEditor?.onCancelClick &&
               options.rowEditor?.onCancelClick(e)
             }
-            color="info"
-          />
-          <DeleteIcon
             color="error"
-            onClick={() => handleDeleteUser(rowData.id)}
           />
         </div>
       ) : (
@@ -496,7 +606,16 @@ const Users: React.FC = () => {
           />
           <DeleteIcon
             color="error"
-            onClick={() => handleDeleteUser(rowData.id)}
+            onClick={() => {
+              if (rowData.id && rowData.id < 0) {
+                setUsers((prevUsers) =>
+                  prevUsers.filter((user) => user.id !== rowData.id)
+                );
+              } else if (rowData.id && rowData.id > 0) {
+                const userId = rowData.id;
+                handleDeleteUser(userId);
+              }
+            }}
           />
         </div>
       )}
@@ -506,6 +625,7 @@ const Users: React.FC = () => {
   return (
     <Card className="card">
       <Toast ref={toast} />
+      <Toast ref={toastDelete} position="top-center" />
       <div className="meeting-list-name-select flex justify-content-between align-items-center gap-4">
         <h3>Users</h3>
       </div>
@@ -535,17 +655,20 @@ const Users: React.FC = () => {
         header={header}
         emptyMessage="No users match your search."
         showGridlines
+        paginator
+        rows={10}
+        rowsPerPageOptions={[5, 10, 25, 50]}
       >
         <Column
           field="first_name"
           header="First Name"
-          editor={(options) => textEditor(options)}
+          editor={(options) => firstNameEditor(options)}
           sortable
         />
         <Column
           field="last_name"
           header="Last Name"
-          editor={(options) => textEditor(options)}
+          editor={(options) => lastNameEditor(options)}
           sortable
         />
         <Column
@@ -558,13 +681,13 @@ const Users: React.FC = () => {
         <Column
           field="email"
           header="Email"
-          editor={(options) => textEditor(options)}
+          editor={(options) => emailEditor(options)}
           sortable
         />
         <Column
           field="phone"
           header="Phone"
-          editor={(options) => textEditor(options)}
+          editor={(options) => phoneEditor(options)}
           sortable
         />
         <Column

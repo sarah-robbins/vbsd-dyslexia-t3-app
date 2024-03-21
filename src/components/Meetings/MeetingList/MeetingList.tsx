@@ -39,8 +39,6 @@ const MeetingList: React.FC<Props> = ({
 }) => {
   const hiddenOnMeetingPage = isOnMeetingsPage ? "hidden" : "";
   const showOnStudentsPage = isOnStudentsPage ? "" : "hidden";
-  console.log("isOnMeetingsPage: ", isOnMeetingsPage);
-  console.log("isOnStudentsPage: ", isOnStudentsPage);
   const [filteredMeetings, setFilteredMeetings] = useState<
     MeetingWithAttendees[]
   >([]);
@@ -58,10 +56,6 @@ const MeetingList: React.FC<Props> = ({
 
   useEffect(() => {
     if (selectedDate && isOnMeetingsPage) {
-      console.log(
-        "***datedMeetingsWithAttendees*** ",
-        datedMeetingsWithAttendees
-      );
       const filtered = datedMeetingsWithAttendees
         .map((meeting) => ({
           ...meeting,
@@ -111,7 +105,6 @@ const MeetingList: React.FC<Props> = ({
           return { ...meeting, attendees };
         });
 
-      console.log("***getDatedMeetings*** ", getDatedMeetings);
       const filtered = datedMeetingsWithAttendees
         .map((meeting) => ({
           ...meeting,
@@ -123,7 +116,15 @@ const MeetingList: React.FC<Props> = ({
         });
       setFilteredMeetings(filtered);
     }
-  }, [datedMeetingsWithAttendees, getDatedMeetings, selectedDate]);
+  }, [
+    datedMeetingsWithAttendees,
+    getDatedMeetings,
+    isOnMeetingsPage,
+    isOnStudentsPage,
+    selectedDate,
+    meetings,
+    students,
+  ]);
 
   useEffect(() => {
     // Update the indeterminate state of the "Check All" checkbox

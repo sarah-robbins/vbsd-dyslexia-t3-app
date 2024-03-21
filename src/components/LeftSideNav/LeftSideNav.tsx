@@ -115,11 +115,38 @@ const MiniDrawer = styled(MuiDrawer, {
 
 const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
   const { data: session } = useSession();
+
   // const theme = useTheme();
   const { setRouting }: RoutingContextType = React.useContext(routingContext);
 
-  const [open, setOpen] = React.useState<boolean>(false);
+  const [open, setOpen] = React.useState(false);
+  const drawerRef = React.useRef<HTMLDivElement>(null);
 
+  const handleDrawerToggle = () => {
+    setOpen(!open);
+  };
+
+  React.useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      // Assume drawerRef is a ref attached to the Drawer component
+      if (
+        drawerRef.current &&
+        !drawerRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false); // Close the Drawer if the click was outside
+      }
+    };
+
+    // Only add the event listener when the Drawer is open
+    if (open) {
+      document.addEventListener("mousedown", handleOutsideClick);
+    }
+
+    // Clean up the event listener
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, [open]); // Depend on the open state
   const [phone, setPhone] = React.useState<string>(session?.user.phone || "");
   const updateUserMutation = api.users.updateUser.useMutation();
 
@@ -158,9 +185,9 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
     }
   };
 
-  const handleDrawerToggle = () => {
-    setOpen(!open);
-  };
+  // const handleDrawerToggle = () => {
+  //   setOpen(!open);
+  // };
 
   // const settings = ['Profile'];
 
@@ -270,6 +297,7 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
                 onClick={() => {
                   const newRoute = link.text.toLowerCase();
                   setRouting(newRoute); // Update the context
+                  setOpen(false);
                   if (typeof window !== "undefined") {
                     localStorage.setItem("currentRoute", newRoute); // Update local storage
                   }
@@ -464,6 +492,7 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
         {drawer}
       </Drawer>
       <MiniDrawer
+        ref={drawerRef}
         variant="permanent"
         open={open}
         sx={{

@@ -51,7 +51,6 @@ import { useSession } from "next-auth/react";
 import { Skeleton } from "primereact/skeleton";
 import MeetingForm from "@/components/Meetings/MeetingForm/MeetingForm";
 import MeetingList from "@/components/Meetings/MeetingList/MeetingList";
-import { QueryCache } from "@tanstack/react-query";
 // import { useSession } from 'next-auth/react';
 
 interface TutorOption {
@@ -71,6 +70,8 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     hiddenOnMeetingsPage = "flex";
   }
   const toastDelete = useRef<Toast>(null);
+
+  <Toast ref={toastDelete} position="top-center" />;
 
   const getAllStudents = api.students.getAllStudents.useQuery();
   const [students, setStudents] = useState<Student[]>([]);
@@ -266,15 +267,15 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     const tempId = generateTempId();
     const newStudent: Student = {
       id: tempId,
-      first_name: "",
-      last_name: "",
-      student_assigned_id: "",
-      school: "",
-      grade: "",
+      first_name: "First Name",
+      last_name: "Last Name",
+      student_assigned_id: "Student ID #",
+      school: "Unassigned",
+      grade: "Grade",
       home_room_teacher: null,
-      intervention_program: "",
+      intervention_program: "Barton",
       tutor_id: null,
-      services: null,
+      services: "None",
       level_lesson: "",
       new_student: true,
       withdrew: false,
@@ -290,11 +291,21 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       },
     };
     setStudents((prev) => [newStudent, ...prev]);
+    console.log("New Student List: ", students);
     setEditingRows((prevEditingRows) => ({
       ...prevEditingRows,
       [tempId]: true,
     }));
+    console.log("Editing Rows: ", editingRows);
   };
+  useEffect(() => {
+    console.log("Editing Rows Updated:", editingRows);
+  }, [editingRows]);
+  console.log("Editing Rows Keys:", Object.keys(editingRows));
+  console.log(
+    "Data Keys:",
+    students.map((student) => student.id)
+  ); // Assuming 'id' is your dataKey
 
   const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -307,55 +318,13 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     setGlobalFilterValue(value);
   };
 
-  const studentIdEditor = (options: ColumnEditorOptions) => {
+  const textEditor = (options: ColumnEditorOptions) => {
     const value = options.value as string;
     return (
       <InputText
         type="text"
         value={value}
-        placeholder="Student ID"
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          options.editorCallback?.(e.target.value)
-        }
-      />
-    );
-  };
-
-  const firstNameEditor = (options: ColumnEditorOptions) => {
-    const value = options.value as string;
-    return (
-      <InputText
-        type="text"
-        value={value}
-        placeholder="First Name"
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          options.editorCallback?.(e.target.value)
-        }
-      />
-    );
-  };
-
-  const lastNameEditor = (options: ColumnEditorOptions) => {
-    const value = options.value as string;
-    return (
-      <InputText
-        type="text"
-        value={value}
-        placeholder="Last Name"
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          options.editorCallback?.(e.target.value)
-        }
-      />
-    );
-  };
-
-  const teacherEditor = (options: ColumnEditorOptions) => {
-    const value = options.value as string;
-    return (
-      <InputText
-        type="text"
-        value={value}
-        placeholder="Home Room Teacher"
+        placeholder="Enter a value"
         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
           options.editorCallback?.(e.target.value)
         }
@@ -374,8 +343,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         itemTemplate={(option) => {
           return <span>{option}</span>;
         }}
-        filter
-        resetFilterOnHide
       />
     );
   };
@@ -388,8 +355,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         options={appSettings.grade_options}
         onChange={(e: DropdownChangeEvent) => options.editorCallback?.(e.value)}
         placeholder="Grade"
-        filter
-        resetFilterOnHide
         itemTemplate={(option) => {
           return <span>{option}</span>;
         }}
@@ -405,15 +370,17 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         options={appSettings.program_options}
         onChange={(e: DropdownChangeEvent) => options.editorCallback?.(e.value)}
         placeholder="Program"
-        editable
+        itemTemplate={(option) => {
+          return <span>{option}</span>;
+        }}
       />
     );
   };
 
   const serviceEditor = (options: ColumnEditorOptions) => {
     // Assert the type of options.value
-    const value = options.value as string | string[] | undefined;
-    const currentValue = processServices(value) as string[] | undefined;
+    const value = options.value as string | string[] | null | undefined;
+    const currentValue = processServices(value);
 
     const handleServiceChange = (e: MultiSelectChangeEvent) => {
       // Explicitly cast e.value to string[]
@@ -440,7 +407,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         onChange={handleServiceChange}
         placeholder="Services"
         optionLabel="label"
-        selectAllLabel="All"
         className="text-black"
       />
     );
@@ -457,6 +423,10 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         : services || [];
     return Array.from(new Set(servicesArray)).join(", ");
   };
+
+  useEffect(() => {
+    console.log("Updated Students: ", students);
+  }, [students]);
 
   const [selectedTutorIds, setSelectedTutorIds] = useState<{
     [key: number]: number;
@@ -515,8 +485,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
           onChange={(e) => handleTutorChange(studentId, e)}
           placeholder="Tutor Name"
           optionLabel="label"
-          filter
-          resetFilterOnHide
         />
       );
     } else {
@@ -526,7 +494,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
 
   const updateStudentRowMutation = api.students.updateStudentRow.useMutation();
   const createStudentMutation = api.students.createStudent.useMutation();
-  // const [dataVersion, setDataVersion] = useState(0);
 
   const onRowEditComplete = (e: DataTableRowEditCompleteEvent) => {
     let { newData } = e as { newData: Student };
@@ -546,11 +513,13 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
 
     // Handle saving the edited data
     let updatedStudents = students;
-    if (e.data.id === undefined || e.data.id < 0) {
+    if (e.data.id === undefined) {
       // Handling new row
       updatedStudents = students.map((student) =>
         student.id === -1 ? { ...e.data, id: 0 } : student
       );
+
+      // I don't think the id is saving correctly to the savedata. I can see that it is updating the student state, but it is not translating to the save data.
 
       const dataForSave = {
         ...newData,
@@ -582,23 +551,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
             summary: "Success",
             detail: "Student saved",
           });
-          setStudents((prevStudents) => {
-            const index = prevStudents.findIndex(
-              (student) => student.id === dataForSave.id
-            );
-
-            if (index !== -1) {
-              // Student exists, update their information
-              const newStudents = [...prevStudents];
-              newStudents[index] = dataForSave;
-              return newStudents;
-            } else {
-              // New student, add them to the list
-              return [dataForSave, ...prevStudents];
-            }
-          });
         },
-
         onError: (error) => {
           // On error, show an error toast
           toast.current?.show({
@@ -646,21 +599,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
             severity: "success",
             summary: "Success",
             detail: "Student updated",
-          });
-          setStudents((prevStudents) => {
-            const index = prevStudents.findIndex(
-              (student) => student.id === dataForSave.id
-            );
-
-            if (index !== -1) {
-              // Student exists, update their information
-              const newStudents = [...prevStudents];
-              newStudents[index] = dataForSave;
-              return newStudents;
-            } else {
-              // New student, add them to the list
-              return [dataForSave, ...prevStudents];
-            }
           });
         },
         onError: (error) => {
@@ -1091,7 +1029,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
             isMeetingSelected={!!selectedMeetings}
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
-            datedMeetingsWithAttendees={datedMeetingsWithAttendees}
             setDatedMeetingsWithAttendees={setDatedMeetingsWithAttendees}
             selectedMeetingAttendees={selectedMeetingAttendees}
             isOnStudentsPage={isOnStudentsPage}
@@ -1114,9 +1051,9 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       </>
     );
   };
-
   const deleteStudentMutation = api.students.deleteStudent.useMutation();
-  const handleDeleteStudent = (studentId: number) => {
+
+  const handleDeleteStudent = (studentId?: number) => {
     const id = studentId || 0;
     // Call the TRPC mutation to delete the student
     toastDelete.current?.show({
@@ -1141,15 +1078,16 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
             <Button
               onClick={() => {
                 try {
+                  console.log("Deleting meeting with ID from try block:", id);
                   deleteStudentMutation.mutate({ id: id });
-                  toastDelete.current?.clear();
+                  console.log("meeting list:", meetings);
                 } catch (error) {
                   console.error(`Error deleting this meeeting.`);
                 }
 
                 if (deleteStudentMutation.isSuccess) {
                   setStudents((students) =>
-                    students.filter((student) => student.id !== id)
+                    students.filter((student) => student.id !== studentId)
                   );
 
                   // Optionally, show a success message
@@ -1187,23 +1125,31 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     });
   };
 
+  // const actionBodyTemplate = (rowData: Student) => {
+  //   if (typeof rowData.id !== "number") {
+  //     return null;
+  //   }
+  //   return (
+  //     <DeleteIcon
+  //       color="error"
+  //       onClick={() => handleDeleteStudent(rowData.id)}
+  //     />
+  //   );
+  // };
+
   const renderHeader = () => {
     return (
       <div className="flex flex-row justify-content-between">
-        <div className="flex justify-content-start">
-          <div className="flex align-items-center gap-2">
-            {session?.user.role !== "Tutor" && (
+        <div className="flex justify-content-start gap-2">
+          {session?.user.role !== "Tutor" && (
+            <div className="flex align-items-center">
               <Button onClick={addNewStudent} variant="contained">
                 Add
               </Button>
-            )}
-            <Button onClick={expandAll} variant="outlined">
-              Expand All
-            </Button>
-            <Button onClick={collapseAll} variant="outlined">
-              Collapse All
-            </Button>
-          </div>
+            </div>
+          )}
+          <Button onClick={expandAll}>Expand All</Button>
+          <Button onClick={collapseAll}>Collapse All</Button>
         </div>
         <div className="flex">
           <span className="p-input-icon-left">
@@ -1244,7 +1190,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       // FIXME: cannot get the right color of green to match the header
       "bg-green-50":
         data.new_student === true && data.id !== undefined && data.id > -2,
-      "bg-red-100": data.first_name === "",
+      "bg-red-100": data.first_name === "First Name",
       "text-primary":
         data.new_student === true && data.id !== undefined && data.id > -2,
       "border-8":
@@ -1286,16 +1232,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
           />
           <DeleteIcon
             color="error"
-            onClick={() => {
-              if (rowData.id && rowData.id < 0) {
-                setStudents((prevStudents) =>
-                  prevStudents.filter((student) => student.id !== rowData.id)
-                );
-              } else if (rowData.id && rowData.id > 0) {
-                const studentId = rowData.id;
-                handleDeleteStudent(studentId);
-              }
-            }}
+            onClick={() => handleDeleteStudent(rowData.id)}
           />
         </div>
       )}
@@ -1326,7 +1263,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   return (
     <Card className="card">
       <Toast ref={toast} />
-      <Toast ref={toastDelete} position="top-center" />
       <div className="meeting-list-name-select flex justify-content-between align-items-center gap-4">
         <h3>Students</h3>
       </div>
@@ -1364,9 +1300,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         header={header}
         emptyMessage="No students match your search."
         showGridlines
-        paginator
-        rows={10}
-        rowsPerPageOptions={[5, 10, 25, 50]}
       >
         <Column
           expander={allowExpansion}
@@ -1376,19 +1309,19 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         <Column
           field="student_assigned_id"
           header="Student ID #"
-          editor={(options) => studentIdEditor(options)}
+          editor={(options) => textEditor(options)}
           sortable
         />
         <Column
           field="first_name"
           header="First Name"
-          editor={(options) => firstNameEditor(options)}
+          editor={(options) => textEditor(options)}
           sortable
         />
         <Column
           field="last_name"
           header="Last Name"
-          editor={(options) => lastNameEditor(options)}
+          editor={(options) => textEditor(options)}
           sortable
         />
         <Column
@@ -1406,7 +1339,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         <Column
           field="home_room_teacher"
           header="Home Room Teacher"
-          editor={(options) => teacherEditor(options)}
+          editor={(options) => textEditor(options)}
           sortable
         />
         <Column
