@@ -537,3 +537,20 @@ button.mobile-menu-toggle {
   /* padding: 2rem auto !important; */
   margin: .5rem auto !important;
 }
+
+.form-container {
+  min-width: 80vw;
+  max-height: 100vh;
+  max-width: 850px;
+  overflow-y: auto;
+}
+.form-fields {
+  display: flex;
+}
+.form-fields-tp {
+  width: 100%;
+}
+@media screen and (min-width: 600px) {
+  .form-fields-50 {
+    width: calc(50% - 0.75rem);
+  }}

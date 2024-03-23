@@ -291,7 +291,7 @@ export const meetingsRouter = createTRPCRouter({
     }),
 
   //update meeting
-  editMeeting: publicProcedure
+  updateMeeting: publicProcedure
     .input(
       z.object({
         id: z.number().int(),

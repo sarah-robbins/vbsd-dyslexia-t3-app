@@ -579,10 +579,6 @@ const MeetingForm: React.FC<Props> = ({
   const handleAdd = async (formValues: FormValues) => {
     console.log("Submitting with attendees:", formValues.attendees);
 
-    // if (!selectedMeetings.length) {
-    //   return;
-    // }
-
     try {
       const validAttendees = attendees
         .filter((attendee) => attendee.student_id !== undefined) // Filter out undefined student IDs
@@ -648,74 +644,73 @@ const MeetingForm: React.FC<Props> = ({
   };
 
   /* ------------------- edit Meeting ------------------- */
-  const editMeetingMutation = api.meetings.editMeeting.useMutation();
+  const updateMeetingMutation = api.meetings.updateMeeting.useMutation();
   const removeAttendees = api.meetings.deleteAttendeesInput.useMutation();
-  const editMeeting = async (formValues: FormValues) => {
+
+  const editMeeting = (formValues: FormValues) => {
     if (!selectedMeetings.length) {
       return;
     }
 
-    try {
-      const meetingData = {
-        id: selectedMeetings[0]?.id as number,
-        start: formValues.start?.toDate() ?? new Date(),
-        end: formValues.end?.toDate() ?? new Date(),
-        program: formValues.program ?? "",
-        level_lesson: formValues.level_lesson ?? "",
-        meeting_notes: formValues.meeting_notes ?? "",
-        edited_by: sessionData?.userId.toString() ?? "",
-        edited_on: new Date(),
-        tutor_id: sessionData?.userId || 0,
-        attendees: selectedNames.map((name) => {
-          const attendeeStatus = individualStatuses[name];
-          const studentId =
-            students.find(
-              (student) =>
-                `${student.first_name ?? ""} ${student.last_name ?? ""}` ===
-                name
-            )?.id ?? 0;
-          return {
-            student_id: studentId,
-            meeting_status: attendeeStatus,
-          };
-        }),
-      };
+    const meetingData = {
+      id: selectedMeetings[0]?.id as number,
+      start: formValues.start?.toDate() ?? new Date(),
+      end: formValues.end?.toDate() ?? new Date(),
+      program: formValues.program ?? "",
+      level_lesson: formValues.level_lesson ?? "",
+      meeting_notes: formValues.meeting_notes ?? "",
+      edited_by: sessionData?.userId.toString() ?? "",
+      edited_on: new Date(),
+      tutor_id: sessionData?.userId || 0,
+      attendees: selectedNames.map((name) => {
+        const attendeeStatus = individualStatuses[name];
+        const studentId =
+          students.find(
+            (student) =>
+              `${student.first_name ?? ""} ${student.last_name ?? ""}` === name
+          )?.id ?? 0;
+        return {
+          student_id: studentId,
+          meeting_status: attendeeStatus,
+        };
+      }),
+    };
+    // Use removedAttendees as is, since it's already an array of numbers
+    const attendeeIdsToRemove = {
+      attendeeIds: removedAttendees,
+    };
+    // Make an API call to delete the removed attendees
+    if (removedAttendees.length > 0) {
+      removeAttendees.mutate(attendeeIdsToRemove, {
+        onSuccess: () => {
+          console.log("Attendees deleted successfully");
+          // Update your state/UI as necessary
+        },
+        onError: (error) => {
+          console.error("Error deleting attendees:", error);
+        },
+      });
+    }
 
-      // Use removedAttendees as is, since it's already an array of numbers
-      const attendeeIdsToRemove = {
-        attendeeIds: removedAttendees,
-      };
-
-      // Make an API call to delete the removed attendees
-      if (removedAttendees.length > 0) {
-        removeAttendees.mutate(attendeeIdsToRemove, {
-          onSuccess: () => {
-            console.log("Attendees deleted successfully");
-            // Update your state/UI as necessary
-          },
-          onError: (error) => {
-            console.error("Error deleting attendees:", error);
-          },
-        });
-      }
-
-      const response = await editMeetingMutation.mutateAsync(meetingData);
-
-      if (response.success) {
+    updateMeetingMutation.mutate(meetingData, {
+      onSuccess: () => {
+        console.log("Meeting updated successfully");
         toast.current?.show({
           severity: "success",
           summary: "Meeting successfully updated.",
           life: 3000,
         });
-      }
-    } catch (error) {
-      console.error("Error updating meeting:", error);
-      toast.current?.show({
-        severity: "error",
-        summary: "Error updating meeting.",
-        life: 3000,
-      });
-    }
+        setMeetings([meetingData as MeetingWithAttendees, ...meetings]);
+      },
+      onError: (error) => {
+        console.error("Error updating meeting:", error);
+        toast.current?.show({
+          severity: "error",
+          summary: "Error updating meeting.",
+          life: 3000,
+        });
+      },
+    });
   };
 
   /* ------------------------------ DELETEMEETING ----------------------------- */

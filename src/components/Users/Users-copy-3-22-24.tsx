@@ -3,6 +3,7 @@ import {
   DataTable,
   type DataTableRowEditCompleteEvent,
   type DataTableFilterMeta,
+  type DataTableRowEvent,
 } from "primereact/datatable";
 import { FilterMatchMode } from "primereact/api";
 import {
@@ -28,28 +29,14 @@ import CheckIcon from "@mui/icons-material/Check";
 import { useSession } from "next-auth/react";
 // import { Button } from "primereact/button";
 import Button from "@mui/material/Button";
-import AddUserForm from "../AddUserForm";
 
 const Users: React.FC = () => {
-  const [open, setOpen] = React.useState(false);
-  const handleOpen = () => setOpen(true);
-  const [runSuccessToast, setRunSuccessToast] = React.useState(false);
   const toastDelete = useRef<Toast>(null);
-  const toast = useRef<Toast>(null);
-
-  // Show a success toast when the runSuccessToast state is true
-  useEffect(() => {
-    console.log("run success toast: ", runSuccessToast);
-    if (runSuccessToast === true) {
-      toast.current?.show({
-        severity: "success",
-        summary: "Success",
-        detail: "User saved",
-      });
-    }
-  }, [runSuccessToast]);
+  // const getAllUsers = api.users.getAllUsers.useQuery();
 
   const [users, setUsers] = useState<User[]>([]);
+  const toast = useRef<Toast>(null);
+  // use the session to get appSettings
   const { data: session } = useSession();
   const appSettings = (session as customSession)?.appSettings;
   const [filters, setFilters] = useState<DataTableFilterMeta>({
@@ -64,13 +51,9 @@ const Users: React.FC = () => {
   });
   const [globalFilterValue, setGlobalFilterValue] = useState<string>("");
 
-  const getUsersForRole = api.users.getUsersForRole.useQuery() as {
+  const { data: myUsers } = api.users.getUsersForRole.useQuery() as {
     data: User[];
-    isLoading: boolean;
-    isError: boolean;
-    isSuccess: boolean;
   };
-  const myUsers = getUsersForRole.data;
 
   const processSchool = (
     school: string | string[] | null | undefined
@@ -131,33 +114,33 @@ const Users: React.FC = () => {
   };
 
   const [editingRows, setEditingRows] = useState({});
-  // const generateTempId = () =>
-  //   Number(
-  //     `-000${Math.floor(Math.random() * 1000)
-  //       .toString()
-  //       .padStart(3, "0")}`
-  //   );
-  // const addNewUser = () => {
-  //   const tempId = generateTempId();
-  //   const newUser: User = {
-  //     id: tempId,
-  //     first_name: "",
-  //     last_name: "",
-  //     school: null,
-  //     email: "",
-  //     phone: "",
-  //     role: null,
-  //     view: null,
-  //     super_admin_role: null,
-  //     picture: null,
-  //     created_at: new Date(),
-  //   };
-  //   setUsers((prev) => [newUser, ...prev]);
-  //   setEditingRows((prevEditingRows) => ({
-  //     ...prevEditingRows,
-  //     [tempId]: true,
-  //   }));
-  // };
+  const generateTempId = () =>
+    Number(
+      `-000${Math.floor(Math.random() * 1000)
+        .toString()
+        .padStart(3, "0")}`
+    );
+  const addNewUser = () => {
+    const tempId = generateTempId();
+    const newUser: User = {
+      id: tempId,
+      first_name: "",
+      last_name: "",
+      school: null,
+      email: "",
+      phone: "",
+      role: null,
+      view: null,
+      super_admin_role: null,
+      picture: null,
+      created_at: new Date(),
+    };
+    setUsers((prev) => [newUser, ...prev]);
+    setEditingRows((prevEditingRows) => ({
+      ...prevEditingRows,
+      [tempId]: true,
+    }));
+  };
 
   const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -273,10 +256,9 @@ const Users: React.FC = () => {
         : school || [];
     return Array.from(new Set(schoolArray)).join(", ");
   };
-
-  // useEffect(() => {
-  //   console.log("**********Updated Users: ", users);
-  // }, [users]);
+  useEffect(() => {
+    console.log("**********Updated Users: ", users);
+  }, [users]);
 
   useEffect(() => {
     if (myUsers) {
@@ -388,28 +370,23 @@ const Users: React.FC = () => {
         created_at: new Date(),
       };
       createUserMutation.mutate(dataForSave, {
-        onSuccess: (response) => {
-          if (response.id) {
-            setUsers((prevUsers) => {
-              const updatedUsers = prevUsers.map((user) => {
-                if (user.id === dataForSave.id) {
-                  // Replace the temporary ID with the actual ID
-                  return { ...dataForSave, id: response.id };
-                } else {
-                  return user;
-                }
-              });
-              // Add the new user to the list
-              const userData = createUserMutation.data as User;
-              if (userData) {
-                updatedUsers.push(userData);
-              }
-              return updatedUsers;
-            });
-          } else {
-            console.log("no id returned from the server");
-          }
+        onSuccess: () => {
+          // On success, maybe refresh the data or show a success toast
+          setUsers((prevUsers) => {
+            const index = prevUsers.findIndex(
+              (user) => user.id === dataForSave.id
+            );
 
+            if (index !== -1) {
+              // User exists, update their information
+              const newUsers = [...prevUsers];
+              newUsers[index] = dataForSave;
+              return newUsers;
+            } else {
+              // New user, add them to the list
+              return [dataForSave, ...prevUsers];
+            }
+          });
           toast.current?.show({
             severity: "success",
             summary: "Success",
@@ -449,30 +426,28 @@ const Users: React.FC = () => {
 
       // Call the mutation to update the user
       updateUserMutation.mutate(dataForSave, {
-        onSuccess: (response) => {
-          if (response) {
-            // On success, maybe refresh the data or show a success toast
-            setUsers((prevUsers) => {
-              const index = prevUsers.findIndex(
-                (user) => user.id === dataForSave.id
-              );
+        onSuccess: () => {
+          // On success, maybe refresh the data or show a success toast
+          setUsers((prevUsers) => {
+            const index = prevUsers.findIndex(
+              (user) => user.id === dataForSave.id
+            );
 
-              if (index !== -1) {
-                // User exists, update their information
-                const newUsers = [...prevUsers];
-                newUsers[index] = dataForSave;
-                return newUsers;
-              } else {
-                // New user, add them to the list
-                return [dataForSave, ...prevUsers];
-              }
-            });
-            toast.current?.show({
-              severity: "success",
-              summary: "Success",
-              detail: "User updated",
-            });
-          }
+            if (index !== -1) {
+              // User exists, update their information
+              const newUsers = [...prevUsers];
+              newUsers[index] = dataForSave;
+              return newUsers;
+            } else {
+              // New user, add them to the list
+              return [dataForSave, ...prevUsers];
+            }
+          });
+          toast.current?.show({
+            severity: "success",
+            summary: "Success",
+            detail: "User updated",
+          });
         },
         onError: (error) => {
           console.log("error", error);
@@ -513,36 +488,34 @@ const Users: React.FC = () => {
           <div className="flex gap-2">
             <Button
               onClick={() => {
-                deleteUserMutation.mutate(
-                  { id: id },
-                  {
-                    onSuccess: () => {
-                      toastDelete.current?.clear();
-                      setUsers((users) =>
-                        users.filter((user) => user.id !== id)
-                      );
+                try {
+                  console.log("Deleting meeting with ID from try block:", id);
+                  deleteUserMutation.mutate({ id: id });
+                  toastDelete.current?.clear();
+                } catch (error) {
+                  console.error(`Error deleting this meeeting.`);
+                }
 
-                      // Optionally, show a success message
-                      toast.current?.show({
-                        severity: "success",
-                        summary: "Success",
-                        detail: "User added successfully",
-                      });
-                    },
-                    onError: (error) => {
-                      console.log("error", error);
-                      toastDelete.current?.clear();
-                      if (deleteUserMutation.isError) {
-                        console.error("Error deleting user.");
-                        toast.current?.show({
-                          severity: "error",
-                          summary: "Error",
-                          detail: "Delete failed",
-                        });
-                      }
-                    },
-                  }
-                );
+                if (deleteUserMutation.isSuccess) {
+                  setUsers((users) => users.filter((user) => user.id !== id));
+                  console.log("user list:", users);
+
+                  // Optionally, show a success message
+                  toast.current?.show({
+                    severity: "success",
+                    summary: "Success",
+                    detail: "User deleted",
+                  });
+                }
+
+                if (deleteUserMutation.isError) {
+                  console.error("Error deleting user.");
+                  toast.current?.show({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "Delete failed",
+                  });
+                }
               }}
               variant="contained"
               color="error"
@@ -567,8 +540,7 @@ const Users: React.FC = () => {
       <div className="flex justify-content-between">
         <div className="flex align-items-center">
           {session?.user.role !== "Tutor" && (
-            // <Button onClick={addNewUser} variant="contained">
-            <Button onClick={handleOpen} variant="contained">
+            <Button onClick={addNewUser} variant="contained">
               Add
             </Button>
           )}
@@ -594,9 +566,9 @@ const Users: React.FC = () => {
   // if (!getAllUsers.data) return <p>Loading...</p>;
 
   // choose waht to do when a row in clicked
-  // const rowSelected = (e: DataTableRowEvent) => {
-  //   console.log("e", e);
-  // };
+  const rowSelected = (e: DataTableRowEvent) => {
+    console.log("e", e);
+  };
 
   const newRowClass = (data: User) => {
     return {
@@ -651,108 +623,95 @@ const Users: React.FC = () => {
   );
 
   return (
-    <>
-      {/* <AddUserForm session={session} users={users} setUsers={setUsers} /> */}
-      <AddUserForm
-        session={session}
-        users={users}
-        setUsers={setUsers}
-        open={open}
-        setOpen={setOpen}
-        runSuccessToast={runSuccessToast}
-        setRunSuccessToast={setRunSuccessToast}
-      />
-
-      <Card className="card">
-        <Toast ref={toast} />
-        <Toast ref={toastDelete} position="top-center" />
-        <div className="meeting-list-name-select flex justify-content-between align-items-center gap-4">
-          <h3>Users</h3>
-        </div>
-        <DataTable
-          value={users}
-          editMode="row"
-          // onRowEditInit={(e) => setEditingRows(e.data.id)}
-          editingRows={editingRows}
-          onRowEditComplete={onRowEditComplete}
-          dataKey="id"
-          key="id"
-          stripedRows
-          removableSort
-          rowClassName={newRowClass}
-          // onRowSelect={rowSelected}
-          tableStyle={{ minWidth: "60rem" }}
-          filters={filters}
-          globalFilterFields={[
-            "first_name",
-            "last_name",
-            "school",
-            "email",
-            "phone",
-            "role",
-            "view",
-          ]}
-          header={header}
-          emptyMessage="No users match your search."
-          showGridlines
-          paginator
-          rows={10}
-          rowsPerPageOptions={[5, 10, 25, 50]}
-        >
-          <Column
-            field="first_name"
-            header="First Name"
-            editor={(options) => firstNameEditor(options)}
-            sortable
-          />
-          <Column
-            field="last_name"
-            header="Last Name"
-            editor={(options) => lastNameEditor(options)}
-            sortable
-          />
-          <Column
-            field="school"
-            header="Schools"
-            body={schoolsTemplate}
-            editor={(options) => schoolEditor(options)}
-            sortable
-          />
-          <Column
-            field="email"
-            header="Email"
-            editor={(options) => emailEditor(options)}
-            sortable
-          />
-          <Column
-            field="phone"
-            header="Phone"
-            editor={(options) => phoneEditor(options)}
-            sortable
-          />
-          <Column
-            field="role"
-            header="Role"
-            body={rolesTemplate}
-            editor={(options) => roleEditor(options)}
-            sortable
-          />
-          <Column
-            field="view"
-            header="View"
-            editor={(options) => viewEditor(options)}
-            sortable
-          />
-          <Column
-            header="Actions"
-            rowEditor
-            body={editRowIcons}
-            headerStyle={{ width: "1%", minWidth: "2rem" }}
-            bodyStyle={{ textAlign: "center" }}
-          ></Column>
-        </DataTable>
-      </Card>
-    </>
+    <Card className="card">
+      <Toast ref={toast} />
+      <Toast ref={toastDelete} position="top-center" />
+      <div className="meeting-list-name-select flex justify-content-between align-items-center gap-4">
+        <h3>Users</h3>
+      </div>
+      <DataTable
+        value={users}
+        editMode="row"
+        // onRowEditInit={(e) => setEditingRows(e.data.id)}
+        editingRows={editingRows}
+        onRowEditComplete={onRowEditComplete}
+        dataKey="id"
+        key="id"
+        stripedRows
+        removableSort
+        rowClassName={newRowClass}
+        onRowSelect={rowSelected}
+        tableStyle={{ minWidth: "60rem" }}
+        filters={filters}
+        globalFilterFields={[
+          "first_name",
+          "last_name",
+          "school",
+          "email",
+          "phone",
+          "role",
+          "view",
+        ]}
+        header={header}
+        emptyMessage="No users match your search."
+        showGridlines
+        paginator
+        rows={10}
+        rowsPerPageOptions={[5, 10, 25, 50]}
+      >
+        <Column
+          field="first_name"
+          header="First Name"
+          editor={(options) => firstNameEditor(options)}
+          sortable
+        />
+        <Column
+          field="last_name"
+          header="Last Name"
+          editor={(options) => lastNameEditor(options)}
+          sortable
+        />
+        <Column
+          field="school"
+          header="Schools"
+          body={schoolsTemplate}
+          editor={(options) => schoolEditor(options)}
+          sortable
+        />
+        <Column
+          field="email"
+          header="Email"
+          editor={(options) => emailEditor(options)}
+          sortable
+        />
+        <Column
+          field="phone"
+          header="Phone"
+          editor={(options) => phoneEditor(options)}
+          sortable
+        />
+        <Column
+          field="role"
+          header="Role"
+          body={rolesTemplate}
+          editor={(options) => roleEditor(options)}
+          sortable
+        />
+        <Column
+          field="view"
+          header="View"
+          editor={(options) => viewEditor(options)}
+          sortable
+        />
+        <Column
+          header="Actions"
+          rowEditor
+          body={editRowIcons}
+          headerStyle={{ width: "1%", minWidth: "2rem" }}
+          bodyStyle={{ textAlign: "center" }}
+        ></Column>
+      </DataTable>
+    </Card>
   );
 };
 

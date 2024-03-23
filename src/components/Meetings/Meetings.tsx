@@ -12,7 +12,7 @@ import {
   type MeetingWithAttendees,
 } from "@/types";
 import Students from "../Students/Students";
-import { get } from "http";
+import { TRPCClientError } from "@trpc/client";
 // import { useSession } from "next-auth/react";
 // import StudentsInProgress from '../Students/Students-in-progress';
 
@@ -51,9 +51,16 @@ const Meetings = () => {
   const dateToQuery =
     selectedDate && dayjs.isDayjs(selectedDate) ? selectedDate : dayjs();
 
-  const { data: getDatedMeetings } = api.meetings.getMeetingsByDate.useQuery(
+  // const { data: getDatedMeetings } = api.meetings.getMeetingsByDate.useQuery(
+  //   dateToQuery.toDate()
+  // ) as { data: MeetingWithAttendees[] };
+
+  const getMeetingsByDate = api.meetings.getMeetingsByDate.useQuery(
     dateToQuery.toDate()
-  ) as { data: MeetingWithAttendees[] };
+  ) as {
+    data: MeetingWithAttendees[];
+  };
+  const getDatedMeetings = getMeetingsByDate.data;
 
   const { data: myStudents } = api.students.getStudentsForRole.useQuery() as {
     data: Student[];

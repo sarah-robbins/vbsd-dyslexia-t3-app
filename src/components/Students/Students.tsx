@@ -51,7 +51,7 @@ import { useSession } from "next-auth/react";
 import { Skeleton } from "primereact/skeleton";
 import MeetingForm from "@/components/Meetings/MeetingForm/MeetingForm";
 import MeetingList from "@/components/Meetings/MeetingList/MeetingList";
-import { QueryCache } from "@tanstack/react-query";
+import AddStudentForm from "../AddStudentForm";
 // import { useSession } from 'next-auth/react';
 
 interface TutorOption {
@@ -70,7 +70,20 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   } else if (!isOnMeetingsPage) {
     hiddenOnMeetingsPage = "flex";
   }
+  const [open, setOpen] = React.useState(false);
+  const handleOpen = () => setOpen(true);
+  const [runSuccessToast, setRunSuccessToast] = React.useState(false);
   const toastDelete = useRef<Toast>(null);
+  useEffect(() => {
+    console.log("run success toast: ", runSuccessToast);
+    if (runSuccessToast === true) {
+      toast.current?.show({
+        severity: "success",
+        summary: "Success",
+        detail: "User saved",
+      });
+    }
+  }, [runSuccessToast]);
 
   const getAllStudents = api.students.getAllStudents.useQuery();
   const [students, setStudents] = useState<Student[]>([]);
@@ -121,11 +134,18 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     data: Student[];
   };
 
+  const [users, setUsers] = useState<User[]>([]);
   const { data: myUsers } = api.users.getUsersForRole.useQuery() as {
     data: User[];
   };
+  useEffect(() => {
+    if (myUsers) {
+      setUsers(myUsers);
+    }
+  }, [myUsers]);
   const [formattedTutors, setFormattedTutors] = useState<TutorOption[]>([]);
 
+  console.log("myUsers from Students component: ", myUsers);
   const dateToQuery =
     selectedDate && dayjs.isDayjs(selectedDate) ? selectedDate : dayjs();
 
@@ -255,46 +275,46 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     }
   }, [myUsers]);
 
-  const [editingRows, setEditingRows] = useState({});
-  const generateTempId = () =>
-    Number(
-      `-000${Math.floor(Math.random() * 1000)
-        .toString()
-        .padStart(3, "0")}`
-    );
-  const addNewStudent = () => {
-    const tempId = generateTempId();
-    const newStudent: Student = {
-      id: tempId,
-      first_name: "",
-      last_name: "",
-      student_assigned_id: "",
-      school: "",
-      grade: "",
-      home_room_teacher: null,
-      intervention_program: "",
-      tutor_id: null,
-      services: null,
-      level_lesson: "",
-      new_student: true,
-      withdrew: false,
-      graduated: false,
-      moved: false,
-      new_location: "",
-      additional_comments: "",
-      created_at: new Date(),
-      tutorFullName: "",
-      tutorInfo: {
-        value: 0,
-        label: "",
-      },
-    };
-    setStudents((prev) => [newStudent, ...prev]);
-    setEditingRows((prevEditingRows) => ({
-      ...prevEditingRows,
-      [tempId]: true,
-    }));
-  };
+  const [editingRows] = useState({});
+  // const generateTempId = () =>
+  //   Number(
+  //     `-000${Math.floor(Math.random() * 1000)
+  //       .toString()
+  //       .padStart(3, "0")}`
+  //   );
+  // const addNewStudent = () => {
+  //   const tempId = generateTempId();
+  //   const newStudent: Student = {
+  //     id: tempId,
+  //     first_name: "",
+  //     last_name: "",
+  //     student_assigned_id: "",
+  //     school: "",
+  //     grade: "",
+  //     home_room_teacher: null,
+  //     intervention_program: "",
+  //     tutor_id: null,
+  //     services: null,
+  //     level_lesson: "",
+  //     new_student: true,
+  //     withdrew: false,
+  //     graduated: false,
+  //     moved: false,
+  //     new_location: "",
+  //     additional_comments: "",
+  //     created_at: new Date(),
+  //     tutorFullName: "",
+  //     tutorInfo: {
+  //       value: 0,
+  //       label: "",
+  //     },
+  //   };
+  //   setStudents((prev) => [newStudent, ...prev]);
+  //   setEditingRows((prevEditingRows) => ({
+  //     ...prevEditingRows,
+  //     [tempId]: true,
+  //   }));
+  // };
 
   const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -575,36 +595,41 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         created_at: new Date(),
       };
       createStudentMutation.mutate(dataForSave, {
-        onSuccess: () => {
-          // On success, maybe refresh the data or show a success toast
+        onSuccess: (response) => {
+          if (response.id) {
+            setStudents((prevStudents) => {
+              const updatedStudents = prevStudents.map((user) => {
+                if (user.id === dataForSave.id) {
+                  // Replace the temporary ID with the actual ID
+                  return { ...dataForSave, id: response.id };
+                } else {
+                  return user;
+                }
+              });
+              // Add the new user to the list
+              const userData = createStudentMutation.data as Student;
+              if (userData) {
+                updatedStudents.push(userData);
+              }
+              return updatedStudents;
+            });
+          } else {
+            console.log("no id returned from the server");
+          }
+
           toast.current?.show({
             severity: "success",
             summary: "Success",
-            detail: "Student saved",
-          });
-          setStudents((prevStudents) => {
-            const index = prevStudents.findIndex(
-              (student) => student.id === dataForSave.id
-            );
-
-            if (index !== -1) {
-              // Student exists, update their information
-              const newStudents = [...prevStudents];
-              newStudents[index] = dataForSave;
-              return newStudents;
-            } else {
-              // New student, add them to the list
-              return [dataForSave, ...prevStudents];
-            }
+            detail: "User saved",
           });
         },
-
         onError: (error) => {
+          console.log("error", error);
           // On error, show an error toast
           toast.current?.show({
             severity: "error",
             summary: "Error",
-            detail: error.message,
+            detail: "Save failed",
           });
         },
       });
@@ -1140,34 +1165,44 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
           <div className="flex gap-2">
             <Button
               onClick={() => {
-                try {
-                  deleteStudentMutation.mutate({ id: id });
-                  toastDelete.current?.clear();
-                } catch (error) {
-                  console.error(`Error deleting this meeeting.`);
-                }
+                console.log("Deleting meeting with ID from try block:", id);
+                deleteStudentMutation.mutate(
+                  { id: id },
+                  {
+                    onSuccess: () => {
+                      toastDelete.current?.clear();
 
-                if (deleteStudentMutation.isSuccess) {
-                  setStudents((students) =>
-                    students.filter((student) => student.id !== id)
-                  );
+                      if (deleteStudentMutation.isSuccess) {
+                        console.log("old students: ", students);
 
-                  // Optionally, show a success message
-                  toast.current?.show({
-                    severity: "success",
-                    summary: "Success",
-                    detail: "Student deleted",
-                    life: 3000,
-                  });
-                }
+                        setStudents((students) =>
+                          students.filter((student) => student.id !== id)
+                        );
 
-                if (deleteStudentMutation.isError) {
-                  toast.current?.show({
-                    severity: "error",
-                    summary: "Error",
-                    life: 3000,
-                  });
-                }
+                        console.log("student list:", students);
+
+                        // Optionally, show a success message
+                        toast.current?.show({
+                          severity: "success",
+                          summary: "Success",
+                          detail: "Student added",
+                        });
+                      }
+                    },
+                    onError: (error) => {
+                      console.log("error", error);
+                      toastDelete.current?.clear();
+                      if (deleteStudentMutation.isError) {
+                        console.error("Error deleting student.");
+                        toast.current?.show({
+                          severity: "error",
+                          summary: "Error",
+                          detail: "Delete failed",
+                        });
+                      }
+                    },
+                  }
+                );
               }}
               variant="contained"
               color="error"
@@ -1193,7 +1228,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         <div className="flex justify-content-start">
           <div className="flex align-items-center gap-2">
             {session?.user.role !== "Tutor" && (
-              <Button onClick={addNewStudent} variant="contained">
+              <Button onClick={handleOpen} variant="contained">
                 Add
               </Button>
             )}
@@ -1324,128 +1359,141 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   // }
 
   return (
-    <Card className="card">
-      <Toast ref={toast} />
-      <Toast ref={toastDelete} position="top-center" />
-      <div className="meeting-list-name-select flex justify-content-between align-items-center gap-4">
-        <h3>Students</h3>
-      </div>
-      <DataTable
-        className="students-table"
-        value={students}
-        editMode="row"
-        // onRowEditInit={(e) => setEditingRows(e.data.id)}
-        editingRows={editingRows}
-        onRowEditComplete={onRowEditComplete}
-        expandedRows={expandedRows}
-        onRowToggle={(e) => setExpandedRows(e.data)}
-        // onRowExpand={onRowExpand}
-        // onRowCollapse={onRowCollapse}
-        rowExpansionTemplate={rowExpansionTemplate}
-        dataKey="id"
-        stripedRows
-        removableSort
-        rowClassName={newRowClass}
-        onRowSelect={rowSelected}
-        tableStyle={{ minWidth: "60rem" }}
-        filters={filters}
-        globalFilterFields={[
-          "first_name",
-          "last_name",
-          "school",
-          "grade",
-          "home_room_teacher",
-          "intervention_program",
-          "tutorFullName",
-          "date_intervention_began",
-          "calculateTotalMeetings",
-          "services",
-        ]}
-        header={header}
-        emptyMessage="No students match your search."
-        showGridlines
-        paginator
-        rows={10}
-        rowsPerPageOptions={[5, 10, 25, 50]}
-      >
-        <Column
-          expander={allowExpansion}
-          style={{ width: "5rem" }}
-          header="Expand"
-        />
-        <Column
-          field="student_assigned_id"
-          header="Student ID #"
-          editor={(options) => studentIdEditor(options)}
-          sortable
-        />
-        <Column
-          field="first_name"
-          header="First Name"
-          editor={(options) => firstNameEditor(options)}
-          sortable
-        />
-        <Column
-          field="last_name"
-          header="Last Name"
-          editor={(options) => lastNameEditor(options)}
-          sortable
-        />
-        <Column
-          field="school"
-          header="School"
-          editor={(options) => schoolEditor(options)}
-          sortable
-        />
-        <Column
-          field="grade"
-          header="Grade"
-          editor={(options) => gradeEditor(options)}
-          sortable
-        />
-        <Column
-          field="home_room_teacher"
-          header="Home Room Teacher"
-          editor={(options) => teacherEditor(options)}
-          sortable
-        />
-        <Column
-          field="intervention_program"
-          header="Program"
-          editor={(options) => programEditor(options)}
-          sortable
-        />
-        <Column
-          field="tutorFullName"
-          header="Tutor"
-          style={{ whiteSpace: "nowrap" }}
-          editor={(options) => tutorEditor(options)}
-          sortable
-        />
-        <Column
-          field="calculateTotalMeetings"
-          header="Total Meetings"
-          sortable
-          body={!students ? loadingTemplate : null}
-        />
-        <Column
-          field="services"
-          header="Services"
-          body={servicesTemplate}
-          editor={(options) => serviceEditor(options)}
-          sortable
-        />
-        {session?.user.role !== "Tutor" && (
+    <>
+      <AddStudentForm
+        session={session}
+        users={users}
+        setUsers={setUsers}
+        students={students}
+        setStudents={setStudents}
+        open={open}
+        setOpen={setOpen}
+        runSuccessToast={runSuccessToast}
+        setRunSuccessToast={setRunSuccessToast}
+      />
+      <Card className="card">
+        <Toast ref={toast} />
+        <Toast ref={toastDelete} position="top-center" />
+        <div className="meeting-list-name-select flex justify-content-between align-items-center gap-4">
+          <h3>Students</h3>
+        </div>
+        <DataTable
+          className="students-table"
+          value={students}
+          editMode="row"
+          // onRowEditInit={(e) => setEditingRows(e.data.id)}
+          editingRows={editingRows}
+          onRowEditComplete={onRowEditComplete}
+          expandedRows={expandedRows}
+          onRowToggle={(e) => setExpandedRows(e.data)}
+          // onRowExpand={onRowExpand}
+          // onRowCollapse={onRowCollapse}
+          rowExpansionTemplate={rowExpansionTemplate}
+          dataKey="id"
+          stripedRows
+          removableSort
+          rowClassName={newRowClass}
+          onRowSelect={rowSelected}
+          tableStyle={{ minWidth: "60rem" }}
+          filters={filters}
+          globalFilterFields={[
+            "first_name",
+            "last_name",
+            "school",
+            "grade",
+            "home_room_teacher",
+            "intervention_program",
+            "tutorFullName",
+            "date_intervention_began",
+            "calculateTotalMeetings",
+            "services",
+          ]}
+          header={header}
+          emptyMessage="No students match your search."
+          showGridlines
+          paginator
+          rows={10}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+        >
           <Column
-            header="Actions"
-            rowEditor
-            body={editRowIcons}
-            headerStyle={{ width: "1%" }}
-            bodyStyle={{ textAlign: "center" }}
-          ></Column>
-        )}
-      </DataTable>
-    </Card>
+            expander={allowExpansion}
+            style={{ width: "5rem" }}
+            header="Expand"
+          />
+          <Column
+            field="student_assigned_id"
+            header="Student ID #"
+            editor={(options) => studentIdEditor(options)}
+            sortable
+          />
+          <Column
+            field="first_name"
+            header="First Name"
+            editor={(options) => firstNameEditor(options)}
+            sortable
+          />
+          <Column
+            field="last_name"
+            header="Last Name"
+            editor={(options) => lastNameEditor(options)}
+            sortable
+          />
+          <Column
+            field="school"
+            header="School"
+            editor={(options) => schoolEditor(options)}
+            sortable
+          />
+          <Column
+            field="grade"
+            header="Grade"
+            editor={(options) => gradeEditor(options)}
+            sortable
+          />
+          <Column
+            field="home_room_teacher"
+            header="Home Room Teacher"
+            editor={(options) => teacherEditor(options)}
+            sortable
+          />
+          <Column
+            field="intervention_program"
+            header="Program"
+            editor={(options) => programEditor(options)}
+            sortable
+          />
+          <Column
+            field="tutorFullName"
+            header="Tutor"
+            style={{ whiteSpace: "nowrap" }}
+            editor={(options) => tutorEditor(options)}
+            sortable
+          />
+          <Column
+            field="calculateTotalMeetings"
+            header="Total Meetings"
+            sortable
+            body={!students ? loadingTemplate : null}
+          />
+          <Column
+            field="services"
+            header="Services"
+            body={servicesTemplate}
+            editor={(options) => serviceEditor(options)}
+            sortable
+          />
+          {session?.user.role !== "Tutor" && (
+            <Column
+              header="Actions"
+              rowEditor
+              body={editRowIcons}
+              headerStyle={{ width: "1%" }}
+              bodyStyle={{ textAlign: "center" }}
+            ></Column>
+          )}
+        </DataTable>
+      </Card>
+    </>
   );
 };
 
