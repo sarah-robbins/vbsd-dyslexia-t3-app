@@ -53,7 +53,9 @@ const MeetingForm: React.FC<Props> = ({
   students = [],
   getDatedMeetings = [],
   selectedMeetings = [],
+  setSelectedMeetings,
   selectedDate,
+  datedMeetingsWithAttendees,
   setDatedMeetingsWithAttendees,
   isOnMeetingsPage,
   isOnStudentsPage,
@@ -194,7 +196,7 @@ const MeetingForm: React.FC<Props> = ({
     if (mySelectedAttendees) {
       setSelectedAttendees(mySelectedAttendees);
     }
-  }, [selectedMeetings]);
+  }, [mySelectedAttendees, selectedMeetings]);
 
   const handleNameChange = (event: SelectChangeEvent<string[]>) => {
     const value = event.target.value;
@@ -745,23 +747,48 @@ const MeetingForm: React.FC<Props> = ({
                 deleteMeetingMutation.mutate(
                   { id: id },
                   {
-                    onSuccess: () => {
-                      // This code runs after the mutation succeeds
-                      setMeetings(
-                        meetings.filter((meeting) => meeting.id !== id)
-                      );
-                      setDatedMeetingsWithAttendees(
-                        meetings.filter((meeting) => meeting.id !== id)
-                      );
-                      console.log("*****meeting list*****:", meetings);
-                      toast.current?.show({
-                        severity: "success",
-                        summary: "This meeting has been deleted.",
-                        life: 3000,
-                      });
-                      // Reset form values or other state updates here
+                    onSuccess: (response) => {
+                      if (response) {
+                        setMeetings(
+                          meetings.filter((meeting) => meeting.id !== id)
+                        );
+                        // setDatedMeetingsWithAttendees(
+                        //   meetings.filter((meeting) => meeting.id !== id)
+                        // );
+                        setSelectedMeetings([]);
+                        console.log("*****meeting list*****:", meetings);
+                        console.log(
+                          "*****dated meeting list*****:",
+                          datedMeetingsWithAttendees
+                        );
+                        toast.current?.show({
+                          severity: "success",
+                          summary: "This meeting has been deleted.",
+                          life: 3000,
+                        });
+                        setFormValues({
+                          name: [],
+                          student_id: 0,
+                          start: dayjs(),
+                          end: dayjs(),
+                          meeting_status: "",
+                          program: "",
+                          level_lesson: "",
+                          meeting_notes: "",
+                          recorded_by: "",
+                          recorded_on: dayjs(),
+                          edited_by: "",
+                          edited_on: dayjs(),
+                          attendees: [],
+                        });
+                        setName([]);
+                        setSelectedNames([]);
+                        setSelectedStatus("");
+                        setStartTime(dayjs());
+                        setEndTime(dayjs());
 
-                      toastDelete.current?.clear();
+                        toastDelete.current?.clear();
+                      }
                     },
                     onError: () => {
                       // This code runs if the mutation fails

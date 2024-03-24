@@ -176,6 +176,7 @@ const Meetings = () => {
         />
         <MeetingList
           meetings={meetings}
+          setMeetings={setMeetings}
           students={students}
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}

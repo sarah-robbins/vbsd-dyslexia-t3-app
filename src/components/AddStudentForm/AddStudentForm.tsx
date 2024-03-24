@@ -17,7 +17,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { type Dayjs } from "dayjs";
-import { set } from "zod";
 
 const style = {
   position: "absolute",
@@ -343,19 +342,25 @@ const AddStudentForm: React.FC<Props> = ({
           <FormControl required className="form-fields form-fields-50">
             <InputLabel id="demo-simple-select-label">School</InputLabel>
             <Select
-              // labelId="demo-simple-select-label"
-              // id="demo-simple-select"
               value={studentSchool}
               label="School"
               onChange={handleSchoolChange}
             >
-              {session.user.school.split(", ").map((school) => (
-                <MenuItem key={school} value={school}>
-                  <ListItemText primary={school} />
-                </MenuItem>
-              ))}
+              {session.user.role.toLowerCase().includes("admin")
+                ? session.appSettings.school_options.map((school) => (
+                    <MenuItem key={school} value={school}>
+                      <ListItemText primary={school} />
+                    </MenuItem>
+                  ))
+                : session.user.role.toLowerCase().includes("principal")
+                ? session.user.school.split(",").map((school) => (
+                    <MenuItem key={school.trim()} value={school.trim()}>
+                      <ListItemText primary={school.trim()} />
+                    </MenuItem>
+                  ))
+                : null}
             </Select>
-          </FormControl>
+          </FormControl>{" "}
           <FormControl required className="form-fields form-fields-50">
             <InputLabel id="demo-simple-select-label">Grade</InputLabel>
             <Select
