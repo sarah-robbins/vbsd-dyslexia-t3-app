@@ -63,10 +63,12 @@ export const studentsRouter = createTRPCRouter({
           },
         });
       case 'principal':
+        const sessionUserSchools = userSchool.split(',').map(s => s.trim());
+
         return await ctx.prisma.students.findMany({
           where: {
             school: {
-              in: Array.isArray(userSchool) ? userSchool : [userSchool], // userSchool should be an array of school names
+              in: sessionUserSchools, // userSchool should be an array of school names
             },
           },
           include: {

@@ -14,6 +14,7 @@ import { type Session } from "next-auth";
 import { api } from "@/utils/api";
 import { type Toast } from "primereact/toast";
 import CloseIcon from "@mui/icons-material/Close";
+import { set } from "zod";
 
 const style = {
   position: "absolute",
@@ -73,7 +74,22 @@ const AddUserForm: React.FC<Props> = ({
   setRunSuccessToast,
 }) => {
   const toast = useRef<Toast>(null);
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    setOpen(false),
+      setFormValues({
+        first_name: "",
+        last_name: "",
+        school: "",
+        email: "",
+        phone: "",
+        role: "",
+        view: "",
+        created_at: new Date(),
+      });
+    setUserSchools([]);
+    setUserRoles([]);
+    setUserView("");
+  };
 
   const [userSchools, setUserSchools] = React.useState<string[]>([]);
 
@@ -151,7 +167,19 @@ const AddUserForm: React.FC<Props> = ({
         }
         setOpen(false);
         setRunSuccessToast(true);
-
+        setFormValues({
+          first_name: "",
+          last_name: "",
+          school: "",
+          email: "",
+          phone: "",
+          role: "",
+          view: "",
+          created_at: new Date(),
+        });
+        setUserSchools([]);
+        setUserRoles([]);
+        setUserView("");
         // Return an empty array or the current array of users
         return [];
       },

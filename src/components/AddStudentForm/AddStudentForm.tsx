@@ -17,6 +17,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { type Dayjs } from "dayjs";
+import { set } from "zod";
 
 const style = {
   position: "absolute",
@@ -91,7 +92,35 @@ const AddStudentForm: React.FC<Props> = ({
 }) => {
   console.log("users from AddStudentForm", users);
   const toast = useRef<Toast>(null);
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    setOpen(false),
+      setFormValues({
+        first_name: "",
+        last_name: "",
+        student_assigned_id: "",
+        school: "",
+        grade: "",
+        home_room_teacher: "",
+        intervention_program: "",
+        date_intervention_began: null,
+        tutor_id: null,
+        services: "",
+        level_lesson: "",
+        new_student: true,
+        withdrew: false,
+        graduated: false,
+        moved: false,
+        new_location: "",
+        additional_comments: "",
+        created_at: new Date(),
+      });
+    setStudentSchool("");
+    setStudentGrade("");
+    setStudentProgram("");
+    setStudentTutor(undefined);
+    setStudentServices([]);
+    setStudentDate(null);
+  };
 
   const [studentSchool, setStudentSchool] = React.useState<string>("");
   const [studentGrade, setStudentGrade] = React.useState<string>("");
@@ -214,6 +243,32 @@ const AddStudentForm: React.FC<Props> = ({
         }
         setOpen(false);
         setRunSuccessToast(true);
+        setFormValues({
+          first_name: "",
+          last_name: "",
+          student_assigned_id: "",
+          school: "",
+          grade: "",
+          home_room_teacher: "",
+          intervention_program: "",
+          date_intervention_began: null,
+          tutor_id: null,
+          services: "",
+          level_lesson: "",
+          new_student: true,
+          withdrew: false,
+          graduated: false,
+          moved: false,
+          new_location: "",
+          additional_comments: "",
+          created_at: new Date(),
+        });
+        setStudentSchool("");
+        setStudentGrade("");
+        setStudentProgram("");
+        setStudentTutor(undefined);
+        setStudentServices([]);
+        setStudentDate(null);
 
         // Return an empty array or the current array of students
         return [];

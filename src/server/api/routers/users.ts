@@ -31,7 +31,6 @@ export const usersRouter = createTRPCRouter({
     const userSchool = ctx.session?.user?.school;
 
     let highestPriorityRole = '';
-
     if (userRole.toLowerCase().includes('admin')) {
       highestPriorityRole = 'admin';
     } else if (userRole.toLowerCase().includes('principal')) {
@@ -40,25 +39,28 @@ export const usersRouter = createTRPCRouter({
       highestPriorityRole = 'tutor';
     }
     switch (highestPriorityRole) {
-      case 'tutor':
-        return await ctx.prisma.users.findMany({
-          where: {
-            school: {
-              in: Array.isArray(userSchool) ? userSchool : [userSchool], // userSchool should be an array of school names
-            },
-          },
-        });
+      // case 'tutor':
+      //   return await ctx.prisma.users.findMany({
+      //     where: {
+      //       school: {
+      //         in: Array.isArray(userSchool) ? userSchool : [userSchool], // userSchool should be an array of school names
+      //       },
+      //     },
+      //   });
       case 'principal':
-        return await ctx.prisma.users.findMany({
-          where: {
-            school: {
-              in: Array.isArray(userSchool) ? userSchool : [userSchool], // userSchool should be an array of school names
-            },
-          },
+        const allUsers = await ctx.prisma.users.findMany();
+
+        // Split the session user's school value
+        const sessionUserSchools = userSchool.split(',').map(s => s.trim());
+  
+        // Find users that have a matching school
+        const matchingUsers = allUsers.filter(user => {
+          const userSchools = user.school.split(',').map(s => s.trim());
+          return sessionUserSchools.some(school => userSchools.includes(school));
         });
-      case 'admin':
-          return await ctx.prisma.users.findMany({
-        });
+  
+        return matchingUsers;      case 'admin':
+          return await ctx.prisma.users.findMany({});
       default:
         // Handle default case or throw an error
         return [];
