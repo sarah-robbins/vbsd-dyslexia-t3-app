@@ -1124,6 +1124,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
           />
           <MeetingList
             meetings={meetings}
+            setMeetings={setMeetings}
             students={students}
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
