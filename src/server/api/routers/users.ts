@@ -55,11 +55,15 @@ export const usersRouter = createTRPCRouter({
   
         // Find users that have a matching school
         const matchingUsers = allUsers.filter(user => {
+          if (user.school) {
           const userSchools = user.school.split(',').map(s => s.trim());
           return sessionUserSchools.some(school => userSchools.includes(school));
+          }
+          return false;
         });
   
-        return matchingUsers;      case 'admin':
+        return matchingUsers;
+        case 'admin':
           return await ctx.prisma.users.findMany({});
       default:
         // Handle default case or throw an error
