@@ -266,7 +266,7 @@ export const meetingsRouter = createTRPCRouter({
           });
         }
         
-        return { success: true };
+        return { meeting, success: true};
         // return meeting;
       } catch (error) {
         console.error('Error creating meeting:', error);
@@ -313,7 +313,7 @@ export const meetingsRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       // Update meeting details
-      await ctx.prisma.meetings.update({
+      const meeting = await ctx.prisma.meetings.update({
         where: {
           id: input.id,
         },
@@ -358,7 +358,7 @@ export const meetingsRouter = createTRPCRouter({
         }
       }
 
-      return { success: true };
+      return { meeting, success: true };
     }),
 
   deleteAttendeesInput: publicProcedure

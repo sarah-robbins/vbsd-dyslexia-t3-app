@@ -35,7 +35,7 @@ const Home: NextPage = () => {
 
   useEffect(() => {
     console.log("version", version.toString());
-    const appVersion = "2.0.2 - alpha";
+    const appVersion = "2.0.3 - alpha";
     if (appVersion !== version.toString()) {
       setAppIsUpdated(false);
     }

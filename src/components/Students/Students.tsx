@@ -85,6 +85,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     }
   }, [runSuccessToast]);
 
+  const [filteredMeetings, setFilteredMeetings] = useState<Meeting[]>([]);
   const getAllStudents = api.students.getAllStudents.useQuery();
   const [students, setStudents] = useState<Student[]>([]);
   const [expandedRows, setExpandedRows] = useState<
@@ -264,6 +265,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     }
   }, [myStudents]);
 
+  console.log("myStudents from Students component: ", myStudents);
   // Fetch all tutors (separate API call)
   useEffect(() => {
     if (myUsers) {
@@ -545,7 +547,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   };
 
   const updateStudentRowMutation = api.students.updateStudentRow.useMutation();
-  const createStudentMutation = api.students.createStudent.useMutation();
+  // const createStudentMutation = api.students.createStudent.useMutation();
   // const [dataVersion, setDataVersion] = useState(0);
 
   const onRowEditComplete = (e: DataTableRowEditCompleteEvent) => {
@@ -572,67 +574,67 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         student.id === -1 ? { ...e.data, id: 0 } : student
       );
 
-      const dataForSave = {
-        ...newData,
-        school: newData.school ?? "",
-        grade: newData.grade ?? "",
-        home_room_teacher: newData.home_room_teacher ?? "",
-        tutor_id: selectedTutorIds[newData.id as number] ?? null,
-        intervention_program: newData.intervention_program ?? "",
-        first_name: newData.first_name ?? "",
-        last_name: newData.last_name ?? "",
-        student_assigned_id: newData.student_assigned_id ?? "",
-        services: formatServicesForSave(newData.services),
-        level_lesson: newData.level_lesson ?? "",
-        date_intervention_began: newData.date_intervention_began ?? null,
-        new_student: newData.new_student ?? false,
-        moved: newData.moved ?? false,
-        new_location: newData.new_location ?? "",
-        withdrew: newData.withdrew ?? false,
-        graduated: newData.graduated ?? false,
-        additional_comments: newData.additional_comments ?? "",
-        last_edited: new Date(),
-        created_at: new Date(),
-      };
-      createStudentMutation.mutate(dataForSave, {
-        onSuccess: (response) => {
-          if (response.id) {
-            setStudents((prevStudents) => {
-              const updatedStudents = prevStudents.map((user) => {
-                if (user.id === dataForSave.id) {
-                  // Replace the temporary ID with the actual ID
-                  return { ...dataForSave, id: response.id };
-                } else {
-                  return user;
-                }
-              });
-              // Add the new user to the list
-              const userData = createStudentMutation.data as Student;
-              if (userData) {
-                updatedStudents.push(userData);
-              }
-              return updatedStudents;
-            });
-          } else {
-            console.log("no id returned from the server");
-          }
+      // const dataForSave = {
+      //   ...newData,
+      //   school: newData.school ?? "",
+      //   grade: newData.grade ?? "",
+      //   home_room_teacher: newData.home_room_teacher ?? "",
+      //   tutor_id: selectedTutorIds[newData.id as number] ?? null,
+      //   intervention_program: newData.intervention_program ?? "",
+      //   first_name: newData.first_name ?? "",
+      //   last_name: newData.last_name ?? "",
+      //   student_assigned_id: newData.student_assigned_id ?? "",
+      //   services: formatServicesForSave(newData.services),
+      //   level_lesson: newData.level_lesson ?? "",
+      //   date_intervention_began: newData.date_intervention_began ?? null,
+      //   new_student: newData.new_student ?? false,
+      //   moved: newData.moved ?? false,
+      //   new_location: newData.new_location ?? "",
+      //   withdrew: newData.withdrew ?? false,
+      //   graduated: newData.graduated ?? false,
+      //   additional_comments: newData.additional_comments ?? "",
+      //   last_edited: new Date(),
+      //   created_at: new Date(),
+      // };
+      // createStudentMutation.mutate(dataForSave, {
+      //   onSuccess: (response) => {
+      //     if (response.id) {
+      //       setStudents((prevStudents) => {
+      //         const updatedStudents = prevStudents.map((user) => {
+      //           if (user.id === dataForSave.id) {
+      //             // Replace the temporary ID with the actual ID
+      //             return { ...dataForSave, id: response.id };
+      //           } else {
+      //             return user;
+      //           }
+      //         });
+      //         // Add the new user to the list
+      //         const userData = createStudentMutation.data as Student;
+      //         if (userData) {
+      //           updatedStudents.push(userData);
+      //         }
+      //         return updatedStudents;
+      //       });
+      //     } else {
+      //       console.log("no id returned from the server");
+      //     }
 
-          toast.current?.show({
-            severity: "success",
-            summary: "Success",
-            detail: "User saved",
-          });
-        },
-        onError: (error) => {
-          console.log("error", error);
-          // On error, show an error toast
-          toast.current?.show({
-            severity: "error",
-            summary: "Error",
-            detail: "Save failed",
-          });
-        },
-      });
+      //     toast.current?.show({
+      //       severity: "success",
+      //       summary: "Success",
+      //       detail: "User saved",
+      //     });
+      //   },
+      //   onError: (error) => {
+      //     console.log("error", error);
+      //     // On error, show an error toast
+      //     toast.current?.show({
+      //       severity: "error",
+      //       summary: "Error",
+      //       detail: "Save failed",
+      //     });
+      //   },
+      // });
     } else {
       // Handling existing row update
       updatedStudents = students.map((student) =>
@@ -665,28 +667,29 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
 
       // Call the mutation to update the student
       updateStudentRowMutation.mutate(dataForSave, {
-        onSuccess: () => {
-          // On success, maybe refresh the data or show a success toast
-          toast.current?.show({
-            severity: "success",
-            summary: "Success",
-            detail: "Student updated",
-          });
-          setStudents((prevStudents) => {
-            const index = prevStudents.findIndex(
-              (student) => student.id === dataForSave.id
-            );
+        onSuccess: (response) => {
+          if (response) {
+            toast.current?.show({
+              severity: "success",
+              summary: "Success",
+              detail: "Student updated",
+            });
+            setStudents((prevStudents) => {
+              const index = prevStudents.findIndex(
+                (student) => student.id === dataForSave.id
+              );
 
-            if (index !== -1) {
-              // Student exists, update their information
-              const newStudents = [...prevStudents];
-              newStudents[index] = dataForSave;
-              return newStudents;
-            } else {
-              // New student, add them to the list
-              return [dataForSave, ...prevStudents];
-            }
-          });
+              if (index !== -1) {
+                // Student exists, update their information
+                const newStudents = [...prevStudents];
+                newStudents[index] = dataForSave;
+                return newStudents;
+              } else {
+                // New student, add them to the list
+                return [dataForSave, ...prevStudents];
+              }
+            });
+          }
         },
         onError: (error) => {
           // On error, show an error toast
@@ -1109,6 +1112,8 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
           <MeetingForm
             meetings={meetings}
             setMeetings={setMeetings}
+            // filteredMeetings={filteredMeetings}
+            // setFilteredMeetings={setFilteredMeetings}
             students={students}
             getDatedMeetings={studentMeetings}
             selectedMeetings={selectedMeetings}
@@ -1124,7 +1129,9 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
           />
           <MeetingList
             meetings={meetings}
-            setMeetings={setMeetings}
+            // setMeetings={setMeetings}
+            // filteredMeetings={filteredMeetings}
+            // setFilteredMeetings={setFilteredMeetings}
             students={students}
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
@@ -1170,10 +1177,10 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
                 deleteStudentMutation.mutate(
                   { id: id },
                   {
-                    onSuccess: () => {
+                    onSuccess: (response) => {
                       toastDelete.current?.clear();
 
-                      if (deleteStudentMutation.isSuccess) {
+                      if (response) {
                         console.log("old students: ", students);
 
                         setStudents((students) =>
@@ -1359,6 +1366,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   //   throw new Error("Function not implemented.");
   // }
 
+  console.log("students from students page", students);
   return (
     <>
       <AddStudentForm
@@ -1372,12 +1380,14 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         runSuccessToast={runSuccessToast}
         setRunSuccessToast={setRunSuccessToast}
       />
+
       <Card className="card">
         <Toast ref={toast} />
         <Toast ref={toastDelete} position="top-center" />
         <div className="meeting-list-name-select flex justify-content-between align-items-center gap-4">
           <h3>Students</h3>
         </div>
+
         <DataTable
           className="students-table"
           value={students}

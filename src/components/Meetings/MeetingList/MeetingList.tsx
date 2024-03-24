@@ -11,7 +11,6 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 interface Props {
   meetings: MeetingWithAttendees[];
-  setMeetings: (meetings: MeetingWithAttendees[]) => void;
   students: Student[];
   selectedDate: Dayjs;
   getDatedMeetings: MeetingWithAttendees[];
@@ -26,7 +25,6 @@ interface Props {
 
 const MeetingList: React.FC<Props> = ({
   meetings = [],
-  setMeetings,
   selectedDate,
   setSelectedDate,
   getDatedMeetings = [],
@@ -56,8 +54,11 @@ const MeetingList: React.FC<Props> = ({
     }
   };
 
+  console.log("meetings: ", meetings);
+  console.log("getDatedMeetings: ", getDatedMeetings);
+  console.log("selectedMeetings: ", selectedMeetings);
+  console.log("datedMeetingsWithAttendees: ", datedMeetingsWithAttendees);
   useEffect(() => {
-    setMeetings(getDatedMeetings);
     if (selectedDate && isOnMeetingsPage) {
       const filtered = datedMeetingsWithAttendees
         .map((meeting) => ({
@@ -127,7 +128,6 @@ const MeetingList: React.FC<Props> = ({
     selectedDate,
     meetings,
     students,
-    setMeetings,
   ]);
 
   useEffect(() => {

@@ -22,6 +22,7 @@ import type {
   MeetingAttendees,
   FormValues,
   MeetingWithAttendees,
+  Meeting,
 } from "@/types";
 import { OutlinedInput } from "@mui/material";
 import { useSession } from "next-auth/react";
@@ -29,6 +30,28 @@ import { useSession } from "next-auth/react";
 /* -------------------------------------------------------------------------- */
 /*                         Interfacing for TypeScript                         */
 /* -------------------------------------------------------------------------- */
+
+interface NewMeetingValues {
+  start: Date;
+  end: Date;
+  program: string;
+  level_lesson: string;
+  meeting_notes: string;
+  recorded_by: string;
+  recorded_on: Date;
+  tutor_id: number;
+  // MeetingAttendees: {
+  //   student_id: number;
+  //   meeting_status: string;
+  //   created_at: Date;
+  // }[];
+  attendees: {
+    student_id: number;
+    meeting_status?: string;
+    created_at: Date;
+    name: string;
+  }[];
+}
 
 interface Props {
   meetings: MeetingWithAttendees[];
@@ -53,7 +76,6 @@ const MeetingForm: React.FC<Props> = ({
   students = [],
   getDatedMeetings = [],
   selectedMeetings = [],
-  setSelectedMeetings,
   selectedDate,
   datedMeetingsWithAttendees,
   setDatedMeetingsWithAttendees,
@@ -295,9 +317,18 @@ const MeetingForm: React.FC<Props> = ({
 
   const start = startDateTime;
   const end = endDateTime;
-
+  /* -------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------- */
   /* -------------------------------------------------------------------------- */
   /*                               Status Options                               */
+  /* -------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------- */
   /* -------------------------------------------------------------------------- */
   const [individualStatuses, setIndividualStatuses] = useState<{
     [key: string]: string;
@@ -412,14 +443,19 @@ const MeetingForm: React.FC<Props> = ({
     setIndividualStatuses((prev) => ({ ...prev, [studentName]: status }));
   };
 
-  // const isMetStatusPresent = () => {
-  //   return Object.values(individualStatuses).some((status) => status === "Met");
-  // };
-
   // const isEditable = isMetStatusPresent();
-
+  /* -------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------- */
   /* -------------------------------------------------------------------------- */
   /*                               Program Options                               */
+  /* -------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------- */
   /* -------------------------------------------------------------------------- */
 
   const programOptions: string[] = ["Barton", "Connections", "Foundations"];
@@ -578,71 +614,79 @@ const MeetingForm: React.FC<Props> = ({
     setAttendees(getAttendees);
   }, [formValues.attendees]);
 
-  const handleAdd = async (formValues: FormValues) => {
+  const handleAdd = (formValues: FormValues) => {
     console.log("Submitting with attendees:", formValues.attendees);
 
-    try {
-      const validAttendees = attendees
-        .filter((attendee) => attendee.student_id !== undefined) // Filter out undefined student IDs
-        .map((attendee) => ({
-          student_id: attendee.student_id as number, // Cast to number, since we filtered out undefined
-          meeting_status: attendee.meeting_status,
-          created_at: dayjs().toDate(),
-        }));
+    const validAttendees = attendees
+      .filter((attendee) => attendee.student_id !== undefined) // Filter out undefined student IDs
+      .map((attendee) => ({
+        student_id: attendee.student_id as number,
+        meeting_status: attendee.meeting_status || "",
+        created_at: dayjs().toDate(),
+        name: `${
+          students.find((s) => s.id === attendee.student_id)?.first_name || ""
+        } ${
+          students.find((s) => s.id === attendee.student_id)?.last_name || ""
+        }`,
+      }));
 
-      const newMeeting = {
-        start: dayjs(start).toDate(),
-        end: dayjs(end).toDate(),
-        program: formValues.program ?? "",
-        level_lesson: formValues.level_lesson ?? "",
-        meeting_notes: formValues.meeting_notes ?? "",
-        recorded_by: sessionData?.userId.toString() ?? "",
-        recorded_on: dayjs().toDate(),
-        tutor_id: sessionData?.userId || 0,
-        attendees: validAttendees,
-      };
+    const newMeeting: NewMeetingValues = {
+      start: dayjs(start).toDate(),
+      end: dayjs(end).toDate(),
+      program: formValues.program ?? "",
+      level_lesson: formValues.level_lesson ?? "",
+      meeting_notes: formValues.meeting_notes ?? "",
+      recorded_by: sessionData?.userId.toString() ?? "",
+      recorded_on: dayjs().toDate(),
+      tutor_id: sessionData?.userId || 0,
+      attendees: validAttendees,
+    };
 
-      // createMeetingMutation.mutate(newMeeting);
+    createMeetingMutation.mutate(newMeeting, {
+      onSuccess: (response) => {
+        if (response) {
+          console.log("Meeting added successfully:", response);
+          console.log("New Meeting:", newMeeting);
+          meetings.push(newMeeting);
+          console.log("*************meetings************:", meetings);
+          toast.current?.show({
+            severity: "success",
+            summary: "Meeting successfully added.",
+            life: 3000,
+          });
 
-      setName([]);
-      setSelectedNames([]);
-      setSelectedStatus("");
-      setStartTime(dayjs());
-      setEndTime(dayjs());
-
-      const response = await createMeetingMutation.mutateAsync(newMeeting);
-
-      if (response.success) {
+          setFormValues({
+            name: [],
+            student_id: 0,
+            start: dayjs(),
+            end: dayjs(),
+            meeting_status: "",
+            program: "",
+            level_lesson: "",
+            meeting_notes: "",
+            recorded_by: "",
+            recorded_on: dayjs(),
+            edited_by: "",
+            edited_on: dayjs(),
+            attendees: [],
+          });
+          // location.reload();
+          setName([]);
+          setSelectedNames([]);
+          setSelectedStatus("");
+          setStartTime(dayjs());
+          setEndTime(dayjs());
+        }
+      },
+      onError: (error) => {
+        console.error("Error adding meeting:", error);
         toast.current?.show({
-          severity: "success",
-          summary: "Meeting successfully added.",
+          severity: "error",
+          summary: "Error adding meeting.",
           life: 3000,
         });
-
-        setFormValues({
-          name: [],
-          student_id: 0,
-          start: dayjs(),
-          end: dayjs(),
-          meeting_status: "",
-          program: "",
-          level_lesson: "",
-          meeting_notes: "",
-          recorded_by: "",
-          recorded_on: dayjs(),
-          edited_by: "",
-          edited_on: dayjs(),
-          attendees: [],
-        });
-      }
-    } catch (error) {
-      console.error("Error adding meeting:", error);
-      toast.current?.show({
-        severity: "error",
-        summary: "Error adding meeting.",
-        life: 3000,
-      });
-    }
+      },
+    });
   };
 
   /* ------------------- edit Meeting ------------------- */
@@ -695,14 +739,19 @@ const MeetingForm: React.FC<Props> = ({
     }
 
     updateMeetingMutation.mutate(meetingData, {
-      onSuccess: () => {
-        console.log("Meeting updated successfully");
-        toast.current?.show({
-          severity: "success",
-          summary: "Meeting successfully updated.",
-          life: 3000,
-        });
-        setMeetings([meetingData as MeetingWithAttendees, ...meetings]);
+      onSuccess: (response) => {
+        if (response) {
+          console.log("Meeting added successfully:", response);
+          console.log("Meeting updated successfully", meetingData);
+          meetings.push(meetingData as Meeting);
+          toast.current?.show({
+            severity: "success",
+            summary: "Meeting successfully updated.",
+            life: 3000,
+          });
+          // location.reload();
+          // setSelectedMeetings([]);
+        }
       },
       onError: (error) => {
         console.error("Error updating meeting:", error);
@@ -749,13 +798,15 @@ const MeetingForm: React.FC<Props> = ({
                   {
                     onSuccess: (response) => {
                       if (response) {
+                        console.log("Meeting deleted successfully:", response);
+                        console.log("Meeting deleted with ID:", id);
                         setMeetings(
                           meetings.filter((meeting) => meeting.id !== id)
                         );
-                        // setDatedMeetingsWithAttendees(
-                        //   meetings.filter((meeting) => meeting.id !== id)
-                        // );
-                        setSelectedMeetings([]);
+                        console.log("Meetings:", meetings);
+                        setDatedMeetingsWithAttendees(
+                          meetings.filter((meeting) => meeting.id !== id)
+                        );
                         console.log("*****meeting list*****:", meetings);
                         console.log(
                           "*****dated meeting list*****:",
@@ -788,6 +839,8 @@ const MeetingForm: React.FC<Props> = ({
                         setEndTime(dayjs());
 
                         toastDelete.current?.clear();
+
+                        // location.reload();
                       }
                     },
                     onError: () => {
@@ -951,7 +1004,9 @@ const MeetingForm: React.FC<Props> = ({
               />
             </div>
           </LocalizationProvider>
+
           {renderStatusSelects()}
+
           <div className="flex gap-4">
             <FormControl className="w-6">
               <InputLabel id="demo-simple-select-label">Program</InputLabel>

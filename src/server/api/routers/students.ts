@@ -199,10 +199,18 @@ export const studentsRouter = createTRPCRouter({
         intervention_program: z.string().optional(),
         services: z.string().optional(),
         new_student: z.boolean().optional(),
+        date_intervention_began: z.date().optional(),
+        level_lesson: z.string().optional(),
+        moved: z.boolean().optional(),
+        new_location: z.string().optional(),
+        withdrew: z.boolean().optional(),
+        graduated: z.boolean().optional(),
+        additional_comments: z.string().optional(),
         created_at: z.date().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
+      console.log('input from trpc', input);
       return ctx.prisma.students.create({
         data: {
           school: input.school,
@@ -214,6 +222,13 @@ export const studentsRouter = createTRPCRouter({
           tutor_id: input.tutor_id,
           intervention_program: input.intervention_program,
           services: input.services,
+          date_intervention_began: input.date_intervention_began,
+          level_lesson: input.level_lesson,
+          moved: input.moved,
+          new_location: input.new_location,
+          withdrew: input.withdrew,
+          graduated: input.graduated,
+          additional_comments: input.additional_comments,
           new_student: input.new_student,
         },
       });

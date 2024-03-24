@@ -17,6 +17,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { type Dayjs } from "dayjs";
+// import Autocomplete from "@mui/material/Autocomplete";
 
 const style = {
   position: "absolute",
@@ -52,7 +53,7 @@ interface formValues {
   tutor_id?: number | null;
   intervention_program?: string;
   level_lesson?: string;
-  date_intervention_began?: Dayjs | null;
+  date_intervention_began?: Date | null;
   services?: string;
   new_student?: boolean;
   graduated?: boolean;
@@ -61,6 +62,12 @@ interface formValues {
   withdrew?: boolean;
   additional_comments?: string;
   created_at?: Date;
+  tutorId?: number | null;
+  tutorFullName?: string;
+  tutorInfo?: {
+    value: number;
+    label: string;
+  };
 }
 
 interface Props {
@@ -84,6 +91,7 @@ const isCustomSession = (session: Session | null): session is customSession => {
 const AddStudentForm: React.FC<Props> = ({
   session,
   users,
+  setUsers,
   students,
   open,
   setOpen,
@@ -162,12 +170,19 @@ const AddStudentForm: React.FC<Props> = ({
 
   const handleTutorChange = (event: SelectChangeEvent) => {
     setStudentTutor(Number(event.target.value));
-    console.log("event.target.value", event.target.value);
-    console.log("type of event.target.value", typeof event.target.value);
-    console.log("prevFormValues", formValues);
+    const tutor = users.find((user) => user.id === Number(event.target.value));
+    console.log("tutor", tutor);
+    const tutorName = `${tutor?.first_name || ""} ${tutor?.last_name || ""}`;
+    console.log("tutorName", tutorName);
     setFormValues((prevFormValues) => ({
       ...prevFormValues,
       tutor_id: Number(event.target.value),
+      tutorId: Number(event.target.value),
+      tutorInfo: {
+        value: Number(event.target.value),
+        label: tutorName,
+      },
+      user: tutor,
     }));
   };
 
@@ -189,13 +204,13 @@ const AddStudentForm: React.FC<Props> = ({
     if (date) {
       setFormValues((prevFormValues) => ({
         ...prevFormValues,
-        date_intervention_began: dayjs(date), // Convert Dayjs to Date
+        date_intervention_began: date.toDate(), // Convert Dayjs to Date
       }));
     } else {
-      setFormValues((prevFormValues) => ({
-        ...prevFormValues,
-        date_intervention_began: null, // Set to null when no date is selected
-      }));
+      // setFormValues((prevFormValues) => ({
+      //   ...prevFormValues,
+      //   date_intervention_began: null, // Set to null when no date is selected
+      // }));
     }
   };
 
@@ -224,12 +239,34 @@ const AddStudentForm: React.FC<Props> = ({
 
   const saveNewStudent = () => {
     console.log("formValues", formValues);
-    createStudentMutation.mutate(formValues, {
+    const tutor = users.find((user) => user.id === Number(studentTutor));
+
+    const tutorName = `${tutor?.first_name || ""} ${tutor?.last_name || ""}`;
+
+    let updatedFormValues = {
+      ...formValues,
+      date_intervention_began: studentDate?.toDate(),
+    };
+    if (studentTutor) {
+      updatedFormValues = {
+        ...formValues,
+        date_intervention_began: studentDate?.toDate(),
+        tutorId: studentTutor,
+        tutor_id: studentTutor,
+        tutorInfo: {
+          value: studentTutor,
+          label: tutorName,
+        },
+        tutorFullName: tutorName,
+      };
+    }
+    console.log("updatedFormValues", updatedFormValues);
+    createStudentMutation.mutate(updatedFormValues, {
       onSuccess: (response) => {
         if (response.id) {
           const newStudent: Student = {
+            ...updatedFormValues,
             id: response.id,
-            ...formValues,
           };
           if (newStudent) {
             students.push(newStudent);
@@ -237,40 +274,41 @@ const AddStudentForm: React.FC<Props> = ({
             // // This is the correct way to update the state, but it's not working
             // setStudents(prevStudents => [newStudent, ...prevStudents]);
           }
+          setOpen(false);
+          setRunSuccessToast(true);
+          setFormValues({
+            first_name: "",
+            last_name: "",
+            student_assigned_id: "",
+            school: "",
+            grade: "",
+            home_room_teacher: "",
+            intervention_program: "",
+            date_intervention_began: null,
+            tutor_id: null,
+            services: "",
+            level_lesson: "",
+            new_student: true,
+            withdrew: false,
+            graduated: false,
+            moved: false,
+            new_location: "",
+            additional_comments: "",
+            created_at: new Date(),
+          });
+          setStudentSchool("");
+          setStudentGrade("");
+          setStudentProgram("");
+          setStudentTutor(undefined);
+          setStudentServices([]);
+          setStudentDate(null);
+          // setUsers(users);
+
+          // Return an empty array or the current array of students
+          // return [];
         } else {
           console.log("no id returned from the server");
         }
-        setOpen(false);
-        setRunSuccessToast(true);
-        setFormValues({
-          first_name: "",
-          last_name: "",
-          student_assigned_id: "",
-          school: "",
-          grade: "",
-          home_room_teacher: "",
-          intervention_program: "",
-          date_intervention_began: null,
-          tutor_id: null,
-          services: "",
-          level_lesson: "",
-          new_student: true,
-          withdrew: false,
-          graduated: false,
-          moved: false,
-          new_location: "",
-          additional_comments: "",
-          created_at: new Date(),
-        });
-        setStudentSchool("");
-        setStudentGrade("");
-        setStudentProgram("");
-        setStudentTutor(undefined);
-        setStudentServices([]);
-        setStudentDate(null);
-
-        // Return an empty array or the current array of students
-        return [];
       },
       onError: (error) => {
         console.log("error", error);
@@ -287,8 +325,6 @@ const AddStudentForm: React.FC<Props> = ({
     });
   };
 
-  console.log("session from AddStudentForm", session);
-
   if (!session || !isCustomSession(session)) {
     return null;
   }
@@ -303,10 +339,10 @@ const AddStudentForm: React.FC<Props> = ({
         sx={style}
         className="form-container flex flex-column flex-wrap sm:flex-row justify-content-start align-items-stretch"
       >
-        <div className="modal-header flex justify-content-between w-full mb-4">
+        <div className="modal-header flex justify-content-between align-items-center w-full mb-4">
           <h2>Add Student</h2>
-          <Button onClick={handleClose}>
-            <CloseIcon />
+          <Button color="error" onClick={handleClose}>
+            <CloseIcon color="error" className="close-icon" />
           </Button>
         </div>
         <div className="flex flex-column flex-wrap sm:flex-row gap-4 justify-content-center align-items-stretch">
@@ -339,6 +375,13 @@ const AddStudentForm: React.FC<Props> = ({
               onChange={handleTextChange}
             />
           </FormControl>
+          {/* <Autocomplete
+            disablePortal
+            id="combo-box-demo"
+            options={mySchools}
+            sx={{ width: 300 }}
+            renderInput={(params) => <TextField {...params} label="School" />}
+          /> */}
           <FormControl required className="form-fields form-fields-50">
             <InputLabel id="demo-simple-select-label">School</InputLabel>
             <Select

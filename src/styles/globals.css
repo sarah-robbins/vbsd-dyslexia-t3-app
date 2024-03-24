@@ -538,6 +538,12 @@ button.mobile-menu-toggle {
   margin: .5rem auto !important;
 }
 
+.close-icon {
+  width: 36px !important;
+  height: 36px !important;
+  font-size: 36px !important;
+}
+
 .form-container {
   min-width: 80vw;
   max-height: 100vh;

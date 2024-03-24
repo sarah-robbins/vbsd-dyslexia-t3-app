@@ -75,6 +75,18 @@ export type Meeting = {
   MeetingAttendees?: MeetingAttendees[];
 };
 
+export interface MeetingWithAttendees extends Meeting {
+  attendees?: {
+    id?: number;
+    meeting_id?: number;
+    student_id?: number;
+    meeting_status?: string;
+    created_at?: Dayjs | Date;
+    name: string;
+    tutor_id?: number | null;
+  }[];
+}
+
 export type MeetingAttendees = {
   id?: number;
   meeting_id?: number;
@@ -110,18 +122,6 @@ export type User = {
   created_at?: Dayjs | Date | null;
   view?: string | null;
 };
-
-export interface MeetingWithAttendees extends Meeting {
-  attendees?: {
-    id?: number;
-    meeting_id: number;
-    student_id: number;
-    meeting_status: string;
-    created_at?: Dayjs;
-    name: string;
-    tutor_id?: number | null;
-  }[];
-}
 
 export type AppSettings = {
   id?: number;

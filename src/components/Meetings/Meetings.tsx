@@ -12,7 +12,6 @@ import {
   type MeetingWithAttendees,
 } from "@/types";
 import Students from "../Students/Students";
-import { TRPCClientError } from "@trpc/client";
 // import { useSession } from "next-auth/react";
 // import StudentsInProgress from '../Students/Students-in-progress';
 
@@ -65,6 +64,10 @@ const Meetings = () => {
   const { data: myStudents } = api.students.getStudentsForRole.useQuery() as {
     data: Student[];
   };
+
+  useEffect(() => {
+    console.log("meeting from the PARENT: ", meetings);
+  }, [meetings]);
 
   useEffect(() => {
     if (myStudents) {
@@ -176,7 +179,7 @@ const Meetings = () => {
         />
         <MeetingList
           meetings={meetings}
-          setMeetings={setMeetings}
+          // setMeetings={setMeetings}
           students={students}
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}

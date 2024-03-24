@@ -14,6 +14,7 @@ import { type Session } from "next-auth";
 import { api } from "@/utils/api";
 import { type Toast } from "primereact/toast";
 import CloseIcon from "@mui/icons-material/Close";
+import Autocomplete from "@mui/material/Autocomplete";
 
 const style = {
   position: "absolute",
@@ -211,10 +212,10 @@ const AddUserForm: React.FC<Props> = ({
         sx={style}
         className="form-container flex flex-column flex-wrap sm:flex-row justify-content-start align-items-stretch"
       >
-        <div className="modal-header flex justify-content-between w-full mb-4">
+        <div className="modal-header flex justify-content-between align-items-center w-full mb-4">
           <h2>Add User</h2>
-          <Button onClick={handleClose}>
-            <CloseIcon />
+          <Button onClick={handleClose} color="error">
+            <CloseIcon className="close-icon" />
           </Button>
         </div>
         <div className="flex flex-column flex-wrap sm:flex-row gap-4 justify-content-center align-items-stretch">
@@ -249,7 +250,7 @@ const AddUserForm: React.FC<Props> = ({
               renderValue={(selected) => selected.join(", ")}
               MenuProps={MenuProps}
             >
-              {session.appSettings.school_options.map((school) => (
+              {session.appSettings.school_options.sort().map((school) => (
                 <MenuItem key={school} value={school}>
                   <Checkbox checked={userSchools.indexOf(school) > -1} />
                   <ListItemText primary={school} />
@@ -286,7 +287,7 @@ const AddUserForm: React.FC<Props> = ({
               // input={<OutlinedInput label="Tag" />}
               renderValue={(selected) => selected.join(", ")}
             >
-              {session.appSettings.user_role_options.map((role) => (
+              {session.appSettings.user_role_options.sort().map((role) => (
                 <MenuItem key={role} value={role}>
                   <Checkbox checked={userRoles.indexOf(role) > -1} />
                   <ListItemText primary={role} />
@@ -303,7 +304,7 @@ const AddUserForm: React.FC<Props> = ({
               label="View"
               onChange={handleViewChange}
             >
-              {session.appSettings.initial_view_options.map((view) => (
+              {session.appSettings.initial_view_options.sort().map((view) => (
                 <MenuItem key={view} value={view}>
                   <ListItemText primary={view} />
                 </MenuItem>

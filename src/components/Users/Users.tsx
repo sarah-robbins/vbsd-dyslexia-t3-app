@@ -516,18 +516,20 @@ const Users: React.FC = () => {
                 deleteUserMutation.mutate(
                   { id: id },
                   {
-                    onSuccess: () => {
-                      toastDelete.current?.clear();
-                      setUsers((users) =>
-                        users.filter((user) => user.id !== id)
-                      );
+                    onSuccess: (response) => {
+                      if (response) {
+                        toastDelete.current?.clear();
+                        setUsers((users) =>
+                          users.filter((user) => user.id !== id)
+                        );
 
-                      // Optionally, show a success message
-                      toast.current?.show({
-                        severity: "success",
-                        summary: "Success",
-                        detail: "User added successfully",
-                      });
+                        // Optionally, show a success message
+                        toast.current?.show({
+                          severity: "success",
+                          summary: "Success",
+                          detail: "User added successfully",
+                        });
+                      }
                     },
                     onError: (error) => {
                       console.log("error", error);
