@@ -7,7 +7,6 @@ import dayjs, { type Dayjs } from "dayjs";
 import { api } from "@/utils/api";
 import {
   type Student,
-  type Meeting,
   type MeetingAttendees,
   type MeetingWithAttendees,
 } from "@/types";
@@ -54,7 +53,7 @@ const Meetings = () => {
   //   dateToQuery.toDate()
   // ) as { data: MeetingWithAttendees[] };
 
-  const getMeetingsByDate = api.meetings.getMeetingsByDate.useQuery(
+  const getMeetingsByDate = api.meetings.getMeetingsByRoleAndDate.useQuery(
     dateToQuery.toDate()
   ) as {
     data: MeetingWithAttendees[];
@@ -85,58 +84,58 @@ const Meetings = () => {
   //     school: sessionData?.school ?? '',
   //   });
 
-  const convertMeetings = (meetings: Meeting[]): MeetingWithAttendees[] => {
-    return meetings.map((meeting) => {
-      let start, end, edited_on, recorded_on;
+  // const convertMeetings = (meetings: Meeting[]): MeetingWithAttendees[] => {
+  //   return meetings.map((meeting) => {
+  //     let start, end, edited_on, recorded_on;
 
-      if (meeting.start && meeting.start instanceof Date) {
-        start = dayjs(meeting.start);
-      } else {
-        start = meeting.start;
-      }
+  //     if (meeting.start && meeting.start instanceof Date) {
+  //       start = dayjs(meeting.start);
+  //     } else {
+  //       start = meeting.start;
+  //     }
 
-      if (meeting.end && meeting.end instanceof Date) {
-        end = dayjs(meeting.end);
-      } else {
-        end = meeting.end;
-      }
+  //     if (meeting.end && meeting.end instanceof Date) {
+  //       end = dayjs(meeting.end);
+  //     } else {
+  //       end = meeting.end;
+  //     }
 
-      if (meeting.edited_on && meeting.edited_on instanceof Date) {
-        edited_on = dayjs(meeting.edited_on);
-      } else {
-        edited_on = meeting.edited_on;
-      }
+  //     if (meeting.edited_on && meeting.edited_on instanceof Date) {
+  //       edited_on = dayjs(meeting.edited_on);
+  //     } else {
+  //       edited_on = meeting.edited_on;
+  //     }
 
-      if (meeting.recorded_on && meeting.recorded_on instanceof Date) {
-        recorded_on = dayjs(meeting.recorded_on);
-      } else {
-        recorded_on = meeting.recorded_on;
-      }
+  //     if (meeting.recorded_on && meeting.recorded_on instanceof Date) {
+  //       recorded_on = dayjs(meeting.recorded_on);
+  //     } else {
+  //       recorded_on = meeting.recorded_on;
+  //     }
 
-      return {
-        ...meeting,
-        start,
-        end,
-        edited_on,
-        recorded_on,
-        attendees: [], // Add the attendees property
-      };
-    });
-  };
+  //     return {
+  //       ...meeting,
+  //       start,
+  //       end,
+  //       edited_on,
+  //       recorded_on,
+  //       attendees: [], // Add the attendees property
+  //     };
+  //   });
+  // };
 
-  const { data: roleBasedMeetings } =
-    api.meetings.getMeetingsForRole.useQuery() as {
-      data: Meeting[];
-    };
+  // const { data: roleBasedMeetings } =
+  //   api.meetings.getMeetingsForRole.useQuery() as {
+  //     data: Meeting[];
+  //   };
 
   useEffect(() => {
-    if (roleBasedMeetings) {
-      // Convert dates to Dayjs objects and update state
-      const convertedMeetings = convertMeetings(roleBasedMeetings);
-      setMeetings(convertedMeetings);
-    }
+    // if (roleBasedMeetings) {
+    //   // Convert dates to Dayjs objects and update state
+    //   const convertedMeetings = convertMeetings(roleBasedMeetings);
+    //   setMeetings(convertedMeetings);
+    // }
     setMeetings(getDatedMeetings);
-  }, [getDatedMeetings, meetings, roleBasedMeetings]);
+  }, [getDatedMeetings, meetings]);
 
   return (
     <div className="flex flex-column justify-content-center gap-4">
