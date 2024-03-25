@@ -26,7 +26,10 @@ import type {
 } from "@/types";
 import { OutlinedInput } from "@mui/material";
 import { useSession } from "next-auth/react";
-
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+dayjs.extend(utc);
+dayjs.extend(timezone);
 /* -------------------------------------------------------------------------- */
 /*                         Interfacing for TypeScript                         */
 /* -------------------------------------------------------------------------- */
@@ -119,6 +122,7 @@ const MeetingForm: React.FC<Props> = ({
   const toastDelete = useRef<Toast>(null);
   const [attendees, setAttendees] = useState<MeetingAttendees[]>([]);
   const [formDate, setFormDate] = useState(selectedDate);
+  const [isFormEditable, setIsFormEditable] = useState(false);
   const [formValues, setFormValues] = useState<FormValues>({
     // name: '',
     name: [],
@@ -433,6 +437,7 @@ const MeetingForm: React.FC<Props> = ({
     } else {
       return selectedNames.map((studentName) => {
         const status = individualStatuses[studentName] || "";
+        console.log("individualStatuses", individualStatuses);
 
         return (
           <div key={studentName} className="flex flex-column gap-4">
@@ -468,7 +473,7 @@ const MeetingForm: React.FC<Props> = ({
 
   useEffect(() => {
     const anyMetStatus =
-      selectedNames.length > 1
+      selectedNames.length > 0
         ? Object.values(individualStatuses).some((status) => status === "Met")
         : selectedStatus === "Met";
 
@@ -547,7 +552,10 @@ const MeetingForm: React.FC<Props> = ({
       const metStatusPresent = Object.values(newStatuses).some(
         (status) => status === "Met"
       );
+      console.log("metStatusPresent", metStatusPresent);
       setIsFormEditable(metStatusPresent);
+      console.log("selectedMeeting", selectedMeeting);
+      console.log("form is editable? ", isFormEditable);
 
       const attendeeNames =
         selectedMeeting.attendees?.map((attendee) => {
@@ -585,7 +593,7 @@ const MeetingForm: React.FC<Props> = ({
         attendees: selectedMeeting.attendees ?? [],
       });
     }
-  }, [students, selectedMeetings]);
+  }, [students, selectedMeetings, isFormEditable]);
 
   useEffect(() => {
     if (selectedMeetings.length <= 0) {
@@ -914,8 +922,6 @@ const MeetingForm: React.FC<Props> = ({
 
   const noMeeting =
     selectedMeetings.length <= 0 || selectedMeetings.length === undefined;
-
-  const [isFormEditable, setIsFormEditable] = useState(false);
 
   let hiddenButtonClass = "hidden"; // Default to hidden
 
