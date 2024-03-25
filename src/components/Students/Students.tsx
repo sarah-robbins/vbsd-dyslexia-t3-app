@@ -75,7 +75,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   const [runSuccessToast, setRunSuccessToast] = React.useState(false);
   const toastDelete = useRef<Toast>(null);
   useEffect(() => {
-    console.log("run success toast: ", runSuccessToast);
     if (runSuccessToast === true) {
       toast.current?.show({
         severity: "success",
@@ -146,7 +145,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   }, [myUsers]);
   const [formattedTutors, setFormattedTutors] = useState<TutorOption[]>([]);
 
-  console.log("myUsers from Students component: ", myUsers);
   const dateToQuery =
     selectedDate && dayjs.isDayjs(selectedDate) ? selectedDate : dayjs();
 
@@ -199,7 +197,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
 
   useEffect(() => {
     if (roleBasedMeetings) {
-      console.log("Role based meetings: ", roleBasedMeetings);
       // Convert dates to Dayjs objects and update state
       const convertedMeetings = convertMeetings(roleBasedMeetings);
       setMeetings(convertedMeetings);
@@ -265,7 +262,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     }
   }, [myStudents]);
 
-  console.log("myStudents from Students component: ", myStudents);
   // Fetch all tutors (separate API call)
   useEffect(() => {
     if (myUsers) {
@@ -637,10 +633,10 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       // });
     } else {
       // Handling existing row update
-      updatedStudents = students.map((student) =>
-        student.id === e.data.id ? { ...e.data } : student
-      );
-      console.log(updatedStudents);
+      // updatedStudents = students.map((student) =>
+      //   student.id === e.data.id ? { ...e.data } : student
+      // );
+      // console.log(updatedStudents);
 
       const dataForSave = {
         ...newData,
@@ -1173,7 +1169,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
           <div className="flex gap-2">
             <Button
               onClick={() => {
-                console.log("Deleting meeting with ID from try block:", id);
                 deleteStudentMutation.mutate(
                   { id: id },
                   {
@@ -1181,13 +1176,9 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
                       toastDelete.current?.clear();
 
                       if (response) {
-                        console.log("old students: ", students);
-
                         setStudents((students) =>
                           students.filter((student) => student.id !== id)
                         );
-
-                        console.log("student list:", students);
 
                         // Optionally, show a success message
                         toast.current?.show({
@@ -1366,7 +1357,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   //   throw new Error("Function not implemented.");
   // }
 
-  console.log("students from students page", students);
   return (
     <>
       <AddStudentForm

@@ -131,13 +131,12 @@ const Meetings = () => {
 
   useEffect(() => {
     if (roleBasedMeetings) {
-      console.log("roleBasedMeetings", roleBasedMeetings);
       // Convert dates to Dayjs objects and update state
       const convertedMeetings = convertMeetings(roleBasedMeetings);
       setMeetings(convertedMeetings);
     }
     setMeetings(getDatedMeetings);
-  }, [getDatedMeetings, roleBasedMeetings]);
+  }, [getDatedMeetings, meetings, roleBasedMeetings]);
 
   return (
     <div className="flex flex-column justify-content-center gap-4">

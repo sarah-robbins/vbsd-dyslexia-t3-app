@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, use } from "react";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import FormControl from "@mui/material/FormControl";
@@ -40,17 +40,46 @@ interface NewMeetingValues {
   recorded_by: string;
   recorded_on: Date;
   tutor_id: number;
-  // MeetingAttendees: {
-  //   student_id: number;
-  //   meeting_status: string;
-  //   created_at: Date;
-  // }[];
   attendees: {
     student_id: number;
     meeting_status?: string;
     created_at: Date;
     name: string;
   }[];
+}
+
+interface UpdatedMeetingValues {
+  id: number;
+  start: Date;
+  end: Date;
+  program: string;
+  level_lesson: string;
+  meeting_notes: string;
+  edited_by: string;
+  edited_on: Date;
+  tutor_id: number;
+  attendees: {
+    student_id: number;
+    meeting_status?: string;
+    name: string;
+  }[];
+}
+
+interface DeletedMeetingValues {
+  MeetingAttendes: {
+    id: number;
+  };
+  edited_by: string;
+  edited_on: Date;
+  end: Date;
+  id: number;
+  level_lesson: string;
+  meeting_notes: string;
+  program: string;
+  recorded_by: string;
+  recorded_on: Date;
+  start: Date;
+  tutor_id: number;
 }
 
 interface Props {
@@ -76,6 +105,7 @@ const MeetingForm: React.FC<Props> = ({
   students = [],
   getDatedMeetings = [],
   selectedMeetings = [],
+  setSelectedMeetings,
   selectedDate,
   datedMeetingsWithAttendees,
   setDatedMeetingsWithAttendees,
@@ -107,7 +137,6 @@ const MeetingForm: React.FC<Props> = ({
   });
 
   useEffect(() => {
-    console.log("meetings from MeetingForm", meetings);
     if (selectedDate && getDatedMeetings) {
       const datedMeetingsWithAttendees: MeetingWithAttendees[] =
         getDatedMeetings.map((meeting): MeetingWithAttendees => {
@@ -402,28 +431,38 @@ const MeetingForm: React.FC<Props> = ({
         );
       });
     } else {
-      return (
-        <FormControl className="w-12">
-          <InputLabel id="demo-simple-select-label">Meeting Status</InputLabel>
+      return selectedNames.map((studentName) => {
+        const status = individualStatuses[studentName] || "";
 
-          <Select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            inputProps={{
-              readOnly: !session?.user.role
-                .split(",")
-                .map((role) => role.trim())
-                .some((role) => ["Admin", "Tutor"].includes(role)),
-            }}
-          >
-            {options.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      );
+        return (
+          <div key={studentName} className="flex flex-column gap-4">
+            <FormControl className="w-12">
+              <InputLabel id="demo-simple-select-label">
+                Meeting Status
+              </InputLabel>
+
+              <Select
+                value={status}
+                onChange={(e) =>
+                  handleIndividualStatusChange(studentName, e.target.value)
+                }
+                inputProps={{
+                  readOnly: !session?.user.role
+                    .split(",")
+                    .map((role) => role.trim())
+                    .some((role) => ["Admin", "Tutor"].includes(role)),
+                }}
+              >
+                {options.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </div>
+        );
+      });
     }
   };
 
@@ -604,19 +643,20 @@ const MeetingForm: React.FC<Props> = ({
   const createMeetingMutation = api.meetings.createMeeting.useMutation();
 
   useEffect(() => {
+    console.log("*********attendees from form values*********", formValues);
+  }, [formValues]);
+
+  useEffect(() => {
     if (!formValues.attendees) return;
     const getAttendees = formValues.attendees?.map((attendee) => ({
       student_id: attendee.student_id,
       meeting_status: attendee.meeting_status,
       created_at: dayjs().toDate(),
     }));
-
     setAttendees(getAttendees);
   }, [formValues.attendees]);
 
   const handleAdd = (formValues: FormValues) => {
-    console.log("Submitting with attendees:", formValues.attendees);
-
     const validAttendees = attendees
       .filter((attendee) => attendee.student_id !== undefined) // Filter out undefined student IDs
       .map((attendee) => ({
@@ -645,10 +685,7 @@ const MeetingForm: React.FC<Props> = ({
     createMeetingMutation.mutate(newMeeting, {
       onSuccess: (response) => {
         if (response) {
-          console.log("Meeting added successfully:", response);
-          console.log("New Meeting:", newMeeting);
           meetings.push(newMeeting);
-          console.log("*************meetings************:", meetings);
           toast.current?.show({
             severity: "success",
             summary: "Meeting successfully added.",
@@ -670,7 +707,7 @@ const MeetingForm: React.FC<Props> = ({
             edited_on: dayjs(),
             attendees: [],
           });
-          // location.reload();
+          location.reload();
           setName([]);
           setSelectedNames([]);
           setSelectedStatus("");
@@ -698,7 +735,7 @@ const MeetingForm: React.FC<Props> = ({
       return;
     }
 
-    const meetingData = {
+    const meetingData: UpdatedMeetingValues = {
       id: selectedMeetings[0]?.id as number,
       start: formValues.start?.toDate() ?? new Date(),
       end: formValues.end?.toDate() ?? new Date(),
@@ -718,6 +755,7 @@ const MeetingForm: React.FC<Props> = ({
         return {
           student_id: studentId,
           meeting_status: attendeeStatus,
+          name: name,
         };
       }),
     };
@@ -743,14 +781,14 @@ const MeetingForm: React.FC<Props> = ({
         if (response) {
           console.log("Meeting added successfully:", response);
           console.log("Meeting updated successfully", meetingData);
-          meetings.push(meetingData as Meeting);
+          meetings.push(meetingData);
           toast.current?.show({
             severity: "success",
             summary: "Meeting successfully updated.",
             life: 3000,
           });
-          // location.reload();
-          // setSelectedMeetings([]);
+          location.reload();
+          setSelectedMeetings([]);
         }
       },
       onError: (error) => {
@@ -798,20 +836,17 @@ const MeetingForm: React.FC<Props> = ({
                   {
                     onSuccess: (response) => {
                       if (response) {
-                        console.log("Meeting deleted successfully:", response);
-                        console.log("Meeting deleted with ID:", id);
-                        setMeetings(
-                          meetings.filter((meeting) => meeting.id !== id)
+                        toastDelete.current?.clear();
+                        console.log("meetings from handleDelete", meetings);
+                        const updatedMeetings = meetings.filter(
+                          (meeting) => meeting.id !== id
                         );
-                        console.log("Meetings:", meetings);
-                        setDatedMeetingsWithAttendees(
-                          meetings.filter((meeting) => meeting.id !== id)
-                        );
-                        console.log("*****meeting list*****:", meetings);
                         console.log(
-                          "*****dated meeting list*****:",
-                          datedMeetingsWithAttendees
+                          "********updatedMeetings from handleDelete********",
+                          updatedMeetings
                         );
+                        setMeetings(updatedMeetings);
+
                         toast.current?.show({
                           severity: "success",
                           summary: "This meeting has been deleted.",
@@ -838,9 +873,7 @@ const MeetingForm: React.FC<Props> = ({
                         setStartTime(dayjs());
                         setEndTime(dayjs());
 
-                        toastDelete.current?.clear();
-
-                        // location.reload();
+                        location.reload();
                       }
                     },
                     onError: () => {

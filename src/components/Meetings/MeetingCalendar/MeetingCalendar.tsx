@@ -26,11 +26,9 @@ const MeetingCalendar: React.FC<Props> = ({
 }) => {
   const meetingDates: string[] = useMemo(() => {
     if (meetings) {
-      console.log("Unique meeting", meetings);
       const uniqueDates = new Set(
         meetings.map((meeting) => dayjs(meeting.start).format("YYYY-MM-DD"))
       );
-      console.log("Unique meeting dates", uniqueDates);
       return Array.from(uniqueDates);
     }
     return [];
@@ -57,11 +55,6 @@ const MeetingCalendar: React.FC<Props> = ({
     setSelectedDate(selected);
     return dayjs(selectedDate).toDate();
   };
-
-  useEffect(() => {
-    console.log("what is the selecteddate?", selectedDate);
-    console.log("what is the date type?", typeof selectedDate);
-  }, [selectedDate]);
 
   // interface CalendarDate {
   //   year: string;

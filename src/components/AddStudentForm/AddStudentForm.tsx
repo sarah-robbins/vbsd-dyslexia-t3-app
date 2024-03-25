@@ -97,7 +97,6 @@ const AddStudentForm: React.FC<Props> = ({
   setOpen,
   setRunSuccessToast,
 }) => {
-  console.log("users from AddStudentForm", users);
   const toast = useRef<Toast>(null);
   const handleClose = () => {
     setOpen(false),
@@ -171,9 +170,7 @@ const AddStudentForm: React.FC<Props> = ({
   const handleTutorChange = (event: SelectChangeEvent) => {
     setStudentTutor(Number(event.target.value));
     const tutor = users.find((user) => user.id === Number(event.target.value));
-    console.log("tutor", tutor);
     const tutorName = `${tutor?.first_name || ""} ${tutor?.last_name || ""}`;
-    console.log("tutorName", tutorName);
     setFormValues((prevFormValues) => ({
       ...prevFormValues,
       tutor_id: Number(event.target.value),
@@ -238,7 +235,6 @@ const AddStudentForm: React.FC<Props> = ({
   const createStudentMutation = api.students.createStudent.useMutation();
 
   const saveNewStudent = () => {
-    console.log("formValues", formValues);
     const tutor = users.find((user) => user.id === Number(studentTutor));
 
     const tutorName = `${tutor?.first_name || ""} ${tutor?.last_name || ""}`;
@@ -260,7 +256,6 @@ const AddStudentForm: React.FC<Props> = ({
         tutorFullName: tutorName,
       };
     }
-    console.log("updatedFormValues", updatedFormValues);
     createStudentMutation.mutate(updatedFormValues, {
       onSuccess: (response) => {
         if (response.id) {

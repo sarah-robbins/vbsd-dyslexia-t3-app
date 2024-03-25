@@ -54,10 +54,6 @@ const MeetingList: React.FC<Props> = ({
     }
   };
 
-  console.log("meetings: ", meetings);
-  console.log("getDatedMeetings: ", getDatedMeetings);
-  console.log("selectedMeetings: ", selectedMeetings);
-  console.log("datedMeetingsWithAttendees: ", datedMeetingsWithAttendees);
   useEffect(() => {
     if (selectedDate && isOnMeetingsPage) {
       const filtered = datedMeetingsWithAttendees
@@ -279,10 +275,6 @@ const MeetingList: React.FC<Props> = ({
     }
     return total;
   };
-
-  useEffect(() => {
-    console.log("selectedMeetings: ", selectedMeetings);
-  }, [selectedMeetings]);
 
   const getName = (rowData: MeetingWithAttendees) => {
     if (!datedMeetingsWithAttendees || !rowData) {
