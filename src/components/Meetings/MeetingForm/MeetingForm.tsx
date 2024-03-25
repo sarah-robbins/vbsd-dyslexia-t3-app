@@ -140,6 +140,21 @@ const MeetingForm: React.FC<Props> = ({
     attendees: [],
   });
 
+  // const today = dayjs();
+  // const convertToUTC = (
+  //   today: Dayjs,
+  //   dateFormat = "YYYY-MM-DDTHH:MM:SSZ",
+  //   tz = "Asia/Kolkata"
+  // ) => {
+  //   return dayjs.tz(today, dateFormat, tz).utc().toDate();
+  // };
+  // console.log("today", today);
+  // console.log("convertToUTC", convertToUTC(today));
+  // console.log(
+  //   "convertToUTC",
+  //   convertToUTC(today, "YYYY-MM-DDTHH:MM:SSZ", "America/New_York")
+  // );
+
   useEffect(() => {
     if (selectedDate && getDatedMeetings) {
       const datedMeetingsWithAttendees: MeetingWithAttendees[] =
@@ -587,9 +602,9 @@ const MeetingForm: React.FC<Props> = ({
         level_lesson: selectedMeeting.level_lesson || "",
         meeting_notes: selectedMeeting.meeting_notes || "",
         recorded_by: "",
-        recorded_on: dayjs(),
+        recorded_on: dayjs.utc(),
         edited_by: "",
-        edited_on: dayjs(),
+        edited_on: dayjs.utc(),
         attendees: selectedMeeting.attendees ?? [],
       });
     }
@@ -607,9 +622,9 @@ const MeetingForm: React.FC<Props> = ({
         level_lesson: "",
         meeting_notes: "",
         recorded_by: "",
-        recorded_on: dayjs(),
+        recorded_on: dayjs.utc(),
         edited_by: "",
-        edited_on: dayjs(),
+        edited_on: dayjs.utc(),
         attendees: [],
       });
       setName([]);
@@ -659,7 +674,7 @@ const MeetingForm: React.FC<Props> = ({
     const getAttendees = formValues.attendees?.map((attendee) => ({
       student_id: attendee.student_id,
       meeting_status: attendee.meeting_status,
-      created_at: dayjs().toDate(),
+      created_at: dayjs.utc().toDate(),
     }));
     setAttendees(getAttendees);
   }, [formValues.attendees]);
@@ -670,7 +685,7 @@ const MeetingForm: React.FC<Props> = ({
       .map((attendee) => ({
         student_id: attendee.student_id as number,
         meeting_status: attendee.meeting_status || "",
-        created_at: dayjs().toDate(),
+        created_at: dayjs.utc().toDate(),
         name: `${
           students.find((s) => s.id === attendee.student_id)?.first_name || ""
         } ${
@@ -685,7 +700,7 @@ const MeetingForm: React.FC<Props> = ({
       level_lesson: formValues.level_lesson ?? "",
       meeting_notes: formValues.meeting_notes ?? "",
       recorded_by: sessionData?.userId.toString() ?? "",
-      recorded_on: dayjs().toDate(),
+      recorded_on: dayjs.utc().toDate(),
       tutor_id: sessionData?.userId || 0,
       attendees: validAttendees,
     };
@@ -710,9 +725,9 @@ const MeetingForm: React.FC<Props> = ({
             level_lesson: "",
             meeting_notes: "",
             recorded_by: "",
-            recorded_on: dayjs(),
+            recorded_on: dayjs.utc(),
             edited_by: "",
-            edited_on: dayjs(),
+            edited_on: dayjs.utc(),
             attendees: [],
           });
           location.reload();
@@ -870,9 +885,9 @@ const MeetingForm: React.FC<Props> = ({
                           level_lesson: "",
                           meeting_notes: "",
                           recorded_by: "",
-                          recorded_on: dayjs(),
+                          recorded_on: dayjs.utc(),
                           edited_by: "",
-                          edited_on: dayjs(),
+                          edited_on: dayjs.utc(),
                           attendees: [],
                         });
                         setName([]);
