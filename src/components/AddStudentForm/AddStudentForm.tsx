@@ -453,13 +453,27 @@ const AddStudentForm: React.FC<Props> = ({
               label="Tutor"
               onChange={handleTutorChange}
             >
-              {users.sort().map((user) => (
-                <MenuItem key={user.id} value={user.id}>
-                  <ListItemText
-                    primary={`${user.first_name || ""} ${user.last_name || ""}`}
-                  />
-                </MenuItem>
-              ))}
+              {users
+                .sort((a, b) => {
+                  const lastNameA = (a.last_name || "").toUpperCase(); // Handle undefined case
+                  const lastNameB = (b.last_name || "").toUpperCase(); // Handle undefined case
+                  if (lastNameA < lastNameB) {
+                    return -1; // a comes before b
+                  }
+                  if (lastNameA > lastNameB) {
+                    return 1; // b comes before a
+                  }
+                  return 0; // a and b are equal
+                })
+                .map((user) => (
+                  <MenuItem key={user.id} value={user.id}>
+                    <ListItemText
+                      primary={`${user.first_name || ""} ${
+                        user.last_name || ""
+                      }`}
+                    />
+                  </MenuItem>
+                ))}
             </Select>
           </FormControl>
           <FormControl required className="w-full">

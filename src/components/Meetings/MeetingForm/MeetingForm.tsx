@@ -863,7 +863,7 @@ const MeetingForm: React.FC<Props> = ({
             summary: "Meeting successfully updated.",
             life: 3000,
           });
-          // location.reload();
+          location.reload();
           setSelectedMeetings([]);
         }
       },
