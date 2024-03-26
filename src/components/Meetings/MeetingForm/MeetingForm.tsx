@@ -568,15 +568,33 @@ const MeetingForm: React.FC<Props> = ({
   /*                           HANDLE SELECTED MEETING                          */
   /* -------------------------------------------------------------------------- */
 
-  const allStudentNames = students.sort().map((student) => {
-    const firstName = student?.first_name ?? "";
-    const lastName = student?.last_name ?? "";
-
-    return `${firstName} ${lastName}`;
-  });
   useEffect(() => {
-    setStudentNames(allStudentNames);
-  }, [allStudentNames]);
+    if (isOnMeetingsPage) {
+      const filteredStudents = students.filter(
+        (student) =>
+          student.tutor_id === session?.user?.userId &&
+          !student.withdrew &&
+          !student.moved &&
+          !student.graduated
+      );
+      const allStudentNames = filteredStudents.sort().map((student) => {
+        const firstName = student?.first_name ?? "";
+        const lastName = student?.last_name ?? "";
+
+        return `${firstName} ${lastName}`;
+      });
+      setStudentNames(allStudentNames);
+    }
+    if (isOnStudentsPage) {
+      const allStudentNames = students.sort().map((student) => {
+        const firstName = student?.first_name ?? "";
+        const lastName = student?.last_name ?? "";
+
+        return `${firstName} ${lastName}`;
+      });
+      setStudentNames(allStudentNames);
+    }
+  }, [students, isOnMeetingsPage, isOnStudentsPage]);
 
   useEffect(() => {
     const getAttendeeNames = (): string[] => {

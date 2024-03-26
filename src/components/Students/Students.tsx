@@ -1026,7 +1026,13 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
               }}
             />
             <div>
-              <Button onClick={handleUpdateClick}>Save</Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleUpdateClick}
+              >
+                Save
+              </Button>
             </div>
           </Card>
           <Card className="expansion-row__item w-6">
