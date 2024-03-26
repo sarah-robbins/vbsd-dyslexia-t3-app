@@ -411,7 +411,7 @@ const AddStudentForm: React.FC<Props> = ({
               label="Grade"
               onChange={handleGradeChange}
             >
-              {session.appSettings.grade_options.sort().map((grade) => (
+              {session.appSettings.grade_options.map((grade) => (
                 <MenuItem key={grade} value={grade}>
                   <ListItemText primary={grade} />
                 </MenuItem>
