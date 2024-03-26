@@ -61,7 +61,7 @@ model VerificationToken {
 }
 
 model AppSettings {
-  id                     Int      @id(map: "app_settings_pkey") @default(autoincrement())
+  id                     Int      @id @default(autoincrement())
   school_name            String
   primary_color          String
   school_options         String[]
@@ -88,7 +88,7 @@ model MeetingAttendees {
 }
 
 model Meetings {
-  id               Int                @id(map: "dummyMeetings_pkey") @unique(map: "dummyMeetings_id_key") @default(autoincrement())
+  id               Int                @id @unique @default(autoincrement())
   start            DateTime?          @db.Timestamptz(6)
   end              DateTime?          @db.Timestamptz(6)
   program          String?
@@ -103,7 +103,7 @@ model Meetings {
 }
 
 model Students {
-  id                      Int                @id(map: "dummyStudents_pkey") @unique(map: "dummyStudents_id_key") @default(autoincrement())
+  id                      Int                @id @unique @default(autoincrement())
   school                  String?
   first_name              String?
   last_name               String?
@@ -128,7 +128,7 @@ model Students {
 }
 
 model Users {
-  id               Int        @id(map: "dummyUsers_pkey") @unique @default(autoincrement())
+  id               Int        @id @unique @default(autoincrement())
   first_name       String
   last_name        String
   school           String
