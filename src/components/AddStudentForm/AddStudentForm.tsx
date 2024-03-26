@@ -126,6 +126,7 @@ const AddStudentForm: React.FC<Props> = ({
     setStudentTutor(undefined);
     setStudentServices([]);
     setStudentDate(null);
+    setIsFormValid(false);
   };
 
   const [studentSchool, setStudentSchool] = React.useState<string>("");
@@ -134,53 +135,86 @@ const AddStudentForm: React.FC<Props> = ({
   const [studentTutor, setStudentTutor] = React.useState<number>();
   const [studentServices, setStudentServices] = React.useState<string[]>([]);
   const [studentDate, setStudentDate] = React.useState<Dayjs | null>(null); // Initialize to null
+  const [isFormValid, setIsFormValid] = React.useState<boolean>(false);
 
   const handleTextChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
-    setFormValues((prevFormValues) => ({
-      ...prevFormValues,
-      [name]: value,
-    }));
+    setFormValues((prevFormValues) => {
+      const updatedFormValues = { ...prevFormValues, [name]: value };
+      checkFormValidity(updatedFormValues);
+      return updatedFormValues;
+    });
+  };
+  const checkFormValidity = (formValues: formValues) => {
+    // Use the double NOT operator to ensure the result is always a boolean
+    const isValid = !!(
+      formValues.student_assigned_id &&
+      formValues.first_name &&
+      formValues.last_name &&
+      formValues.school &&
+      formValues.grade &&
+      formValues.intervention_program &&
+      formValues.tutor_id &&
+      formValues.services
+    );
+
+    setIsFormValid(isValid);
   };
 
   const handleSchoolChange = (event: SelectChangeEvent) => {
     setStudentSchool(event.target.value);
-    setFormValues((prevFormValues) => ({
-      ...prevFormValues,
-      school: event.target.value?.toString() || "",
-    }));
+    setFormValues((prevFormValues) => {
+      const updatedFormValues = {
+        ...prevFormValues,
+        school: event.target.value?.toString() || "",
+      };
+      checkFormValidity(updatedFormValues);
+      return updatedFormValues;
+    });
   };
 
   const handleGradeChange = (event: SelectChangeEvent) => {
     setStudentGrade(event.target.value);
-    setFormValues((prevFormValues) => ({
-      ...prevFormValues,
-      grade: event.target.value,
-    }));
+    setFormValues((prevFormValues) => {
+      const updatedFormValues = {
+        ...prevFormValues,
+        grade: event.target.value,
+      };
+      checkFormValidity(updatedFormValues);
+      return updatedFormValues;
+    });
   };
 
   const handleProgramChange = (event: SelectChangeEvent) => {
     setStudentProgram(event.target.value);
-    setFormValues((prevFormValues) => ({
-      ...prevFormValues,
-      intervention_program: event.target.value,
-    }));
+    setFormValues((prevFormValues) => {
+      const updatedFormValues = {
+        ...prevFormValues,
+        intervention_program: event.target.value,
+      };
+      checkFormValidity(updatedFormValues);
+      return updatedFormValues;
+    });
   };
 
   const handleTutorChange = (event: SelectChangeEvent) => {
     setStudentTutor(Number(event.target.value));
     const tutor = users.find((user) => user.id === Number(event.target.value));
     const tutorName = `${tutor?.first_name || ""} ${tutor?.last_name || ""}`;
-    setFormValues((prevFormValues) => ({
-      ...prevFormValues,
-      tutor_id: Number(event.target.value),
-      tutorId: Number(event.target.value),
-      tutorInfo: {
-        value: Number(event.target.value),
-        label: tutorName,
-      },
-      user: tutor,
-    }));
+    setFormValues((prevFormValues) => {
+      const updatedFormValues = {
+        ...prevFormValues,
+        tutor_id: Number(event.target.value),
+        tutorId: Number(event.target.value),
+        tutorInfo: {
+          value: Number(event.target.value),
+          label: tutorName,
+        },
+        user: tutor,
+      };
+      checkFormValidity(updatedFormValues);
+      return updatedFormValues;
+    });
   };
 
   const handleServicesChange = (
@@ -190,10 +224,14 @@ const AddStudentForm: React.FC<Props> = ({
       target: { value },
     } = event;
     setStudentServices(typeof value === "string" ? value.split(",") : value);
-    setFormValues((prevFormValues) => ({
-      ...prevFormValues,
-      services: typeof value === "string" ? value : value.join(","),
-    }));
+    setFormValues((prevFormValues) => {
+      const updatedFormValues = {
+        ...prevFormValues,
+        services: typeof value === "string" ? value : value.join(","),
+      };
+      checkFormValidity(updatedFormValues);
+      return updatedFormValues;
+    });
   };
 
   const handleDateChange = (date: Dayjs | null) => {
@@ -297,6 +335,7 @@ const AddStudentForm: React.FC<Props> = ({
           setStudentTutor(undefined);
           setStudentServices([]);
           setStudentDate(null);
+          setIsFormValid(false);
           // setUsers(users);
 
           // Return an empty array or the current array of students
@@ -344,6 +383,10 @@ const AddStudentForm: React.FC<Props> = ({
           <FormControl className="form-fields form-fields-50">
             <TextField
               required
+              error={!formValues.student_assigned_id}
+              helperText={
+                !formValues.student_assigned_id ? "Student ID is required" : ""
+              }
               name="student_assigned_id"
               label="Student ID"
               variant="outlined"
@@ -353,6 +396,10 @@ const AddStudentForm: React.FC<Props> = ({
           <FormControl className="form-fields form-fields-50">
             <TextField
               required
+              error={!formValues.first_name}
+              helperText={
+                !formValues.first_name ? "First name is required" : ""
+              }
               name="first_name"
               id="outlined-basic"
               label="First Name"
@@ -363,6 +410,8 @@ const AddStudentForm: React.FC<Props> = ({
           <FormControl className="form-fields form-fields-50">
             <TextField
               required
+              error={!formValues.last_name}
+              helperText={!formValues.last_name ? "Last name is required" : ""}
               name="last_name"
               id="outlined-basic"
               label="Last Name"
@@ -377,9 +426,14 @@ const AddStudentForm: React.FC<Props> = ({
             sx={{ width: 300 }}
             renderInput={(params) => <TextField {...params} label="School" />}
           /> */}
-          <FormControl required className="form-fields form-fields-50">
+          <FormControl
+            required
+            error={!formValues.school}
+            className="form-fields form-fields-50"
+          >
             <InputLabel id="demo-simple-select-label">School</InputLabel>
             <Select
+              required
               value={studentSchool}
               label="School"
               onChange={handleSchoolChange}
@@ -402,7 +456,11 @@ const AddStudentForm: React.FC<Props> = ({
                 : null}
             </Select>
           </FormControl>{" "}
-          <FormControl required className="form-fields form-fields-50">
+          <FormControl
+            required
+            error={!formValues.grade}
+            className="form-fields form-fields-50"
+          >
             <InputLabel id="demo-simple-select-label">Grade</InputLabel>
             <Select
               // labelId="demo-simple-select-label"
@@ -428,7 +486,11 @@ const AddStudentForm: React.FC<Props> = ({
               onChange={handleTextChange}
             />
           </FormControl>
-          <FormControl required className="form-fields form-fields-50">
+          <FormControl
+            required
+            error={!formValues.intervention_program}
+            className="form-fields form-fields-50"
+          >
             <InputLabel id="demo-simple-select-label">Program</InputLabel>
             <Select
               // labelId="demo-simple-select-label"
@@ -444,7 +506,11 @@ const AddStudentForm: React.FC<Props> = ({
               ))}
             </Select>
           </FormControl>
-          <FormControl required className="form-fields form-fields-50">
+          <FormControl
+            required
+            error={!formValues.tutor_id}
+            className="form-fields form-fields-50"
+          >
             <InputLabel id="demo-simple-select-label">Tutor</InputLabel>
             <Select
               // labelId="demo-simple-select-label"
@@ -476,7 +542,7 @@ const AddStudentForm: React.FC<Props> = ({
                 ))}
             </Select>
           </FormControl>
-          <FormControl required className="w-full">
+          <FormControl required error={!formValues.services} className="w-full">
             <InputLabel id="demo-simple-select-label">Services</InputLabel>
             <Select
               // labelId="demo-multiple-checkbox-label"
@@ -528,7 +594,11 @@ const AddStudentForm: React.FC<Props> = ({
           </FormControl>
         </div>
         <div className="mt-4 form-button-container flex gap-4">
-          <Button variant="contained" onClick={saveNewStudent}>
+          <Button
+            variant="contained"
+            onClick={saveNewStudent}
+            disabled={!isFormValid}
+          >
             Add Student
           </Button>
           <Button variant="contained" color="error" onClick={handleClose}>
