@@ -342,14 +342,29 @@ const MeetingForm: React.FC<Props> = ({
 
   const handleStartTime = (time: Dayjs | null) => {
     if (time) {
-      const timeOnly = dayjs(time);
-      setStartTime(timeOnly);
+      setStartTime(time); // Update the startTime state directly with the Dayjs object
+
+      // Combine the date from the formDate state and the time from the timepicker
+      const updatedStart = time
+        .set("year", dateFromForm?.year())
+        .set("month", dateFromForm?.month())
+        .set("date", dateFromForm?.date());
+
+      setFormValues({ ...formValues, start: updatedStart });
     }
   };
-
   const handleEndTime = (time: Dayjs | null) => {
-    const timeOnly = dayjs(time);
-    setEndTime(dayjs(timeOnly));
+    if (time) {
+      setEndTime(time); // Update the endTime state directly with the Dayjs object
+
+      // Combine the date from the formDate state and the time from the timepicker
+      const updatedEnd = time
+        .set("year", dateFromForm?.year())
+        .set("month", dateFromForm?.month())
+        .set("date", dateFromForm?.date());
+
+      setFormValues({ ...formValues, end: updatedEnd });
+    }
   };
 
   const startTimeToString = startTime.format("HH:mm:ss");
@@ -365,6 +380,28 @@ const MeetingForm: React.FC<Props> = ({
 
   const start = startDateTime;
   const end = endDateTime;
+
+  useEffect(() => {
+    console.log("start", start);
+    console.log("end", end);
+    console.log("startDateTime", startDateTime);
+    console.log("endDateTime", endDateTime);
+    console.log("startTime", startTime);
+    console.log("endTime", endTime);
+    console.log("startTimeToString", startTimeToString);
+    console.log("endTimeToString", endTimeToString);
+    console.log("form values", formValues);
+  }, [
+    start,
+    end,
+    startTime,
+    endTime,
+    startTimeToString,
+    endTimeToString,
+    startDateTime,
+    endDateTime,
+    formValues,
+  ]);
   /* -------------------------------------------------------------------------- */
   /* -------------------------------------------------------------------------- */
   /* -------------------------------------------------------------------------- */
@@ -438,7 +475,7 @@ const MeetingForm: React.FC<Props> = ({
                       .some((role) => ["Admin", "Tutor"].includes(role)),
                   }}
                 >
-                  {options.map((option) => (
+                  {options.sort().map((option) => (
                     <MenuItem key={option} value={option}>
                       {option}
                     </MenuItem>
@@ -452,7 +489,6 @@ const MeetingForm: React.FC<Props> = ({
     } else {
       return selectedNames.map((studentName) => {
         const status = individualStatuses[studentName] || "";
-        console.log("individualStatuses", individualStatuses);
 
         return (
           <div key={studentName} className="flex flex-column gap-4">
@@ -473,7 +509,7 @@ const MeetingForm: React.FC<Props> = ({
                     .some((role) => ["Admin", "Tutor"].includes(role)),
                 }}
               >
-                {options.map((option) => (
+                {options.sort().map((option) => (
                   <MenuItem key={option} value={option}>
                     {option}
                   </MenuItem>
@@ -532,7 +568,7 @@ const MeetingForm: React.FC<Props> = ({
   /*                           HANDLE SELECTED MEETING                          */
   /* -------------------------------------------------------------------------- */
 
-  const allStudentNames = students.map((student) => {
+  const allStudentNames = students.sort().map((student) => {
     const firstName = student?.first_name ?? "";
     const lastName = student?.last_name ?? "";
 
@@ -545,7 +581,8 @@ const MeetingForm: React.FC<Props> = ({
   useEffect(() => {
     const getAttendeeNames = (): string[] => {
       return selectedMeetings.flatMap(
-        (meeting) => meeting?.attendees?.map((attendee) => attendee.name) ?? []
+        (meeting) =>
+          meeting?.attendees?.sort().map((attendee) => attendee.name) ?? []
       );
     };
     const names = getAttendeeNames();
@@ -567,10 +604,7 @@ const MeetingForm: React.FC<Props> = ({
       const metStatusPresent = Object.values(newStatuses).some(
         (status) => status === "Met"
       );
-      console.log("metStatusPresent", metStatusPresent);
       setIsFormEditable(metStatusPresent);
-      console.log("selectedMeeting", selectedMeeting);
-      console.log("form is editable? ", isFormEditable);
 
       const attendeeNames =
         selectedMeeting.attendees?.map((attendee) => {
@@ -759,6 +793,7 @@ const MeetingForm: React.FC<Props> = ({
     }
 
     const meetingData: UpdatedMeetingValues = {
+      ...formValues,
       id: selectedMeetings[0]?.id as number,
       start: formValues.start?.toDate() ?? new Date(),
       end: formValues.end?.toDate() ?? new Date(),
@@ -782,6 +817,7 @@ const MeetingForm: React.FC<Props> = ({
         };
       }),
     };
+    console.log("meetingData", meetingData);
     // Use removedAttendees as is, since it's already an array of numbers
     const attendeeIdsToRemove = {
       attendeeIds: removedAttendees,
@@ -802,7 +838,6 @@ const MeetingForm: React.FC<Props> = ({
     updateMeetingMutation.mutate(meetingData, {
       onSuccess: (response) => {
         if (response) {
-          console.log("Meeting added successfully:", response);
           console.log("Meeting updated successfully", meetingData);
           meetings.push(meetingData);
           toast.current?.show({
@@ -810,7 +845,7 @@ const MeetingForm: React.FC<Props> = ({
             summary: "Meeting successfully updated.",
             life: 3000,
           });
-          location.reload();
+          // location.reload();
           setSelectedMeetings([]);
         }
       },
@@ -941,7 +976,10 @@ const MeetingForm: React.FC<Props> = ({
   let hiddenButtonClass = "hidden"; // Default to hidden
 
   if (isOnMeetingsPage && session?.user.role) {
-    const roles = session?.user?.role?.split(",").map((role) => role.trim());
+    const roles = session?.user?.role
+      ?.split(",")
+      .sort()
+      .map((role) => role.trim());
     if (roles.includes("Admin") || roles.includes("Tutor")) {
       hiddenButtonClass = "";
     } else {
@@ -950,7 +988,10 @@ const MeetingForm: React.FC<Props> = ({
   }
 
   if (isOnStudentsPage && session?.user.role) {
-    const roles = session?.user?.role?.split(",").map((role) => role.trim());
+    const roles = session?.user?.role
+      ?.split(",")
+      .sort()
+      .map((role) => role.trim());
     if (roles.includes("Admin")) {
       hiddenButtonClass = "";
     } else {
@@ -961,7 +1002,10 @@ const MeetingForm: React.FC<Props> = ({
   let hiddenFieldClass = "hidden"; // Default to hidden
 
   if (isOnMeetingsPage && session?.user.role) {
-    const roles = session?.user?.role?.split(",").map((role) => role.trim());
+    const roles = session?.user?.role
+      ?.split(",")
+      .sort()
+      .map((role) => role.trim());
     if (roles.includes("Tutor")) {
       hiddenFieldClass = "";
     } else {
@@ -970,7 +1014,10 @@ const MeetingForm: React.FC<Props> = ({
   }
 
   if (isOnStudentsPage && session?.user.role) {
-    const roles = session?.user?.role?.split(",").map((role) => role.trim());
+    const roles = session?.user?.role
+      ?.split(",")
+      .sort()
+      .map((role) => role.trim());
     if (roles.includes("Admin")) {
       hiddenFieldClass = "";
     } else {
@@ -1014,7 +1061,7 @@ const MeetingForm: React.FC<Props> = ({
                   .some((role) => ["Admin", "Tutor"].includes(role)),
               }}
             >
-              {studentNames.map((name) => (
+              {studentNames.sort().map((name) => (
                 <MenuItem key={name} value={name}>
                   <Checkbox checked={selectedNames.includes(name)} />
                   <ListItemText primary={name} />
@@ -1078,7 +1125,7 @@ const MeetingForm: React.FC<Props> = ({
                     .some((role) => ["Admin", "Tutor"].includes(role)),
                 }}
               >
-                {programs.map((option) => (
+                {programs.sort().map((option) => (
                   <MenuItem key={option} value={option}>
                     {option}
                   </MenuItem>

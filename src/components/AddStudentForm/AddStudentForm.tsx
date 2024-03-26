@@ -385,17 +385,20 @@ const AddStudentForm: React.FC<Props> = ({
               onChange={handleSchoolChange}
             >
               {session.user.role.toLowerCase().includes("admin")
-                ? session.appSettings.school_options.map((school) => (
+                ? session.appSettings.school_options.sort().map((school) => (
                     <MenuItem key={school} value={school}>
                       <ListItemText primary={school} />
                     </MenuItem>
                   ))
                 : session.user.role.toLowerCase().includes("principal")
-                ? session.user.school.split(",").map((school) => (
-                    <MenuItem key={school.trim()} value={school.trim()}>
-                      <ListItemText primary={school.trim()} />
-                    </MenuItem>
-                  ))
+                ? session.user.school
+                    .split(",")
+                    .sort()
+                    .map((school) => (
+                      <MenuItem key={school.trim()} value={school.trim()}>
+                        <ListItemText primary={school.trim()} />
+                      </MenuItem>
+                    ))
                 : null}
             </Select>
           </FormControl>{" "}
@@ -408,7 +411,7 @@ const AddStudentForm: React.FC<Props> = ({
               label="Grade"
               onChange={handleGradeChange}
             >
-              {session.appSettings.grade_options.map((grade) => (
+              {session.appSettings.grade_options.sort().map((grade) => (
                 <MenuItem key={grade} value={grade}>
                   <ListItemText primary={grade} />
                 </MenuItem>
@@ -434,7 +437,7 @@ const AddStudentForm: React.FC<Props> = ({
               label="Program"
               onChange={handleProgramChange}
             >
-              {session.appSettings.program_options.map((program) => (
+              {session.appSettings.program_options.sort().map((program) => (
                 <MenuItem key={program} value={program}>
                   <ListItemText primary={program} />
                 </MenuItem>
@@ -450,7 +453,7 @@ const AddStudentForm: React.FC<Props> = ({
               label="Tutor"
               onChange={handleTutorChange}
             >
-              {users.map((user) => (
+              {users.sort().map((user) => (
                 <MenuItem key={user.id} value={user.id}>
                   <ListItemText
                     primary={`${user.first_name || ""} ${user.last_name || ""}`}
@@ -471,7 +474,7 @@ const AddStudentForm: React.FC<Props> = ({
               renderValue={(selected) => selected.join(", ")}
               MenuProps={MenuProps}
             >
-              {session.appSettings.services_options.map((service) => (
+              {session.appSettings.services_options.sort().map((service) => (
                 <MenuItem key={service} value={service}>
                   <Checkbox checked={studentServices.indexOf(service) > -1} />
                   <ListItemText primary={service} />
