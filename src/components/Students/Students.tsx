@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, use } from "react";
 import {
   DataTable,
   type DataTableRowEditCompleteEvent,
@@ -16,7 +16,6 @@ import {
 import { api } from "@/utils/api";
 import { Toast } from "primereact/toast";
 import { Card } from "primereact/card";
-
 import type {
   User,
   Student,
@@ -70,6 +69,8 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   } else if (!isOnMeetingsPage) {
     hiddenOnMeetingsPage = "flex";
   }
+  const { data: session } = useSession();
+  const sessionData = session?.user;
   const [open, setOpen] = React.useState(false);
   const handleOpen = () => setOpen(true);
   const [runSuccessToast, setRunSuccessToast] = React.useState(false);
@@ -84,15 +85,13 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     }
   }, [runSuccessToast]);
 
-  const [filteredMeetings, setFilteredMeetings] = useState<Meeting[]>([]);
+  // const [filteredMeetings, setFilteredMeetings] = useState<Meeting[]>([]);
   const getAllStudents = api.students.getAllStudents.useQuery();
   const [students, setStudents] = useState<Student[]>([]);
   const [expandedRows, setExpandedRows] = useState<
     DataTableExpandedRows | DataTableValueArray | undefined
   >(undefined);
   const toast = useRef<Toast>(null);
-  // use the session to get appSettings
-  const { data: session } = useSession();
   // const currentUserData = session?.user;
   const appSettings = (session as customSession)?.appSettings;
   const [filters, setFilters] = useState<DataTableFilterMeta>({
@@ -129,10 +128,30 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   >([]);
   const [attendeesName] = useState<string[]>([]);
   const [isOnStudentsPage] = useState<boolean>(true);
+  const [myStudents, setMyStudents] = useState<Student[]>([]);
 
-  const { data: myStudents } = api.students.getStudentsForRole.useQuery() as {
-    data: Student[];
-  };
+  const { data: getStudentsForTutor } =
+    api.students.getStudentsForTutor.useQuery(sessionData?.userId || 0) as {
+      data: Student[];
+    };
+
+  const { data: getStudentsForRole } =
+    api.students.getStudentsForRole.useQuery() as {
+      data: Student[];
+    };
+
+  useEffect(() => {
+    if (isOnMeetingsPage) {
+      setMyStudents(getStudentsForTutor);
+    } else {
+      setMyStudents(getStudentsForRole);
+    }
+  }, [
+    getStudentsForRole,
+    getStudentsForTutor,
+    isOnMeetingsPage,
+    sessionData?.userId,
+  ]);
 
   const [users, setUsers] = useState<User[]>([]);
   const { data: myUsers } = api.users.getUsersForRole.useQuery() as {
@@ -232,6 +251,8 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
 
   // Manipulate Student data for display
   useEffect(() => {
+    console.log("myStudents", myStudents);
+    console.log("stuents", students);
     if (myStudents) {
       const processedStudents = myStudents.map((student) => ({
         ...student,
@@ -274,45 +295,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   }, [myUsers]);
 
   const [editingRows] = useState({});
-  // const generateTempId = () =>
-  //   Number(
-  //     `-000${Math.floor(Math.random() * 1000)
-  //       .toString()
-  //       .padStart(3, "0")}`
-  //   );
-  // const addNewStudent = () => {
-  //   const tempId = generateTempId();
-  //   const newStudent: Student = {
-  //     id: tempId,
-  //     first_name: "",
-  //     last_name: "",
-  //     student_assigned_id: "",
-  //     school: "",
-  //     grade: "",
-  //     home_room_teacher: null,
-  //     intervention_program: "",
-  //     tutor_id: null,
-  //     services: null,
-  //     level_lesson: "",
-  //     new_student: true,
-  //     withdrew: false,
-  //     graduated: false,
-  //     moved: false,
-  //     new_location: "",
-  //     additional_comments: "",
-  //     created_at: new Date(),
-  //     tutorFullName: "",
-  //     tutorInfo: {
-  //       value: 0,
-  //       label: "",
-  //     },
-  //   };
-  //   setStudents((prev) => [newStudent, ...prev]);
-  //   setEditingRows((prevEditingRows) => ({
-  //     ...prevEditingRows,
-  //     [tempId]: true,
-  //   }));
-  // };
 
   const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;

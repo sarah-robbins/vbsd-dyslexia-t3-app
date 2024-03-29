@@ -11,12 +11,12 @@ import {
   type MeetingWithAttendees,
 } from "@/types";
 import Students from "../Students/Students";
-// import { useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 // import StudentsInProgress from '../Students/Students-in-progress';
 
 const Meetings = () => {
-  // const { data: session } = useSession();
-  // const sessionData = session?.user;
+  const { data: session } = useSession();
+  const sessionData = session?.user;
   // State
   const [meetings, setMeetings] = useState<MeetingWithAttendees[]>([]);
   const [date, setDate] = useState<Dayjs | null>(dayjs());
@@ -65,19 +65,17 @@ const Meetings = () => {
   };
 
   useEffect(() => {
-    console.log("meeting from the PARENT: ", meetings);
-  }, [meetings]);
-
-  useEffect(() => {
     if (myStudents) {
       setStudents(myStudents);
     }
   }, [myStudents]);
 
-  // const { data: getMeetingsByTutorId } =
-  //   api.meetings.getMeetingsByTutorId.useQuery({
-  //     tutorId: sessionData?.userId ?? 0,
-  //   });
+  const { data: getMeetingsByTutorId } =
+    api.meetings.getMeetingsByTutorId.useQuery({
+      tutorId: sessionData?.userId ?? 0,
+    });
+  const tutorMeetings = getMeetingsByTutorId;
+  console.log("tutorMeetings: ", tutorMeetings);
 
   // const { data: getMeetingsBySchool } =
   //   api.meetings.getMeetingsBySchool.useQuery({
@@ -129,13 +127,18 @@ const Meetings = () => {
   //   };
 
   useEffect(() => {
-    // if (roleBasedMeetings) {
-    //   // Convert dates to Dayjs objects and update state
-    //   const convertedMeetings = convertMeetings(roleBasedMeetings);
-    //   setMeetings(convertedMeetings);
-    // }
-    setMeetings(getDatedMeetings);
-  }, [getDatedMeetings, meetings]);
+    if (tutorMeetings) {
+      const transformedMeetings = tutorMeetings.map((meeting) => ({
+        ...meeting,
+        MeetingAttendees: meeting.MeetingAttendees.map((attendee) => ({
+          ...attendee,
+          name: attendee.name === null ? undefined : attendee.name,
+          // Convert any other properties as necessary
+        })),
+      }));
+      setMeetings(transformedMeetings);
+    }
+  }, [tutorMeetings]);
 
   return (
     <div className="flex flex-column justify-content-center gap-4">

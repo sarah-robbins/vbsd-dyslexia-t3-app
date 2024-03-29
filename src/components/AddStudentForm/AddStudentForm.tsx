@@ -17,6 +17,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { type Dayjs } from "dayjs";
+import Autocomplete from "@mui/material/Autocomplete";
 // import Autocomplete from "@mui/material/Autocomplete";
 
 const style = {
@@ -161,28 +162,55 @@ const AddStudentForm: React.FC<Props> = ({
     setIsFormValid(isValid);
   };
 
-  const handleSchoolChange = (event: SelectChangeEvent) => {
-    setStudentSchool(event.target.value);
-    setFormValues((prevFormValues) => {
-      const updatedFormValues = {
-        ...prevFormValues,
-        school: event.target.value?.toString() || "",
-      };
-      checkFormValidity(updatedFormValues);
-      return updatedFormValues;
-    });
+  // Generate options based on the user role
+  let schoolOptions: string[];
+  if (session?.user.role.toLowerCase().includes("admin")) {
+    schoolOptions = (
+      session as customSession
+    )?.appSettings.school_options.sort();
+  } else if (session?.user.role.toLowerCase().includes("principal")) {
+    schoolOptions = session.user.school
+      .split(",")
+      .map((school) => school.trim())
+      .sort();
+  } else {
+    schoolOptions = []; // Ensure there's always a fallback
+  }
+
+  const handleSchoolChange = (newValue: string | null) => {
+    if (newValue) {
+      setStudentSchool(newValue);
+      setFormValues((prevFormValues) => {
+        const updatedFormValues = {
+          ...prevFormValues,
+          school: newValue?.toString() || "",
+        };
+        checkFormValidity(updatedFormValues);
+        return updatedFormValues;
+      });
+    }
   };
 
-  const handleGradeChange = (event: SelectChangeEvent) => {
-    setStudentGrade(event.target.value);
-    setFormValues((prevFormValues) => {
-      const updatedFormValues = {
-        ...prevFormValues,
-        grade: event.target.value,
-      };
-      checkFormValidity(updatedFormValues);
-      return updatedFormValues;
-    });
+  // Generate options based on the user role
+  let gradeOptions: string[];
+  if ((session as customSession)?.appSettings.grade_options) {
+    gradeOptions = (session as customSession)?.appSettings.grade_options;
+  } else {
+    gradeOptions = []; // Ensure there's always a fallback
+  }
+
+  const handleGradeChange = (newValue: string | null) => {
+    if (newValue) {
+      setStudentGrade(newValue);
+      setFormValues((prevFormValues) => {
+        const updatedFormValues = {
+          ...prevFormValues,
+          grade: newValue,
+        };
+        checkFormValidity(updatedFormValues);
+        return updatedFormValues;
+      });
+    }
   };
 
   const handleProgramChange = (event: SelectChangeEvent) => {
@@ -196,6 +224,13 @@ const AddStudentForm: React.FC<Props> = ({
       return updatedFormValues;
     });
   };
+
+  let tutorOptions: string[];
+  if ((session as customSession)?.appSettings.grade_options) {
+    gradeOptions = (session as customSession)?.appSettings.grade_options;
+  } else {
+    gradeOptions = []; // Ensure there's always a fallback
+  }
 
   const handleTutorChange = (event: SelectChangeEvent) => {
     setStudentTutor(Number(event.target.value));
@@ -419,62 +454,44 @@ const AddStudentForm: React.FC<Props> = ({
               onChange={handleTextChange}
             />
           </FormControl>
-          {/* <Autocomplete
-            disablePortal
-            id="combo-box-demo"
-            options={mySchools}
-            sx={{ width: 300 }}
-            renderInput={(params) => <TextField {...params} label="School" />}
-          /> */}
-          <FormControl
-            required
-            error={!formValues.school}
-            className="form-fields form-fields-50"
-          >
-            <InputLabel id="demo-simple-select-label">School</InputLabel>
-            <Select
-              required
-              value={studentSchool}
-              label="School"
-              onChange={handleSchoolChange}
-            >
-              {session.user.role.toLowerCase().includes("admin")
-                ? session.appSettings.school_options.sort().map((school) => (
-                    <MenuItem key={school} value={school}>
-                      <ListItemText primary={school} />
-                    </MenuItem>
-                  ))
-                : session.user.role.toLowerCase().includes("principal")
-                ? session.user.school
-                    .split(",")
-                    .sort()
-                    .map((school) => (
-                      <MenuItem key={school.trim()} value={school.trim()}>
-                        <ListItemText primary={school.trim()} />
-                      </MenuItem>
-                    ))
-                : null}
-            </Select>
-          </FormControl>{" "}
-          <FormControl
-            required
-            error={!formValues.grade}
-            className="form-fields form-fields-50"
-          >
-            <InputLabel id="demo-simple-select-label">Grade</InputLabel>
-            <Select
-              // labelId="demo-simple-select-label"
-              // id="demo-simple-select"
-              value={studentGrade}
-              label="Grade"
-              onChange={handleGradeChange}
-            >
-              {session.appSettings.grade_options.map((grade) => (
-                <MenuItem key={grade} value={grade}>
-                  <ListItemText primary={grade} />
-                </MenuItem>
-              ))}
-            </Select>
+
+          <FormControl className="form-fields form-fields-50">
+            <Autocomplete
+              disablePortal
+              id="school-autocomplete"
+              options={schoolOptions}
+              value={studentSchool} // Ensure this is managed correctly in your state
+              onChange={(event, newValue) => {
+                handleSchoolChange(newValue); // Adapt this handler as necessary
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="School"
+                  required
+                  error={!formValues.school}
+                />
+              )}
+            />
+          </FormControl>
+          <FormControl className="form-fields form-fields-50">
+            <Autocomplete
+              disablePortal
+              id="grade-autocomplete"
+              options={gradeOptions}
+              value={studentGrade} // Ensure this is managed correctly in your state
+              onChange={(event, newValue) => {
+                handleGradeChange(newValue); // Adapt this handler as necessary
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Grade"
+                  required
+                  error={!formValues.grade}
+                />
+              )}
+            />
           </FormControl>
           <FormControl className="form-fields form-fields-50">
             <TextField
@@ -506,6 +523,27 @@ const AddStudentForm: React.FC<Props> = ({
               ))}
             </Select>
           </FormControl>
+
+          <FormControl className="form-fields form-fields-50">
+            <Autocomplete
+              disablePortal
+              id="school-autocomplete"
+              options={schoolOptions}
+              value={studentSchool} // Ensure this is managed correctly in your state
+              onChange={(event, newValue) => {
+                handleSchoolChange(newValue); // Adapt this handler as necessary
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="School"
+                  required
+                  error={!formValues.school}
+                />
+              )}
+            />
+          </FormControl>
+
           <FormControl
             required
             error={!formValues.tutor_id}

@@ -24,6 +24,7 @@ const MeetingCalendar: React.FC<Props> = ({
   // date,
   // setDate,
 }) => {
+  console.log("meetings from MeetingCalendar: ", meetings);
   const meetingDates: string[] = useMemo(() => {
     if (meetings) {
       const uniqueDates = new Set(

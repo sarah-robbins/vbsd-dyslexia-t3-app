@@ -126,8 +126,8 @@ const MeetingList: React.FC<Props> = ({
     students,
   ]);
 
+  // Update the indeterminate state of the "Check All" checkbox
   useEffect(() => {
-    // Update the indeterminate state of the "Check All" checkbox
     if (selectAllCheckboxRef.current) {
       selectAllCheckboxRef.current.indeterminate =
         selectedMeetings.length > 0 &&
@@ -331,6 +331,11 @@ const MeetingList: React.FC<Props> = ({
     if (selectedMeetings.length > 0) {
     }
   };
+
+  // Whenever selectedDate changes, reset the selected meetings.
+  useEffect(() => {
+    setSelectedMeetings([]);
+  }, [selectedDate, setSelectedMeetings]);
 
   return (
     <Card className="lg:w-7 flex-order-1 lg:flex-order-2 elevate-item">

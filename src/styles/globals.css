@@ -457,6 +457,11 @@ button.mobile-menu-toggle {
   padding: 10px;
   border: 2px solid #cacfd3;
 }
+
+.p-datatable-wrapper {
+  min-height: 300px;
+  max-height: calc(100vh - 368px);
+}
 /* .p-datatable .p-datatable-tbody > tr > td {
   padding: 1.5rem 1.5rem !important;
 } */

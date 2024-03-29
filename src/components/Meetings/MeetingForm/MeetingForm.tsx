@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, use } from "react";
+import React, { useEffect, useState, useRef, ChangeEvent } from "react";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import FormControl from "@mui/material/FormControl";
@@ -68,22 +68,22 @@ interface UpdatedMeetingValues {
   }[];
 }
 
-interface DeletedMeetingValues {
-  MeetingAttendes: {
-    id: number;
-  };
-  edited_by: string;
-  edited_on: Date;
-  end: Date;
-  id: number;
-  level_lesson: string;
-  meeting_notes: string;
-  program: string;
-  recorded_by: string;
-  recorded_on: Date;
-  start: Date;
-  tutor_id: number;
-}
+// interface DeletedMeetingValues {
+//   MeetingAttendes: {
+//     id: number;
+//   };
+//   edited_by: string;
+//   edited_on: Date;
+//   end: Date;
+//   id: number;
+//   level_lesson: string;
+//   meeting_notes: string;
+//   program: string;
+//   recorded_by: string;
+//   recorded_on: Date;
+//   start: Date;
+//   tutor_id: number;
+// }
 
 interface Props {
   meetings: MeetingWithAttendees[];
@@ -110,7 +110,6 @@ const MeetingForm: React.FC<Props> = ({
   selectedMeetings = [],
   setSelectedMeetings,
   selectedDate,
-  datedMeetingsWithAttendees,
   setDatedMeetingsWithAttendees,
   isOnMeetingsPage,
   isOnStudentsPage,
@@ -140,21 +139,22 @@ const MeetingForm: React.FC<Props> = ({
     attendees: [],
   });
 
-  // const today = dayjs();
-  // const convertToUTC = (
-  //   today: Dayjs,
-  //   dateFormat = "YYYY-MM-DDTHH:MM:SSZ",
-  //   tz = "Asia/Kolkata"
-  // ) => {
-  //   return dayjs.tz(today, dateFormat, tz).utc().toDate();
-  // };
-  // console.log("today", today);
-  // console.log("convertToUTC", convertToUTC(today));
-  // console.log(
-  //   "convertToUTC",
-  //   convertToUTC(today, "YYYY-MM-DDTHH:MM:SSZ", "America/New_York")
-  // );
+  // const [isFormValid, setIsFormValid] = useState(false);
+  // const checkFormValidity = (formValues: formValues) => {
+  //   // Use the double NOT operator to ensure the result is always a boolean
+  //   const isValid = !!(
+  //     formValues.name &&
+  //     formValues.start &&
+  //     formValues.end &&
+  //     formValues.meeting_status &&
+  //     formValues.program &&
+  //     formValues.level_lesson
+  //   );
 
+  //   setIsFormValid(isValid);
+  // };
+
+  // setDatedMeetings
   useEffect(() => {
     if (selectedDate && getDatedMeetings) {
       const datedMeetingsWithAttendees: MeetingWithAttendees[] =
@@ -242,6 +242,15 @@ const MeetingForm: React.FC<Props> = ({
     selectedDate,
     setDatedMeetingsWithAttendees,
   ]);
+
+  const handleTextChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setFormValues((prevFormValues) => {
+      const updatedFormValues = { ...prevFormValues, [name]: value };
+      // checkFormValidity(updatedFormValues);
+      return updatedFormValues;
+    });
+  };
 
   /* -------------------------------------------------------------------------- */
   /*                             HANDLE NAME CHANGE                             */
@@ -332,11 +341,30 @@ const MeetingForm: React.FC<Props> = ({
   }, [selectedDate]);
 
   const handleFormDateChange = (date: Dayjs | null) => {
+    console.log("date from handleFormDateChange", date);
     if (date) {
+      // Convert the Dayjs date object to start and end times with Date type
+      const startDateTime = date
+        .hour(startTime.hour())
+        .minute(startTime.minute())
+        .second(startTime.second())
+        .millisecond(startTime.millisecond());
+
+      const endDateTime = date
+        .hour(endTime.hour())
+        .minute(endTime.minute())
+        .second(endTime.second())
+        .millisecond(endTime.millisecond());
+
+      // Update the form date and form values for start and end with Date objects
       setFormDate(date);
+      setFormValues({
+        ...formValues,
+        start: startDateTime, // Now a Date object
+        end: endDateTime, // Now a Date object
+      });
     }
   };
-
   const [startTime, setStartTime] = useState<Dayjs>(dayjs());
   const [endTime, setEndTime] = useState<Dayjs>(dayjs());
 
@@ -381,39 +409,8 @@ const MeetingForm: React.FC<Props> = ({
   const start = startDateTime;
   const end = endDateTime;
 
-  useEffect(() => {
-    console.log("start", start);
-    console.log("end", end);
-    console.log("startDateTime", startDateTime);
-    console.log("endDateTime", endDateTime);
-    console.log("startTime", startTime);
-    console.log("endTime", endTime);
-    console.log("startTimeToString", startTimeToString);
-    console.log("endTimeToString", endTimeToString);
-    console.log("form values", formValues);
-  }, [
-    start,
-    end,
-    startTime,
-    endTime,
-    startTimeToString,
-    endTimeToString,
-    startDateTime,
-    endDateTime,
-    formValues,
-  ]);
-  /* -------------------------------------------------------------------------- */
-  /* -------------------------------------------------------------------------- */
-  /* -------------------------------------------------------------------------- */
-  /* -------------------------------------------------------------------------- */
-  /* -------------------------------------------------------------------------- */
   /* -------------------------------------------------------------------------- */
   /*                               Status Options                               */
-  /* -------------------------------------------------------------------------- */
-  /* -------------------------------------------------------------------------- */
-  /* -------------------------------------------------------------------------- */
-  /* -------------------------------------------------------------------------- */
-  /* -------------------------------------------------------------------------- */
   /* -------------------------------------------------------------------------- */
   const [individualStatuses, setIndividualStatuses] = useState<{
     [key: string]: string;
@@ -538,19 +535,8 @@ const MeetingForm: React.FC<Props> = ({
     setIndividualStatuses((prev) => ({ ...prev, [studentName]: status }));
   };
 
-  // const isEditable = isMetStatusPresent();
-  /* -------------------------------------------------------------------------- */
-  /* -------------------------------------------------------------------------- */
-  /* -------------------------------------------------------------------------- */
-  /* -------------------------------------------------------------------------- */
-  /* -------------------------------------------------------------------------- */
   /* -------------------------------------------------------------------------- */
   /*                               Program Options                               */
-  /* -------------------------------------------------------------------------- */
-  /* -------------------------------------------------------------------------- */
-  /* -------------------------------------------------------------------------- */
-  /* -------------------------------------------------------------------------- */
-  /* -------------------------------------------------------------------------- */
   /* -------------------------------------------------------------------------- */
 
   const programOptions: string[] = ["Barton", "Connections", "Foundations"];
@@ -1151,12 +1137,12 @@ const MeetingForm: React.FC<Props> = ({
               </Select>
             </FormControl>
             <TextField
+              // required
+              // error={!formValues.level_lesson}
               id="outlined-multiline-flexible"
               value={formValues.level_lesson}
               disabled={!isFormEditable}
-              onChange={(e) =>
-                setFormValues({ ...formValues, level_lesson: e.target.value })
-              }
+              onChange={handleTextChange}
               label="Level/Lesson"
               className="w-6"
               inputProps={{
