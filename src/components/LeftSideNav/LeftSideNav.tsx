@@ -38,6 +38,7 @@ import { signOut, useSession } from "next-auth/react";
 import { TextField } from "@mui/material";
 import Link from "next/link";
 import { api } from "@/utils/api";
+import { useMemo } from "react";
 
 const drawerWidth = 180;
 
@@ -249,21 +250,24 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
   // const theme = useTheme();
   // const isMdAndUp = useMediaQuery(theme.breakpoints.up('md'));
 
-  // TODO: initial code to hide certain links based on user role && add multiple roles
-  const filteredLinks = React.useMemo(() => {
+  const roles =
+    session?.user?.role?.split(",").map((role) => role.trim()) || [];
+  const filteredLinks = useMemo(() => {
     if (session?.user.role === "Tutor") {
       return links.filter(
         (link) => link.text !== "Users" && link.text !== "Students"
       );
     }
-    if (session?.user.role === "Principal") {
-      return links.filter((link) => link.text !== "Meetings");
+    if (session?.user.role === "Principal" || session?.user.role === "Admin") {
+      return links.filter(
+        (link) => link.text !== "Meetings" && link.text !== "Users"
+      );
     }
-    if (session?.user.role === "Admin") {
-      return links.filter((link) => link.text !== "Meetings");
+    if (roles.includes("Principal") && !roles.includes("Admin")) {
+      return links.filter((link) => link.text !== "Users");
     }
     return links;
-  }, [session?.user.role]);
+  }, [links, session?.user.role]);
 
   const drawer = (
     <div
