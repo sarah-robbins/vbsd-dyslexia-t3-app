@@ -7,7 +7,6 @@ import {
 import { TRPCError } from '@trpc/server';
 
 export const meetingsRouter = createTRPCRouter({
-  //get all meetings
   getAllMeetings: publicProcedure.query(async ({ ctx }) => {
     return await ctx.prisma.meetings.findMany({
       include: {
@@ -55,33 +54,6 @@ export const meetingsRouter = createTRPCRouter({
     }
   }),
 
-  // getAllAttendees: publicProcedure.query(async ({ ctx }) => {
-  //   return await ctx.prisma.meetingAttendees.findMany();
-  // }),
-
-  // getAttendeesByStudent
-  // getAttendeesByStudent: publicProcedure
-  //   .input(z.number().int())
-  //   .query(async ({ ctx, input }) => {
-  //     return await ctx.prisma.meetingAttendees.findMany({
-  //       where: {
-  //         student_id: input,
-  //       },
-  //     });
-  //   }),
-
-  // getAttendeesByMeeting
-  // getAttendeesByMeeting: publicProcedure
-  //   .input(z.number().int())
-  //   .query(async ({ ctx, input }) => {
-  //     return await ctx.prisma.meetingAttendees.findMany({
-  //       where: {
-  //         meeting_id: input,
-  //       },
-  //     });
-  //   }),
-
-  // getMeetingsByDate
   getMeetingsByDate: publicProcedure
     .input(z.date())
     .query(async ({ ctx, input }) => {
@@ -219,7 +191,6 @@ export const meetingsRouter = createTRPCRouter({
       });
     }),
 
-  //create meeting
   createMeeting: publicProcedure
     .input(
       z.object({
@@ -275,7 +246,6 @@ export const meetingsRouter = createTRPCRouter({
 
     }),
 
-  //delete meeting
   deleteMeeting: publicProcedure
     .input(
       z.object({
@@ -290,7 +260,6 @@ export const meetingsRouter = createTRPCRouter({
       });
     }),
 
-  //update meeting
   updateMeeting: publicProcedure
     .input(
       z.object({
