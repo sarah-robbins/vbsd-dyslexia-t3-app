@@ -25,7 +25,6 @@ import Box from "@mui/material/Box";
 import Menu from "@mui/material/Menu";
 import Avatar from "@mui/material/Avatar";
 import Tooltip from "@mui/material/Tooltip";
-import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import EventIcon from "@mui/icons-material/Event";
@@ -33,7 +32,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import GroupsIcon from "@mui/icons-material/Groups";
 import LeaderboardIcon from "@mui/icons-material/Leaderboard";
 import SettingsIcon from "@mui/icons-material/Settings";
-import { type RoutingContextType, routingContext } from "@/context/AllContext";
+import { useRouting } from "@/context/RoutingContext";
 import { signOut, useSession } from "next-auth/react";
 import { TextField } from "@mui/material";
 import Link from "next/link";
@@ -74,7 +73,6 @@ const DrawerHeader = styled("div")(({ theme }) => ({
   alignItems: "center",
   justifyContent: "flex-end",
   padding: theme.spacing(0, 1),
-  // necessary for content to be below app bar
   ...theme.mixins.toolbar,
 }));
 
@@ -94,7 +92,6 @@ const AppBar = styled(MuiAppBar, {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
-  // ...(open && {}),
 }));
 
 const MiniDrawer = styled(MuiDrawer, {
@@ -116,93 +113,10 @@ const MiniDrawer = styled(MuiDrawer, {
 
 const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
   const { data: session } = useSession();
-
-  // const theme = useTheme();
-  const { setRouting }: RoutingContextType = React.useContext(routingContext);
+  const { currentRoute, setRoute } = useRouting();
 
   const [open, setOpen] = React.useState(false);
   const drawerRef = React.useRef<HTMLDivElement>(null);
-
-  const handleDrawerToggle = () => {
-    setOpen(!open);
-  };
-
-  React.useEffect(() => {
-    const handleOutsideClick = (event: MouseEvent) => {
-      // Assume drawerRef is a ref attached to the Drawer component
-      if (
-        drawerRef.current &&
-        !drawerRef.current.contains(event.target as Node)
-      ) {
-        setOpen(false); // Close the Drawer if the click was outside
-      }
-    };
-
-    // Only add the event listener when the Drawer is open
-    if (open) {
-      document.addEventListener("mousedown", handleOutsideClick);
-    }
-
-    // Clean up the event listener
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-    };
-  }, [open]); // Depend on the open state
-  const [phone, setPhone] = React.useState<string>(session?.user.phone || "");
-  const updateUserMutation = api.users.updateUser.useMutation();
-
-  const handlePhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = event.target.value;
-
-    // Remove all non-digit characters
-    const numbers = inputValue.replace(/\D/g, "");
-
-    // Format the string as per the phone number format
-    let phone = "";
-    for (let i = 0; i < numbers.length; i++) {
-      if (i === 3 || i === 6) {
-        phone += "-";
-      }
-      phone += numbers[i];
-    }
-
-    // Trim the formatted string to match the required length (12 includes hyphens)
-    phone = phone.substring(0, 12);
-
-    setPhone(phone);
-  };
-
-  const handleSavePhone = () => {
-    if (session && session.user.userId) {
-      const userId = Number(session.user.userId);
-      if (!isNaN(userId)) {
-        updateUserMutation.mutate({
-          id: userId,
-          phone: phone,
-        });
-      } else {
-        console.error("Invalid user ID");
-      }
-    }
-  };
-
-  // const handleDrawerToggle = () => {
-  //   setOpen(!open);
-  // };
-
-  // const settings = ['Profile'];
-
-  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
-    null
-  );
-
-  const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorElUser(event.currentTarget);
-  };
-
-  const handleCloseUserMenu = () => {
-    setAnchorElUser(null);
-  };
 
   const links: Link[] = [
     {
@@ -240,16 +154,6 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
     SettingsIcon: SettingsIcon,
   };
 
-  function capitalizeEachWord(string: string): string {
-    return string
-      .split(" ")
-      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-  }
-
-  // const theme = useTheme();
-  // const isMdAndUp = useMediaQuery(theme.breakpoints.up('md'));
-
   const roles =
     session?.user?.role?.split(",").map((role) => role.trim()) || [];
   const filteredLinks = useMemo(() => {
@@ -268,6 +172,95 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
     }
     return links;
   }, [links, session?.user.role]);
+
+  // React.useEffect(() => {
+  //   const storedView = localStorage.getItem("currentRoute");
+  //   console.log("storedView", storedView);
+  //   if (storedView && setRoute) {
+  //     setRoute(storedView);
+  //   }
+  //   console.log("local storeage", localStorage.getItem("currentRoute"));
+  // }, [setRoute]);
+
+  const setNewRoute = (link: Link) => {
+    const newRoute = link.text.toLowerCase();
+    setRoute(newRoute); // Update the context and localStorage
+    setOpen(false); // Close the drawer if open
+  };
+
+  const handleDrawerToggle = () => {
+    setOpen(!open);
+  };
+
+  React.useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (
+        drawerRef.current &&
+        !drawerRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    if (open) {
+      document.addEventListener("mousedown", handleOutsideClick);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, [open]);
+
+  const [phone, setPhone] = React.useState<string>(session?.user.phone || "");
+
+  const updateUserMutation = api.users.updateUser.useMutation();
+
+  const handlePhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = event.target.value;
+    const numbers = inputValue.replace(/\D/g, "");
+    let phone = "";
+    for (let i = 0; i < numbers.length; i++) {
+      if (i === 3 || i === 6) {
+        phone += "-";
+      }
+      phone += numbers[i];
+    }
+    phone = phone.substring(0, 12);
+    setPhone(phone);
+  };
+
+  const handleSavePhone = () => {
+    if (session && session.user.userId) {
+      const userId = Number(session.user.userId);
+      if (!isNaN(userId)) {
+        updateUserMutation.mutate({
+          id: userId,
+          phone: phone,
+        });
+      } else {
+        console.error("Invalid user ID");
+      }
+    }
+  };
+
+  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
+    null
+  );
+
+  const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorElUser(event.currentTarget);
+  };
+
+  const handleCloseUserMenu = () => {
+    setAnchorElUser(null);
+  };
+
+  function capitalizeEachWord(string: string): string {
+    return string
+      .split(" ")
+      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  }
 
   const drawer = (
     <div
@@ -297,21 +290,7 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
         <List>
           {filteredLinks.map((link) => (
             <ListItem key={link.text} disablePadding sx={{ display: "block" }}>
-              <ListItemButton
-                onClick={() => {
-                  const newRoute = link.text.toLowerCase();
-                  setRouting(newRoute); // Update the context
-                  setOpen(false);
-                  if (typeof window !== "undefined") {
-                    localStorage.setItem("currentRoute", newRoute); // Update local storage
-                  }
-                }}
-                sx={{
-                  minHeight: 48,
-                  justifyContent: "initial",
-                  px: 2.5,
-                }}
-              >
+              <ListItemButton onClick={() => setNewRoute(link)}>
                 <ListItemIcon
                   sx={{
                     minWidth: 0,
@@ -346,13 +325,11 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
       </div>
     </div>
   );
-  // const { window }: { window: Window } = props as { window: Window };
   const container =
     window && window.document ? () => window.document.body : undefined;
 
   const userProfile = (
     <div className="flex flex-column justify-content-center align-items-center gap-3">
-      {/* I need to add a box to edit the user's phone number, then a place that displays the email, but doesn't not allow the user to edit it. */}
       <TextField
         value={session ? session.user.phone : ""}
         onChange={handlePhoneChange}
@@ -360,7 +337,6 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
         className="w-12"
       />
       <TextField
-        // id="outlined-multiline-flexible"
         value={session ? session.user.email : ""}
         disabled
         label="Email"
@@ -423,12 +399,6 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
             sx={{ flexGrow: 0 }}
             className="flex text-white align-items-center"
           >
-            {/* <p className='mr-2'>Full Name</p>
-            <Tooltip title="Open settings">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
-              </IconButton>
-            </Tooltip> */}
             <div className="text-right mr-2 hidden md:flex flex-column">
               <Typography variant="h6" noWrap component="div">
                 <Box sx={{ lineHeight: "1" }} className="mb-1">
@@ -486,7 +456,7 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
         open={open}
         onClose={handleDrawerToggle}
         ModalProps={{
-          keepMounted: true, // Better open performance on mobile.
+          keepMounted: true,
         }}
         sx={{
           display: { xs: "block", sm: "none" },

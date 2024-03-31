@@ -251,8 +251,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
 
   // Manipulate Student data for display
   useEffect(() => {
-    console.log("myStudents", myStudents);
-    console.log("stuents", students);
     if (myStudents) {
       const processedStudents = myStudents.map((student) => ({
         ...student,

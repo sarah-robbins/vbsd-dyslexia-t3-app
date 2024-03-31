@@ -5,12 +5,14 @@ import Students from "@/components/Students/Students";
 import Users from "@/components/Users/Users";
 import Stats from "@/components/Stats/Stats";
 import Settings from "@/components/Settings/Settings";
-import { useContext, useEffect, useState } from "react";
-import { type RoutingContextType, routingContext } from "@/context/AllContext";
+import { useEffect, useState } from "react";
+// import { type RoutingContextType, routingContext } from "@/context/AllContext";
+import { useRouting } from "@/context/RoutingContext";
 
 const Dashboard = () => {
-  const { routing }: RoutingContextType = useContext(routingContext);
-  const [currentRoute, setCurrentRoute] = useState("meetings");
+  // const { routing }: RoutingContextType = useContext(routingContext);
+  const { currentRoute, setRoute } = useRouting();
+  // const [currentRoute, setCurrentRoute] = useState("meetings");
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -22,17 +24,8 @@ const Dashboard = () => {
       typeof window !== "undefined"
         ? localStorage.getItem("currentRoute")
         : null;
-    setCurrentRoute(storedRoute || "meetings");
+    setRoute(storedRoute || "meetings");
   }, []);
-
-  useEffect(() => {
-    if (routing) {
-      setCurrentRoute(routing);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("currentRoute", routing);
-      }
-    }
-  }, [routing]);
 
   if (!isMounted) {
     // Render nothing or a loader until the component is mounted

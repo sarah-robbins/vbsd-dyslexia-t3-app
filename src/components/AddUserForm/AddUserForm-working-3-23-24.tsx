@@ -130,7 +130,6 @@ const AddUserForm: React.FC<Props> = ({
   const createUserMutation = api.users.createUser.useMutation();
 
   const saveNewUser = () => {
-    console.log("Form Data is: ", formValues);
     createUserMutation.mutate(formValues, {
       onSuccess: (response) => {
         if (response.id) {
@@ -138,10 +137,8 @@ const AddUserForm: React.FC<Props> = ({
             id: response.id,
             ...formValues,
           };
-          console.log("New User added from form.");
           if (newUser) {
             users.push(newUser);
-            console.log("New User added to db: ", newUser);
           }
         } else {
           console.log("no id returned from the server");

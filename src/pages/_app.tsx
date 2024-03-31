@@ -21,7 +21,7 @@ import {
 } from "@mui/material/styles";
 import darkTheme from "../styles/themes/darkTheme";
 import lightTheme from "../styles/themes/lightTheme";
-import { routingContext } from "@/context/AllContext";
+import { RoutingProvider } from "@/context/RoutingContext";
 
 const ColorModeContext = React.createContext({
   // toggleColorMode: () => {},
@@ -34,7 +34,6 @@ const MyApp: AppType<{ session: customSession | null }> = ({
   Component,
   pageProps: { session, ...pageProps },
 }) => {
-  const [routing, setRouting] = React.useState<string>("");
   const [mode, setMode] = React.useState<"light" | "dark">("dark");
   const colorMode = React.useMemo(
     () => ({
@@ -62,17 +61,16 @@ const MyApp: AppType<{ session: customSession | null }> = ({
 
   return (
     <React.StrictMode>
-      {" "}
       <ColorModeContext.Provider value={colorMode}>
-        <MuiThemeProvider
-          theme={mode === "light" ? darkThemeChosen : lightThemeChosen}
-        >
-          <SessionProvider session={session}>
-            <routingContext.Provider value={{ routing, setRouting }}>
+        <SessionProvider session={session}>
+          <RoutingProvider>
+            <MuiThemeProvider
+              theme={mode === "light" ? darkThemeChosen : lightThemeChosen}
+            >
               <Component {...pageProps} />
-            </routingContext.Provider>
-          </SessionProvider>
-        </MuiThemeProvider>
+            </MuiThemeProvider>
+          </RoutingProvider>
+        </SessionProvider>
       </ColorModeContext.Provider>
     </React.StrictMode>
   );

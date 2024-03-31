@@ -3,12 +3,17 @@ import Image from "next/image";
 import { signIn } from "next-auth/react";
 import Link from "@mui/material/Link";
 import { Button } from "@mui/material";
+import { useRouting } from "@/context/RoutingContext";
+import { useSession } from "next-auth/react";
 
 interface Props {
   disabled: boolean;
 }
 
 const LoginButton: React.FC<Props> = ({ disabled }) => {
+  const { data: session } = useSession();
+  const { setRoute } = useRouting();
+
   const updateAppButton =
     disabled === false ? (
       <Button
@@ -17,6 +22,7 @@ const LoginButton: React.FC<Props> = ({ disabled }) => {
         color="primary"
         onClick={() => {
           void signIn("google", { callbackUrl: "/dashboard" });
+          setRoute(session?.user.view || "");
         }}
       >
         Login

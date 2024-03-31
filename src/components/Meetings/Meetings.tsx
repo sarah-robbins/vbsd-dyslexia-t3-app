@@ -75,7 +75,6 @@ const Meetings = () => {
       tutorId: sessionData?.userId ?? 0,
     });
   const tutorMeetings = getMeetingsByTutorId;
-  console.log("tutorMeetings: ", tutorMeetings);
 
   // const { data: getMeetingsBySchool } =
   //   api.meetings.getMeetingsBySchool.useQuery({

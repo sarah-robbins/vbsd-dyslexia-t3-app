@@ -316,7 +316,6 @@ const AddStudentForm: React.FC<Props> = ({
       ...formValues,
       date_intervention_began: studentDate?.toDate(),
     };
-    console.log("formValues", formValues);
     if (studentTutor) {
       updatedFormValues = {
         ...formValues,
@@ -330,7 +329,6 @@ const AddStudentForm: React.FC<Props> = ({
         tutorFullName: tutorName,
       };
     }
-    console.log("updatedFormValues", updatedFormValues);
     createStudentMutation.mutate(updatedFormValues, {
       onSuccess: (response) => {
         if (response.id) {
@@ -338,7 +336,6 @@ const AddStudentForm: React.FC<Props> = ({
             ...updatedFormValues,
             id: response.id,
           };
-          console.log("newStudent", newStudent);
           if (newStudent) {
             students.push(newStudent);
           }

@@ -341,7 +341,6 @@ const MeetingForm: React.FC<Props> = ({
   }, [selectedDate]);
 
   const handleFormDateChange = (date: Dayjs | null) => {
-    console.log("date from handleFormDateChange", date);
     if (date) {
       // Convert the Dayjs date object to start and end times with Date type
       const startDateTime = date
@@ -704,10 +703,6 @@ const MeetingForm: React.FC<Props> = ({
   const createMeetingMutation = api.meetings.createMeeting.useMutation();
 
   useEffect(() => {
-    console.log("*********attendees from form values*********", formValues);
-  }, [formValues]);
-
-  useEffect(() => {
     if (!formValues.attendees) return;
     const getAttendees = formValues.attendees?.map((attendee) => ({
       student_id: attendee.student_id,
@@ -821,7 +816,6 @@ const MeetingForm: React.FC<Props> = ({
         };
       }),
     };
-    console.log("meetingData", meetingData);
     // Use removedAttendees as is, since it's already an array of numbers
     const attendeeIdsToRemove = {
       attendeeIds: removedAttendees,
@@ -842,7 +836,6 @@ const MeetingForm: React.FC<Props> = ({
     updateMeetingMutation.mutate(meetingData, {
       onSuccess: (response) => {
         if (response) {
-          console.log("Meeting updated successfully", meetingData);
           meetings.push(meetingData);
           toast.current?.show({
             severity: "success",
@@ -870,7 +863,6 @@ const MeetingForm: React.FC<Props> = ({
 
   const handleDelete = () => {
     const id = Number(selectedMeetings[0]?.id);
-    console.log("Deleting meeting with ID:", id);
 
     toastDelete.current?.show({
       severity: "error",
@@ -899,13 +891,8 @@ const MeetingForm: React.FC<Props> = ({
                     onSuccess: (response) => {
                       if (response) {
                         toastDelete.current?.clear();
-                        console.log("meetings from handleDelete", meetings);
                         const updatedMeetings = meetings.filter(
                           (meeting) => meeting.id !== id
-                        );
-                        console.log(
-                          "********updatedMeetings from handleDelete********",
-                          updatedMeetings
                         );
                         setMeetings(updatedMeetings);
 
@@ -1139,6 +1126,7 @@ const MeetingForm: React.FC<Props> = ({
             <TextField
               // required
               // error={!formValues.level_lesson}
+              name="level_lesson"
               id="outlined-multiline-flexible"
               value={formValues.level_lesson}
               disabled={!isFormEditable}
@@ -1180,7 +1168,6 @@ const MeetingForm: React.FC<Props> = ({
                   : Promise.resolve(handleAdd(formValues));
                 action
                   .then(() => {
-                    console.log("Action completed successfully");
                     // Handle successful response here, if needed
                   })
                   .catch((error) => {
