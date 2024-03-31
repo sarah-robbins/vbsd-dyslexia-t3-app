@@ -12,57 +12,55 @@ export const RoutingProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const { data: session } = useSession();
-  const defaultRoute = session?.user.view || ""; // Default route
+  const defaultRoute = session?.user.view || "";
   const localStorageKey = "currentRoute";
 
   const [currentRoute, setCurrentRoute] = useState(defaultRoute);
 
   useEffect(() => {
-    // Initialize route from localStorage or fallback to default
     const routeFromStorage = localStorage.getItem(localStorageKey);
     if (routeFromStorage) {
       setCurrentRoute(routeFromStorage);
     }
   }, []);
 
-  useEffect(() => {
-    if (!session) {
-      return; // Exit if session is not available
-    }
+  // useEffect(() => {
+  //   if (!session) {
+  //     return;
+  //   }
 
-    const roles =
-      session.user.role
-        ?.toLowerCase()
-        .split(",")
-        .map((role) => role.trim()) || [];
-    const view = session.user.view?.toLowerCase();
+  //   const roles =
+  //     session.user.role
+  //       ?.toLowerCase()
+  //       .split(",")
+  //       .map((role) => role.trim()) || [];
+  //   const view = session.user.view?.toLowerCase();
 
-    const updateViewBasedOnUserView = () => {
-      if (view === "meetings" && roles.includes("tutor")) {
-        return "meetings";
-      } else if (
-        view === "students" &&
-        (roles.includes("principal") || roles.includes("admin"))
-      ) {
-        return "students";
-      } else if (view === "users" && roles.includes("admin")) {
-        return "users";
-      } else {
-        return "meetings"; // Default view
-      }
-    };
+  //   const updateViewBasedOnUserView = () => {
+  //     if (view === "meetings" && roles.includes("tutor")) {
+  //       return "meetings";
+  //     } else if (
+  //       view === "students" &&
+  //       (roles.includes("principal") || roles.includes("admin"))
+  //     ) {
+  //       return "students";
+  //     } else if (view === "users" && roles.includes("admin")) {
+  //       return "users";
+  //     } else {
+  //       return "meetings";
+  //     }
+  //   };
 
-    const newView = updateViewBasedOnUserView();
+  //   const newView = updateViewBasedOnUserView();
 
-    // Only update if different to avoid unnecessary writes to localStorage
-    if (newView !== currentRoute) {
-      setRoute(newView);
-    }
-  }, [session?.user.role, session?.user.view]);
+  //   if (newView !== currentRoute) {
+  //     setRoute(newView);
+  //   }
+  // }, [session?.user.role, session?.user.view]);
 
   const setRoute = (newRoute: string) => {
-    setCurrentRoute(newRoute); // Update context state
-    localStorage.setItem("currentRoute", newRoute); // Update localStorage
+    setCurrentRoute(newRoute);
+    localStorage.setItem("currentRoute", newRoute);
   };
 
   return (
