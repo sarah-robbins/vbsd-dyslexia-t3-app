@@ -52,6 +52,7 @@ const MeetingCalendar: React.FC<Props> = ({
     }
 
     // const newDate = new Date(selected);
+    console.log("date from MeetingCalendar.tsx:", selected);
     setSelectedDate(selected);
     return dayjs(selectedDate).toDate();
   };

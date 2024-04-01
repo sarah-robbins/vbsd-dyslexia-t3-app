@@ -65,6 +65,7 @@ const MeetingList: React.FC<Props> = ({
           const meetingDate = dayjs(meeting.start);
           return meetingDate.isSame(selectedDate, "day");
         });
+      console.log("filtered from the MeetingList.tsx:", filtered);
       setFilteredMeetings(filtered);
     }
     if (selectedDate && isOnStudentsPage) {
