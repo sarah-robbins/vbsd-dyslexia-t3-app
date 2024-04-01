@@ -113,7 +113,7 @@ const MiniDrawer = styled(MuiDrawer, {
 
 const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
   const { data: session } = useSession();
-  const { currentRoute, setRoute } = useRouting();
+  const { setRoute } = useRouting();
 
   const [open, setOpen] = React.useState(false);
   const drawerRef = React.useRef<HTMLDivElement>(null);
@@ -173,19 +173,19 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
     return links;
   }, [links, session?.user.role]);
 
-  // React.useEffect(() => {
-  //   const storedView = localStorage.getItem("currentRoute");
-  //   console.log("storedView", storedView);
-  //   if (storedView && setRoute) {
-  //     setRoute(storedView);
-  //   }
-  //   console.log("local storeage", localStorage.getItem("currentRoute"));
-  // }, [setRoute]);
+  React.useEffect(() => {
+    const storedView = localStorage.getItem("currentRoute");
+    console.log("storedView", storedView);
+    if (storedView && setRoute) {
+      setRoute(storedView);
+    }
+    console.log("local storeage", localStorage.getItem("currentRoute"));
+  }, [setRoute]);
 
   const setNewRoute = (link: Link) => {
     const newRoute = link.text.toLowerCase();
-    setRoute(newRoute); // Update the context and localStorage
-    setOpen(false); // Close the drawer if open
+    setRoute(newRoute);
+    setOpen(false);
   };
 
   const handleDrawerToggle = () => {

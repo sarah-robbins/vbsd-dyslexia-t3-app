@@ -1,4 +1,4 @@
-import React, { type SyntheticEvent, useEffect, useMemo } from "react";
+import React, { type SyntheticEvent, useMemo } from "react";
 import { Calendar, type CalendarDateTemplateEvent } from "primereact/calendar";
 import { Card } from "primereact/card";
 import dayjs, { type Dayjs } from "dayjs";
@@ -34,34 +34,22 @@ const MeetingCalendar: React.FC<Props> = ({
     return [];
   }, [meetings]);
 
-  // interface SelectedDate {
-  //   value: string;
-  // }
-
   const handleDateChange = (
     event: FormEvent<Date, SyntheticEvent<Element, Event>>
   ) => {
     let selected: Dayjs;
 
     if (Array.isArray(event.value)) {
-      // Handle multiple dates
-      selected = dayjs(event.value); // Use first date
+      selected = dayjs(event.value);
     } else {
-      // Handle single date
       selected = dayjs(event.value);
     }
 
-    // const newDate = new Date(selected);
     console.log("date from MeetingCalendar.tsx:", selected);
     setSelectedDate(selected);
     return dayjs(selectedDate).toDate();
   };
 
-  // interface CalendarDate {
-  //   year: string;
-  //   month: number;
-  //   day: string;
-  // }
   const dateTemplate = (event: CalendarDateTemplateEvent) => {
     const dayFormatted =
       event.year.toString() +

@@ -1,18 +1,13 @@
-import { type Session } from "next-auth";
+// import { type Session } from "next-auth";
 import { type customSession } from "@/types";
 import { SessionProvider } from "next-auth/react";
 import { type AppType } from "next/app";
 import { api } from "@/utils/api";
 import "@/styles/globals.css";
 import "@/styles/primeflex.scss";
-// PrimeReact theme
-// import 'primereact/resources/themes/lara-light-blue/theme.css';
 import "@/styles/themes/vb-green/theme.css";
-// PrimeReact core
 import "primereact/resources/primereact.min.css";
-// PrimeFlex
 import "/node_modules/primeflex/primeflex.css";
-// PrimeIcons
 import "primeicons/primeicons.css";
 import React from "react";
 import {
@@ -24,7 +19,6 @@ import lightTheme from "../styles/themes/lightTheme";
 import { RoutingProvider } from "@/context/RoutingContext";
 
 const ColorModeContext = React.createContext({
-  // toggleColorMode: () => {},
   toggleColorMode: () => {
     console.log("toggleColorMode");
   },

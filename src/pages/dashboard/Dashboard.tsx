@@ -6,29 +6,23 @@ import Users from "@/components/Users/Users";
 import Stats from "@/components/Stats/Stats";
 import Settings from "@/components/Settings/Settings";
 import { useEffect, useState } from "react";
-// import { type RoutingContextType, routingContext } from "@/context/AllContext";
 import { useRouting } from "@/context/RoutingContext";
 
 const Dashboard = () => {
-  // const { routing }: RoutingContextType = useContext(routingContext);
   const { currentRoute, setRoute } = useRouting();
-  // const [currentRoute, setCurrentRoute] = useState("meetings");
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    // Component did mount logic
     setIsMounted(true);
 
-    // Access local storage only in the browser
     const storedRoute =
       typeof window !== "undefined"
         ? localStorage.getItem("currentRoute")
         : null;
     setRoute(storedRoute || "meetings");
-  }, []);
+  }, [setRoute]);
 
   if (!isMounted) {
-    // Render nothing or a loader until the component is mounted
     return null;
   }
 
