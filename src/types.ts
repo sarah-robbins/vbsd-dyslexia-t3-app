@@ -29,7 +29,7 @@ export type Student = {
   tutorId?: number | null;
   tutorFullName?: string;
   tutorInfo?: {
-    value: number;
+    value: number | null;
     label: string;
   };
 };

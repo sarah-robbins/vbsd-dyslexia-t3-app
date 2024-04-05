@@ -146,6 +146,7 @@ const AddStudentForm: React.FC<Props> = ({
       return updatedFormValues;
     });
   };
+
   const checkFormValidity = (formValues: formValues) => {
     // Use the double NOT operator to ensure the result is always a boolean
     const isValid = !!(
