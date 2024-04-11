@@ -2,6 +2,7 @@ import Box from "@mui/material/Box";
 import LeftSideNav from "@/components/LeftSideNav/LeftSideNav";
 import Meetings from "@/components/Meetings/Meetings";
 import Students from "@/components/Students/Students";
+// import InProgressStudents from "@/components/Students/In-Progress-Students";
 import Users from "@/components/Users/Users";
 import Stats from "@/components/Stats/Stats";
 import Settings from "@/components/Settings/Settings";
@@ -33,6 +34,7 @@ const Dashboard = () => {
           window={typeof window !== "undefined" ? window : undefined}
         />
         {currentRoute === "students" && <Students isOnMeetingsPage={false} />}
+        {/* {currentRoute === "students" && (<InProgressStudents isOnMeetingsPage={false} />)} */}
         {currentRoute === "meetings" && <Meetings />}
         {currentRoute === "users" && <Users />}
         {currentRoute === "stats" && <Stats />}

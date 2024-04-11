@@ -27,18 +27,21 @@ import type {
 } from "@/types";
 import { InputText } from "primereact/inputtext";
 import { Dropdown, type DropdownChangeEvent } from "primereact/dropdown";
-import {
-  MultiSelect,
-  type MultiSelectChangeEvent,
-} from "primereact/multiselect";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CreateIcon from "@mui/icons-material/Create";
 import CloseIcon from "@mui/icons-material/Close";
 import CheckIcon from "@mui/icons-material/Check";
 import {
+  Checkbox,
   CircularProgress,
+  FormControl,
   FormControlLabel,
   IconButton,
+  InputLabel,
+  ListItemText,
+  MenuItem,
+  Select,
+  type SelectChangeEvent,
   Switch,
   TextField,
 } from "@mui/material";
@@ -54,9 +57,48 @@ import MeetingList from "@/components/Meetings/MeetingList/MeetingList";
 import AddStudentForm from "../AddStudentForm";
 // import { useSession } from 'next-auth/react';
 
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
+
 interface TutorOption {
   label: string;
   value: number | undefined;
+}
+
+interface RowFormValues {
+  id?: number;
+  student_assigned_id?: string;
+  school?: string;
+  first_name?: string;
+  last_name?: string;
+  grade?: string;
+  home_room_teacher?: string;
+  tutor_id?: number | null;
+  intervention_program?: string;
+  level_lesson?: string;
+  date_intervention_began?: Date | null;
+  services?: string;
+  new_student?: boolean;
+  graduated?: boolean;
+  moved?: boolean;
+  new_location?: string;
+  withdrew?: boolean;
+  additional_comments?: string;
+  created_at?: Date;
+  tutorId?: number | null;
+  tutorFullName?: string;
+  tutorInfo?: {
+    value: number;
+    label: string;
+  };
 }
 
 interface Props {
@@ -130,21 +172,27 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   const [attendeesName] = useState<string[]>([]);
   const [isOnStudentsPage] = useState<boolean>(true);
   const [myStudents, setMyStudents] = useState<Student[]>([]);
-  // const [isFormValid, setIsFormValid] = React.useState<boolean>(false);
+  const [rowFormValues, setRowFormValues] = useState<RowFormValues>();
+  const [additionalFormValues, setAdditionalFormValues] =
+    useState<FormValues>();
 
-  // const checkFormValidity = (students: Student[]) => {
-  //   const isValid = !!(
-  //     students.student_assigned_id &&
-  //     students.first_name &&
-  //     students.last_name &&
-  //     students.school &&
-  //     students.grade &&
-  //     students.intervention_program &&
-  //     students.tutor_id &&
-  //     students.services
-  //   );
-  //   setIsFormValid(isValid);
-  // };
+  const [isFormValid, setIsFormValid] = React.useState<boolean>(false);
+
+  const checkFormValidity = (rowFormValues: RowFormValues) => {
+    const isValid =
+      !!(
+        // rowFormValues.student_assigned_id &&
+        // rowFormValues.first_name &&
+        // rowFormValues.last_name &&
+        // rowFormValues.school &&
+        // rowFormValues.grade &&
+        // rowFormValues.intervention_program &&
+        // rowFormValues.tutor_id &&
+        rowFormValues.services
+      );
+
+    setIsFormValid(isValid);
+  };
 
   const { data: getStudentsForTutor } =
     api.students.getStudentsForTutor.useQuery(sessionData?.userId || 0) as {
@@ -156,6 +204,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       data: Student[];
     };
 
+  // #region setStudents
   useEffect(() => {
     if (isOnMeetingsPage) {
       setMyStudents(getStudentsForTutor);
@@ -427,14 +476,20 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     );
   };
 
+  const [studentServices, setStudentServices] = useState<string[]>([]);
+
   const serviceEditor = (options: ColumnEditorOptions) => {
     // Assert the type of options.value
     const value = options.value as string | string[] | undefined;
     const currentValue = processServices(value) as string[] | undefined;
 
-    const handleServiceChange = (e: MultiSelectChangeEvent) => {
-      // Explicitly cast e.value to string[]
-      let selectedServices: string[] = e.value as string[];
+    const handleServicesChange = (
+      event: SelectChangeEvent<typeof studentServices>
+    ) => {
+      const {
+        target: { value },
+      } = event;
+      let selectedServices: string[] = value as string[];
 
       if (selectedServices.includes("None") && selectedServices.length > 1) {
         selectedServices = ["None"];
@@ -445,21 +500,37 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       }
 
       options.editorCallback?.(selectedServices);
+
+      setStudentServices(typeof value === "string" ? value.split(",") : value);
+      setRowFormValues((prevFormValues) => {
+        const updatedFormValues = {
+          ...prevFormValues,
+          services: typeof value === "string" ? value : value?.join(","),
+        };
+        checkFormValidity(updatedFormValues);
+        return updatedFormValues;
+      });
     };
 
     return (
-      <MultiSelect
-        value={currentValue}
-        options={appSettings.services_options.map((service) => ({
-          label: service,
-          value: service,
-        }))}
-        onChange={handleServiceChange}
-        placeholder="Services"
-        optionLabel="label"
-        selectAllLabel="All"
-        className="text-black"
-      />
+      <FormControl required error={!rowFormValues?.services} className="w-full">
+        <InputLabel id="demo-simple-select-label">Services</InputLabel>
+        <Select
+          multiple
+          value={currentValue}
+          label="Service"
+          onChange={handleServicesChange}
+          renderValue={(selected) => selected.join(", ")}
+          MenuProps={MenuProps}
+        >
+          {appSettings.services_options.sort().map((service) => (
+            <MenuItem key={service} value={service}>
+              <Checkbox checked={studentServices.indexOf(service) > -1} />
+              <ListItemText primary={service} />
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
     );
   };
 
@@ -730,9 +801,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       return false;
     }
   };
-
-  const [additionalFormValues, setAdditionalFormValues] =
-    useState<FormValues>();
 
   const [interventionDate, setInterventionDate] = useState<Dayjs>();
   const handleInterventionDateChange = (date: Dayjs | null) => {
@@ -1241,13 +1309,16 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     <>
       {options.rowEditor?.editing ? (
         <div className="flex gap-1 justify-content-center">
-          <CheckIcon
+          <IconButton
+            disabled={!isFormValid}
             onClick={(e) =>
               options.rowEditor?.onSaveClick &&
               options.rowEditor?.onSaveClick(e)
             }
             color="primary"
-          />
+          >
+            <CheckIcon />
+          </IconButton>
           <CloseIcon
             onClick={(e) =>
               options.rowEditor?.onCancelClick &&
@@ -1282,27 +1353,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       )}
     </>
   );
-
-  // function t(arg0: string): string | undefined {
-  //   throw new Error("Function not implemented.");
-  // }
-
-  // function confirmDialog(arg0: {
-  //   message: string;
-  //   header: string;
-  //   icon: string;
-  //   accept: () => any;
-  // }): void {
-  //   throw new Error("Function not implemented.");
-  // }
-
-  // function handleDelete(id: any) {
-  //   throw new Error("Function not implemented.");
-  // }
-
-  // function rowEditorTemplate(options: ColumnEditorOptions): React.ReactNode {
-  //   throw new Error("Function not implemented.");
-  // }
 
   return (
     <>

@@ -16,7 +16,7 @@ import { type Toast } from "primereact/toast";
 import CloseIcon from "@mui/icons-material/Close";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import dayjs, { type Dayjs } from "dayjs";
+import { type Dayjs } from "dayjs";
 import Autocomplete from "@mui/material/Autocomplete";
 // import Autocomplete from "@mui/material/Autocomplete";
 
@@ -135,7 +135,28 @@ const AddStudentForm: React.FC<Props> = ({
   const [studentProgram, setStudentProgram] = React.useState<string>("");
   const [studentTutor, setStudentTutor] = React.useState<number>();
   const [studentServices, setStudentServices] = React.useState<string[]>([]);
-  const [studentDate, setStudentDate] = React.useState<Dayjs | null>(null); // Initialize to null
+  const [studentDate, setStudentDate] = React.useState<Dayjs | null>(null);
+  const [formValues, setFormValues] = React.useState<formValues>({
+    first_name: "",
+    last_name: "",
+    student_assigned_id: "",
+    school: "",
+    grade: "",
+    home_room_teacher: "",
+    intervention_program: "",
+    date_intervention_began: null,
+    tutor_id: null,
+    services: "",
+    level_lesson: "",
+    new_student: true,
+    withdrew: false,
+    graduated: false,
+    moved: false,
+    new_location: "",
+    additional_comments: "",
+    created_at: new Date(),
+  });
+
   const [isFormValid, setIsFormValid] = React.useState<boolean>(false);
 
   const handleTextChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -148,7 +169,6 @@ const AddStudentForm: React.FC<Props> = ({
   };
 
   const checkFormValidity = (formValues: formValues) => {
-    // Use the double NOT operator to ensure the result is always a boolean
     const isValid = !!(
       formValues.student_assigned_id &&
       formValues.first_name &&
@@ -284,27 +304,6 @@ const AddStudentForm: React.FC<Props> = ({
       // }));
     }
   };
-
-  const [formValues, setFormValues] = React.useState<formValues>({
-    first_name: "",
-    last_name: "",
-    student_assigned_id: "",
-    school: "",
-    grade: "",
-    home_room_teacher: "",
-    intervention_program: "",
-    date_intervention_began: null,
-    tutor_id: null,
-    services: "",
-    level_lesson: "",
-    new_student: true,
-    withdrew: false,
-    graduated: false,
-    moved: false,
-    new_location: "",
-    additional_comments: "",
-    created_at: new Date(),
-  });
 
   const createStudentMutation = api.students.createStudent.useMutation();
 
@@ -581,8 +580,6 @@ const AddStudentForm: React.FC<Props> = ({
           <FormControl required error={!formValues.services} className="w-full">
             <InputLabel id="demo-simple-select-label">Services</InputLabel>
             <Select
-              // labelId="demo-multiple-checkbox-label"
-              // id="demo-multiple-checkbox"
               multiple
               value={studentServices}
               label="Service"
