@@ -1,0 +1,23 @@
+--------------------------------------
+-- This is the basic code to adjust --
+-- the times from the current db to --
+-- match the data in the old db and --
+-- correct the timezone.            --
+--------------------------------------
+
+-- Update command
+UPDATE public."Meetings"
+-- Add 6 hours to the 'start' column
+SET start = start + INTERVAL '6 hours'
+-- where the 'recorded_on' column is less than (before) or equal to 3/20/2024
+WHERE recorded_on <= '2024-03-20 00:00:00';
+
+-- Select to verify immediately, ordered by 'start' descending
+SELECT start
+FROM public."Meetings"
+ORDER BY start DESC;
+
+-- Adjust the timezone for the data
+ALTER TABLE public."Meetings"
+ALTER COLUMN start TYPE timestamp with time zone
+USING start AT TIME ZONE 'America/Chicago';

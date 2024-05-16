@@ -58,6 +58,13 @@ export const studentsRouter = createTRPCRouter({
               select: {
                 id: true,
                 meeting_status: true,
+                Meetings: {  // Correct relation name as per your schema
+                  select: {
+                      id: true,   // Optionally include more fields from the Meetings table
+                      start: true, // Ensures the 'start' date of the meeting is included
+                      level_lesson: true // Ensures the 'level_lesson' is included
+                  }
+                }
               },
             },
           },
@@ -83,6 +90,13 @@ export const studentsRouter = createTRPCRouter({
               select: {
                 id: true,
                 meeting_status: true,
+                Meetings: {  // Correct relation name as per your schema
+                  select: {
+                    id: true,   // Optionally include more fields from the Meetings table
+                    start: true, // Ensures the 'start' date of the meeting is included
+                    level_lesson: true // Ensures the 'level_lesson' is included
+                  }
+                }
               },
             },
           },
@@ -101,6 +115,13 @@ export const studentsRouter = createTRPCRouter({
               select: {
                 id: true,
                 meeting_status: true,
+                Meetings: {  // Correct relation name as per your schema
+                  select: {
+                    id: true,   // Optionally include more fields from the Meetings table
+                    start: true, // Ensures the 'start' date of the meeting is included
+                    level_lesson: true // Ensures the 'level_lesson' is included
+                  }
+                }
               },
             },
           },

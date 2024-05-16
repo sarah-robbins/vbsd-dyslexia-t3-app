@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, use } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   DataTable,
   type DataTableRowEditCompleteEvent,
@@ -38,10 +38,10 @@ import CheckIcon from "@mui/icons-material/Check";
 import {
   CircularProgress,
   FormControlLabel,
+  IconButton,
   Switch,
   TextField,
 } from "@mui/material";
-// import { Button } from "primereact/button";
 import Button from "@mui/material/Button";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -51,11 +51,24 @@ import { Skeleton } from "primereact/skeleton";
 import MeetingForm from "@/components/Meetings/MeetingForm/MeetingForm";
 import MeetingList from "@/components/Meetings/MeetingList/MeetingList";
 import AddStudentForm from "../AddStudentForm";
-// import { useSession } from 'next-auth/react';
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import {
+  type WorkBook,
+  type WorkSheet,
+  utils as XLSXUtils,
+  write as XLSXWrite,
+} from "xlsx";
+import { PictureAsPdf, TableRows, TextSnippet } from "@mui/icons-material";
 
 interface TutorOption {
   label: string;
   value: number | undefined;
+}
+
+interface ExportColumn {
+  title: string;
+  dataKey: keyof Student;
 }
 
 interface Props {
@@ -85,14 +98,13 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     }
   }, [runSuccessToast]);
 
-  // const [filteredMeetings, setFilteredMeetings] = useState<Meeting[]>([]);
   const getAllStudents = api.students.getAllStudents.useQuery();
   const [students, setStudents] = useState<Student[]>([]);
+  const dt = useRef<DataTable<Student[]>>(null);
   const [expandedRows, setExpandedRows] = useState<
     DataTableExpandedRows | DataTableValueArray | undefined
   >(undefined);
   const toast = useRef<Toast>(null);
-  // const currentUserData = session?.user;
   const appSettings = (session as customSession)?.appSettings;
   const [filters, setFilters] = useState<DataTableFilterMeta>({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -115,14 +127,13 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     services: { value: null, matchMode: FilterMatchMode.CONTAINS },
   });
   const [globalFilterValue, setGlobalFilterValue] = useState<string>("");
-
+  const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [meetings, setMeetings] = useState<MeetingWithAttendees[]>([]);
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [selectedMeetings, setSelectedMeetings] = useState<
     MeetingWithAttendees[]
   >([]);
   const [selectedMeetingAttendees] = useState<MeetingAttendees[]>([]);
-  // const [attendees, setAttendees] = useState<MeetingAttendees[]>([]);
   const [datedMeetingsWithAttendees, setDatedMeetingsWithAttendees] = useState<
     MeetingWithAttendees[]
   >([]);
@@ -216,7 +227,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
 
   useEffect(() => {
     if (roleBasedMeetings) {
-      // Convert dates to Dayjs objects and update state
       const convertedMeetings = convertMeetings(roleBasedMeetings);
       setMeetings(convertedMeetings);
     }
@@ -228,7 +238,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     if (Array.isArray(services)) {
       return services;
     } else if (typeof services === "string") {
-      // Split the string by comma, then trim each element
       return services.split(",").map((service) => service.trim());
     } else {
       return [];
@@ -236,11 +245,9 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   };
 
   const servicesTemplate = (rowData: Student) => {
-    // If services is an array, sort it and convert it to a comma-separated string with spaces
     if (Array.isArray(rowData.services)) {
       return rowData.services.sort().join(", ");
     } else if (typeof rowData.services === "string") {
-      // If services is a string, ensure it's formatted with spaces after commas
       return rowData.services
         .split(",")
         .map((s) => s.trim())
@@ -249,10 +256,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     return rowData.services;
   };
 
-  // Manipulate Student data for display
   useEffect(() => {
-    console.log("myStudents", myStudents);
-    console.log("stuents", students);
     if (myStudents) {
       const processedStudents = myStudents.map((student) => ({
         ...student,
@@ -273,22 +277,21 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
 
       myStudents.forEach((student) => {
         if (student.id !== undefined && student.id !== null) {
-          // Check that id is not undefined and not null
           initialTutorIds[student.id] = student.tutor_id || 0;
         }
       });
 
       setStudents(processedStudents);
-      setSelectedTutorIds(initialTutorIds); // Set the initial tutor IDs
+      setSelectedTutorIds(initialTutorIds);
+      console.log("processed students", processedStudents);
     }
   }, [myStudents]);
 
-  // Fetch all tutors (separate API call)
   useEffect(() => {
     if (myUsers) {
       const formattedData = myUsers.map((user) => ({
         label: `${user.first_name as string} ${user.last_name as string}`,
-        value: user.id, // Ensure this is the unique identifier
+        value: user.id,
       }));
       setFormattedTutors(formattedData);
     }
@@ -297,14 +300,31 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   const [editingRows] = useState({});
 
   const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const _filters = { ...filters };
+    const value = e.target.value.toLowerCase();
+    const _filters: DataTableFilterMeta = { ...filters };
 
     if (_filters.global && "value" in _filters.global) {
       _filters.global.value = value || "";
     }
     setFilters(_filters);
     setGlobalFilterValue(value);
+
+    const filtered = students.filter(
+      (student) =>
+        student.first_name?.toLowerCase().includes(value) ||
+        student.last_name?.toLowerCase().includes(value) ||
+        student.school?.toLowerCase().includes(value) ||
+        student.grade?.toLowerCase().includes(value) ||
+        student.home_room_teacher?.toLowerCase().includes(value) ||
+        student.intervention_program?.toLowerCase().includes(value) ||
+        student.tutorFullName?.toLowerCase().includes(value) ||
+        (student.services && student.services.toLowerCase().includes(value))
+    );
+
+    setFilteredStudents(filtered);
+    console.log("global filter value", value);
+    console.log("filters", _filters);
+    console.log("filtered students", filtered);
   };
 
   const studentIdEditor = (options: ColumnEditorOptions) => {
@@ -411,12 +431,10 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   };
 
   const serviceEditor = (options: ColumnEditorOptions) => {
-    // Assert the type of options.value
     const value = options.value as string | string[] | undefined;
     const currentValue = processServices(value) as string[] | undefined;
 
     const handleServiceChange = (e: MultiSelectChangeEvent) => {
-      // Explicitly cast e.value to string[]
       let selectedServices: string[] = e.value as string[];
 
       if (selectedServices.includes("None") && selectedServices.length > 1) {
@@ -449,8 +467,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   const formatServicesForSave = (
     services: string | string[] | null | undefined
   ): string => {
-    // If services is a string, split it into an array
-    // If services is null or undefined, use an empty array
     const servicesArray =
       typeof services === "string"
         ? services.split(", ").map((s) => s.trim())
@@ -466,10 +482,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     const rowData = options.rowData as Student;
     const studentId = rowData.id as number;
     const currentTutorId = selectedTutorIds[studentId];
-
-    // const currentTutorId = formattedTutors.find(
-    //   (tutor) => tutor.label === rowData.tutorFullName
-    // )?.value;
 
     const handleTutorChange = (studentId: number, e: DropdownChangeEvent) => {
       const newTutorId = e.value as number;
@@ -487,7 +499,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
             ? {
                 ...student,
                 tutorId: newTutorId,
-                tutor_id: newTutorId, // Update this field as well
+                tutor_id: newTutorId,
                 tutorInfo: {
                   value: newTutorId,
                   label: newTutorLabel as string,
@@ -496,14 +508,12 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
             : student
         )
       );
-      // Update the rowData for immediate feedback in the UI
       options.editorCallback?.({
         value: e.value as number,
         label: newTutorLabel,
       });
     };
 
-    // Ensure that the dropdown is rendered only after formattedTutors is available
     if (formattedTutors.length > 0) {
       return (
         <Dropdown
@@ -525,12 +535,10 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   };
 
   const updateStudentRowMutation = api.students.updateStudentRow.useMutation();
-  // const createStudentMutation = api.students.createStudent.useMutation();
-  // const [dataVersion, setDataVersion] = useState(0);
 
   const onRowEditComplete = (e: DataTableRowEditCompleteEvent) => {
     let { newData } = e as { newData: Student };
-    // Transform the services array back into a string
+
     if (Array.isArray(newData.services)) {
       newData = {
         ...newData,
@@ -538,161 +546,76 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       };
     }
 
-    // Update tutorFullName based on tutorId
     const updatedTutor = formattedTutors.find(
       (tutor) => tutor.value === newData.tutorId
     );
     newData.tutorFullName = updatedTutor ? updatedTutor.label : "";
 
-    // Handle saving the edited data
-    let updatedStudents = students;
-    if (e.data.id === undefined || e.data.id < 0) {
-      // Handling new row
-      updatedStudents = students.map((student) =>
-        student.id === -1 ? { ...e.data, id: 0 } : student
-      );
+    const dataForSave = {
+      ...newData,
+      school: newData.school ?? "",
+      grade: newData.grade ?? "",
+      home_room_teacher: newData.home_room_teacher ?? "",
+      tutor_id: selectedTutorIds[newData.id as number] ?? null,
+      intervention_program: newData.intervention_program ?? "",
+      first_name: newData.first_name ?? "",
+      last_name: newData.last_name ?? "",
+      student_assigned_id: newData.student_assigned_id ?? "",
+      services: formatServicesForSave(newData.services),
+      level_lesson: newData.level_lesson ?? "",
+      date_intervention_began: newData.date_intervention_began ?? null,
+      new_student: newData.new_student ?? false,
+      moved: newData.moved ?? false,
+      new_location: newData.new_location ?? "",
+      withdrew: newData.withdrew ?? false,
+      graduated: newData.graduated ?? false,
+      additional_comments: newData.additional_comments ?? "",
+      last_edited: new Date(),
+      created_at: new Date(),
+    };
 
-      // const dataForSave = {
-      //   ...newData,
-      //   school: newData.school ?? "",
-      //   grade: newData.grade ?? "",
-      //   home_room_teacher: newData.home_room_teacher ?? "",
-      //   tutor_id: selectedTutorIds[newData.id as number] ?? null,
-      //   intervention_program: newData.intervention_program ?? "",
-      //   first_name: newData.first_name ?? "",
-      //   last_name: newData.last_name ?? "",
-      //   student_assigned_id: newData.student_assigned_id ?? "",
-      //   services: formatServicesForSave(newData.services),
-      //   level_lesson: newData.level_lesson ?? "",
-      //   date_intervention_began: newData.date_intervention_began ?? null,
-      //   new_student: newData.new_student ?? false,
-      //   moved: newData.moved ?? false,
-      //   new_location: newData.new_location ?? "",
-      //   withdrew: newData.withdrew ?? false,
-      //   graduated: newData.graduated ?? false,
-      //   additional_comments: newData.additional_comments ?? "",
-      //   last_edited: new Date(),
-      //   created_at: new Date(),
-      // };
-      // createStudentMutation.mutate(dataForSave, {
-      //   onSuccess: (response) => {
-      //     if (response.id) {
-      //       setStudents((prevStudents) => {
-      //         const updatedStudents = prevStudents.map((user) => {
-      //           if (user.id === dataForSave.id) {
-      //             // Replace the temporary ID with the actual ID
-      //             return { ...dataForSave, id: response.id };
-      //           } else {
-      //             return user;
-      //           }
-      //         });
-      //         // Add the new user to the list
-      //         const userData = createStudentMutation.data as Student;
-      //         if (userData) {
-      //           updatedStudents.push(userData);
-      //         }
-      //         return updatedStudents;
-      //       });
-      //     } else {
-      //       console.log("no id returned from the server");
-      //     }
-
-      //     toast.current?.show({
-      //       severity: "success",
-      //       summary: "Success",
-      //       detail: "User saved",
-      //     });
-      //   },
-      //   onError: (error) => {
-      //     console.log("error", error);
-      //     // On error, show an error toast
-      //     toast.current?.show({
-      //       severity: "error",
-      //       summary: "Error",
-      //       detail: "Save failed",
-      //     });
-      //   },
-      // });
-    } else {
-      // Handling existing row update
-      // updatedStudents = students.map((student) =>
-      //   student.id === e.data.id ? { ...e.data } : student
-      // );
-      // console.log(updatedStudents);
-
-      const dataForSave = {
-        ...newData,
-        school: newData.school ?? "",
-        grade: newData.grade ?? "",
-        home_room_teacher: newData.home_room_teacher ?? "",
-        tutor_id: selectedTutorIds[newData.id as number] ?? null,
-        intervention_program: newData.intervention_program ?? "",
-        first_name: newData.first_name ?? "",
-        last_name: newData.last_name ?? "",
-        student_assigned_id: newData.student_assigned_id ?? "",
-        services: formatServicesForSave(newData.services),
-        level_lesson: newData.level_lesson ?? "",
-        date_intervention_began: newData.date_intervention_began ?? null,
-        new_student: newData.new_student ?? false,
-        moved: newData.moved ?? false,
-        new_location: newData.new_location ?? "",
-        withdrew: newData.withdrew ?? false,
-        graduated: newData.graduated ?? false,
-        additional_comments: newData.additional_comments ?? "",
-        last_edited: new Date(),
-        created_at: new Date(),
-      };
-
-      // Call the mutation to update the student
-      updateStudentRowMutation.mutate(dataForSave, {
-        onSuccess: (response) => {
-          if (response) {
-            toast.current?.show({
-              severity: "success",
-              summary: "Success",
-              detail: "Student updated",
-            });
-            setStudents((prevStudents) => {
-              const index = prevStudents.findIndex(
-                (student) => student.id === dataForSave.id
-              );
-
-              if (index !== -1) {
-                // Student exists, update their information
-                const newStudents = [...prevStudents];
-                newStudents[index] = dataForSave;
-                return newStudents;
-              } else {
-                // New student, add them to the list
-                return [dataForSave, ...prevStudents];
-              }
-            });
-          }
-        },
-        onError: (error) => {
-          // On error, show an error toast
+    updateStudentRowMutation.mutate(dataForSave, {
+      onSuccess: (response) => {
+        if (response) {
           toast.current?.show({
-            severity: "error",
-            summary: "Error",
-            detail: error.message,
+            severity: "success",
+            summary: "Success",
+            detail: "Student updated",
           });
-        },
-      });
-    }
+          setStudents((prevStudents) => {
+            const index = prevStudents.findIndex(
+              (student) => student.id === dataForSave.id
+            );
+
+            if (index !== -1) {
+              const newStudents = [...prevStudents];
+              newStudents[index] = dataForSave;
+              return newStudents;
+            } else {
+              return [dataForSave, ...prevStudents];
+            }
+          });
+        }
+      },
+      onError: (error) => {
+        toast.current?.show({
+          severity: "error",
+          summary: "Error",
+          detail: error.message,
+        });
+      },
+    });
   };
 
   const updateStudentExtraDataMutation =
     api.students.updateStudentExtraData.useMutation();
 
-  //update the student extra data
   const updateStudentExtraData = (data: Student) => {
-    // Ensure that id is provided
     if (!data.id) {
       console.error("No student ID provided for update");
       return;
     }
 
-    // Prepare the data object, excluding undefined fields
     const updateData = {
       level_lesson: data.level_lesson ?? null,
       date_intervention_began: data.date_intervention_began
@@ -727,28 +650,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       }
     );
   };
-
-  /* -------------------------------------------------------------------------- */
-  /*                                EXPANDED ROWS                               */
-  /* -------------------------------------------------------------------------- */
-
-  // const onRowExpand = (event: DataTableRowEvent) => {
-  //   toast.current?.show({
-  //     severity: "info",
-  //     summary: "Product Expanded",
-  //     detail: event.data.id as number,
-  //     life: 3000,
-  //   });
-  // };
-
-  // const onRowCollapse = (event: DataTableRowEvent) => {
-  //   toast.current?.show({
-  //     severity: "success",
-  //     summary: "Product Collapsed",
-  //     detail: event.data.id as number,
-  //     life: 3000,
-  //   });
-  // };
 
   const expandAll = () => {
     const _expandedRows: DataTableExpandedRows = {};
@@ -860,11 +761,39 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       )
     );
 
+    const getLatestLevelLesson = (meetingAttendees: MeetingAttendees[]) => {
+      if (!meetingAttendees || meetingAttendees.length === 0) {
+        return null;
+      }
+
+      const filteredMeetings = meetingAttendees.filter(
+        (attendee) => attendee.Meetings && attendee.Meetings.level_lesson
+      );
+
+      if (filteredMeetings.length === 0) {
+        return data.level_lesson || "N/A";
+      }
+
+      const sortedMeetings = filteredMeetings.sort((a, b) => {
+        const dateA = a.Meetings?.start
+          ? new Date(a.Meetings.start as string | number | Date)
+          : new Date(0);
+        const dateB = b.Meetings?.start
+          ? new Date(b.Meetings.start as string | number | Date)
+          : new Date(0);
+        return dateB.getTime() - dateA.getTime();
+      });
+
+      return sortedMeetings[0]?.Meetings?.level_lesson || "N/A";
+    };
+
+    const latestLevelLesson = getLatestLevelLesson(data.MeetingAttendees || []);
+
     return (
       <>
         <div className="expansion-row flex flex-row gap-3">
           <Card className="expansion-row__item w-6">
-            <h3>Additional Info {data.first_name}</h3>
+            <h3>Additional Info</h3>
             <div className="flex gap-4">
               <TextField
                 id="outlined-multiline-flexible"
@@ -875,13 +804,22 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
                     level_lesson: e.target.value,
                   })
                 }
-                label="Level/Lesson"
+                label="Beginning Level/Lesson"
                 className="w-12"
                 inputProps={{
                   readOnly: !session?.user.role
                     .split(",")
                     .map((role) => role.trim())
                     .some((role) => ["Admin", "Principal"].includes(role)),
+                }}
+              />
+              <TextField
+                id="outlined-multiline-flexible"
+                value={latestLevelLesson}
+                label="Current Level/Lesson"
+                className="w-12"
+                inputProps={{
+                  readOnly: true,
                 }}
               />
               <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -1045,7 +983,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
                 </LocalizationProvider>
               </div>
             </div>
-            {/* The next part of this will need to show the different meeting statuses and how many occur for tha attendee during the time period in the search. */}
             <div className="flex gap-4">
               <div>
                 <span>Meetings</span>
@@ -1096,8 +1033,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
           <MeetingForm
             meetings={meetings}
             setMeetings={setMeetings}
-            // filteredMeetings={filteredMeetings}
-            // setFilteredMeetings={setFilteredMeetings}
             students={students}
             getDatedMeetings={studentMeetings}
             selectedMeetings={selectedMeetings}
@@ -1113,9 +1048,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
           />
           <MeetingList
             meetings={meetings}
-            // setMeetings={setMeetings}
-            // filteredMeetings={filteredMeetings}
-            // setFilteredMeetings={setFilteredMeetings}
             students={students}
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
@@ -1135,7 +1067,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   const deleteStudentMutation = api.students.deleteStudent.useMutation();
   const handleDeleteStudent = (studentId: number) => {
     const id = studentId || 0;
-    // Call the TRPC mutation to delete the student
     toastDelete.current?.show({
       severity: "error",
       summary: "Delete Meeting",
@@ -1168,7 +1099,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
                           students.filter((student) => student.id !== id)
                         );
 
-                        // Optionally, show a success message
                         toast.current?.show({
                           severity: "success",
                           summary: "Success",
@@ -1209,6 +1139,110 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     });
   };
 
+  const exportColumns: ExportColumn[] = [
+    { title: "Student ID", dataKey: "student_assigned_id" },
+    { title: "First Name", dataKey: "first_name" },
+    { title: "Last Name", dataKey: "last_name" },
+    { title: "School", dataKey: "school" },
+    { title: "Grade", dataKey: "grade" },
+    { title: "Home Room Teacher", dataKey: "home_room_teacher" },
+    { title: "Program", dataKey: "intervention_program" },
+    { title: "Tutor", dataKey: "tutorFullName" },
+    { title: "Services", dataKey: "services" },
+    { title: "Additional Comments", dataKey: "additional_comments" },
+  ];
+
+  // const exportPdf = () => {
+  //   try {
+  //     const doc = new jsPDF();
+
+  //     const head = [exportColumns.map((col) => col.title)];
+  //     const body = filteredStudents.map((student) =>
+  //       exportColumns.map((col) => student[col.dataKey]?.toString() ?? "")
+  //     );
+
+  //     autoTable(doc, {
+  //       head,
+  //       body,
+  //     });
+
+  //     doc.save("students.pdf");
+  //   } catch (error) {
+  //     console.error("Error exporting PDF file:", error);
+  //   }
+  // };
+
+  // const handleExportPdf = () => {
+  //   exportPdf();
+  // };
+
+  const exportCSV = (selectionOnly = false): void => {
+    if (dt.current) {
+      dt.current.exportCSV({ selectionOnly });
+    } else {
+      console.error("DataTable reference is null.");
+    }
+  };
+
+  const exportExcel = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      try {
+        const worksheet: WorkSheet = XLSXUtils.json_to_sheet(
+          filteredStudents.map((student) => {
+            const result: Record<string, string> = {};
+            exportColumns.forEach((col) => {
+              const value = student[col.dataKey];
+              result[col.title] =
+                value !== null && value !== undefined ? value.toString() : "";
+            });
+            return result;
+          })
+        );
+        const workbook: WorkBook = {
+          Sheets: { data: worksheet },
+          SheetNames: ["data"],
+        };
+        const excelBuffer: ArrayBuffer = XLSXWrite(workbook, {
+          bookType: "xlsx",
+          type: "array",
+        }) as ArrayBuffer;
+
+        saveAsExcelFile(excelBuffer, "students").then(resolve).catch(reject);
+      } catch (error) {
+        console.error("Error exporting Excel file:", error);
+        reject(error);
+      }
+    });
+  };
+
+  const saveAsExcelFile = async (
+    buffer: ArrayBuffer,
+    fileName: string
+  ): Promise<void> => {
+    try {
+      const fileSaverModule = await import("file-saver");
+      if (fileSaverModule && fileSaverModule.default) {
+        const EXCEL_TYPE =
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
+        const EXCEL_EXTENSION = ".xlsx";
+        const data = new Blob([buffer], { type: EXCEL_TYPE });
+
+        fileSaverModule.default.saveAs(
+          data,
+          `${fileName}_export_${new Date().getTime()}${EXCEL_EXTENSION}`
+        );
+      }
+    } catch (error) {
+      console.error("Error saving Excel file:", error);
+    }
+  };
+
+  const handleExportExcel = () => {
+    exportExcel().catch((error) => {
+      console.error("Error in handleExportExcel:", error);
+    });
+  };
+
   const renderHeader = () => {
     return (
       <div className="flex flex-row justify-content-between">
@@ -1237,14 +1271,22 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
             />
           </span>
         </div>
+        <div className="flex align-items-center justify-content-end gap-2">
+          <IconButton onClick={() => exportCSV(false)} aria-label="CSV">
+            <TextSnippet />
+          </IconButton>
+          <IconButton onClick={handleExportExcel} aria-label="XLS">
+            <TableRows />
+          </IconButton>
+          {/* <IconButton onClick={handleExportPdf} aria-label="PDF">
+            <PictureAsPdf />
+          </IconButton> */}
+        </div>
       </div>
     );
   };
   const header = renderHeader();
 
-  // const rows = [editingRow, ...students].filter((r) => r != null);
-
-  // load animation for the table
   if (!getAllStudents.data)
     return (
       <div className="flex w-full h-full">
@@ -1255,15 +1297,12 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       </div>
     );
 
-  // choose waht to do when a row in clicked
   const rowSelected = (e: DataTableRowEvent) => {
     console.log("e", e);
   };
 
-  // style the row based on conditions
   const newRowClass = (data: Student) => {
     return {
-      // FIXME: cannot get the right color of green to match the header
       "bg-green-50":
         data.new_student === true && data.id !== undefined && data.id > -2,
       "bg-red-100": data.first_name === "",
@@ -1324,27 +1363,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     </>
   );
 
-  // function t(arg0: string): string | undefined {
-  //   throw new Error("Function not implemented.");
-  // }
-
-  // function confirmDialog(arg0: {
-  //   message: string;
-  //   header: string;
-  //   icon: string;
-  //   accept: () => any;
-  // }): void {
-  //   throw new Error("Function not implemented.");
-  // }
-
-  // function handleDelete(id: any) {
-  //   throw new Error("Function not implemented.");
-  // }
-
-  // function rowEditorTemplate(options: ColumnEditorOptions): React.ReactNode {
-  //   throw new Error("Function not implemented.");
-  // }
-
   return (
     <>
       <AddStudentForm
@@ -1368,15 +1386,13 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
 
         <DataTable
           className="students-table"
+          ref={dt}
           value={students}
           editMode="row"
-          // onRowEditInit={(e) => setEditingRows(e.data.id)}
           editingRows={editingRows}
           onRowEditComplete={onRowEditComplete}
           expandedRows={expandedRows}
           onRowToggle={(e) => setExpandedRows(e.data)}
-          // onRowExpand={onRowExpand}
-          // onRowCollapse={onRowCollapse}
           rowExpansionTemplate={rowExpansionTemplate}
           dataKey="id"
           stripedRows

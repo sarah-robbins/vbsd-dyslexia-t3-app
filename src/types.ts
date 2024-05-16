@@ -95,6 +95,7 @@ export type MeetingAttendees = {
   created_at?: Date | Dayjs;
   name?: string;
   tutor_id?: number | null;
+  Meetings?: Meeting;
 };
 
 export type MeetingAttendeesArray = [
