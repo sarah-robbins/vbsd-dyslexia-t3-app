@@ -246,8 +246,11 @@ const MeetingList: React.FC<Props> = ({
   }, [datedMeetingsWithAttendees]);
 
   const toggleAllCheckboxes = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedMeetings(event.target.checked ? filteredMeetings : []);
-  }, [filteredMeetings, setSelectedMeetings]);
+    if (!event.target.checked) {
+      setSelectedMeetings([]);
+    }
+    // Do nothing if trying to check all
+  }, [setSelectedMeetings]);
 
   const isCheckboxChecked = useCallback((meeting: MeetingWithAttendees) => {
     return selectedMeetings.some((selectedMeeting) => selectedMeeting.id === meeting.id);
@@ -312,10 +315,7 @@ const MeetingList: React.FC<Props> = ({
                 selectedMeetings.length > 0 &&
                 selectedMeetings.length < filteredMeetings.length
               }
-              checked={
-                selectedMeetings.length === filteredMeetings.length &&
-                filteredMeetings.length > 0
-              }
+              checked={selectedMeetings.length > 0}
               onChange={toggleAllCheckboxes}
             />
           )}
