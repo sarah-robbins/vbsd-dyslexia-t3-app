@@ -92,7 +92,7 @@ const isCustomSession = (session: Session | null): session is customSession => {
 const AddStudentForm: React.FC<Props> = ({
   session,
   users,
-  setUsers,
+  // setUsers,
   students,
   open,
   setOpen,
@@ -124,16 +124,17 @@ const AddStudentForm: React.FC<Props> = ({
     setStudentSchool("");
     setStudentGrade("");
     setStudentProgram("");
-    setStudentTutor(undefined);
+    setStudentTutor(null);
     setStudentServices([]);
     setStudentDate(null);
     setIsFormValid(false);
+    setTouched({});
   };
 
   const [studentSchool, setStudentSchool] = React.useState<string>("");
   const [studentGrade, setStudentGrade] = React.useState<string>("");
   const [studentProgram, setStudentProgram] = React.useState<string>("");
-  const [studentTutor, setStudentTutor] = React.useState<number>();
+  const [studentTutor, setStudentTutor] = React.useState<number | null>(null);
   const [studentServices, setStudentServices] = React.useState<string[]>([]);
   const [studentDate, setStudentDate] = React.useState<Dayjs | null>(null);
   const [formValues, setFormValues] = React.useState<formValues>({
@@ -158,6 +159,21 @@ const AddStudentForm: React.FC<Props> = ({
   });
 
   const [isFormValid, setIsFormValid] = React.useState<boolean>(false);
+  const [touched, setTouched] = React.useState<{ [key: string]: boolean }>({});
+
+  const checkFormValidity = (formValues: formValues) => {
+    const isValid = !!(
+      formValues.student_assigned_id &&
+      formValues.first_name &&
+      formValues.last_name &&
+      formValues.school &&
+      formValues.grade &&
+      formValues.intervention_program &&
+      formValues.services
+    );
+
+    setIsFormValid(isValid);
+  };
 
   const handleTextChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -168,19 +184,10 @@ const AddStudentForm: React.FC<Props> = ({
     });
   };
 
-  const checkFormValidity = (formValues: formValues) => {
-    const isValid = !!(
-      formValues.student_assigned_id &&
-      formValues.first_name &&
-      formValues.last_name &&
-      formValues.school &&
-      formValues.grade &&
-      formValues.intervention_program &&
-      formValues.tutor_id &&
-      formValues.services
-    );
-
-    setIsFormValid(isValid);
+  const handleBlur = (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name } = event.target;
+    setTouched((prevTouched) => ({ ...prevTouched, [name]: true }));
+    checkFormValidity(formValues); // Ensure form validity is checked on blur
   };
 
   // Generate options based on the user role
@@ -246,31 +253,37 @@ const AddStudentForm: React.FC<Props> = ({
     });
   };
 
-  let tutorOptions: string[];
-  if ((session as customSession)?.appSettings.grade_options) {
-    gradeOptions = (session as customSession)?.appSettings.grade_options;
-  } else {
-    gradeOptions = []; // Ensure there's always a fallback
-  }
-
   const handleTutorChange = (event: SelectChangeEvent) => {
-    setStudentTutor(Number(event.target.value));
-    const tutor = users.find((user) => user.id === Number(event.target.value));
-    const tutorName = `${tutor?.first_name || ""} ${tutor?.last_name || ""}`;
-    setFormValues((prevFormValues) => {
-      const updatedFormValues = {
-        ...prevFormValues,
-        tutor_id: Number(event.target.value),
-        tutorId: Number(event.target.value),
-        tutorInfo: {
-          value: Number(event.target.value),
-          label: tutorName,
-        },
-        user: tutor,
-      };
-      checkFormValidity(updatedFormValues);
-      return updatedFormValues;
-    });
+    const value = event.target.value;
+    if (value === "unassigned") {
+      setStudentTutor(null);
+      setFormValues((prevFormValues) => {
+        const updatedFormValues = {
+          ...prevFormValues,
+          tutor_id: null,
+          tutorId: null,
+          tutorInfo: undefined,
+        };
+        return updatedFormValues;
+      });
+    } else {
+      const tutorId = Number(value);
+      setStudentTutor(tutorId);
+      const tutor = users.find((user) => user.id === tutorId);
+      const tutorName = `${tutor?.first_name || ""} ${tutor?.last_name || ""}`;
+      setFormValues((prevFormValues) => {
+        const updatedFormValues = {
+          ...prevFormValues,
+          tutor_id: tutorId,
+          tutorId: tutorId,
+          tutorInfo: {
+            value: tutorId,
+            label: tutorName,
+          },
+        };
+        return updatedFormValues;
+      });
+    }
   };
 
   const handleServicesChange = (
@@ -298,10 +311,10 @@ const AddStudentForm: React.FC<Props> = ({
         date_intervention_began: date.toDate(), // Convert Dayjs to Date
       }));
     } else {
-      // setFormValues((prevFormValues) => ({
-      //   ...prevFormValues,
-      //   date_intervention_began: null, // Set to null when no date is selected
-      // }));
+      setFormValues((prevFormValues) => ({
+        ...prevFormValues,
+        date_intervention_began: null, // Set to null when no date is selected
+      }));
     }
   };
 
@@ -364,10 +377,11 @@ const AddStudentForm: React.FC<Props> = ({
           setStudentSchool("");
           setStudentGrade("");
           setStudentProgram("");
-          setStudentTutor(undefined);
+          setStudentTutor(null);
           setStudentServices([]);
           setStudentDate(null);
           setIsFormValid(false);
+          setTouched({});
           // setUsers(users);
 
           // Return an empty array or the current array of students
@@ -415,40 +429,43 @@ const AddStudentForm: React.FC<Props> = ({
           <FormControl className="form-fields form-fields-50">
             <TextField
               required
-              error={!formValues.student_assigned_id}
+              error={touched.student_assigned_id && !formValues.student_assigned_id}
               helperText={
-                !formValues.student_assigned_id ? "Student ID is required" : ""
+                touched.student_assigned_id && !formValues.student_assigned_id ? "Student ID is required" : ""
               }
               name="student_assigned_id"
               label="Student ID"
               variant="outlined"
               onChange={handleTextChange}
+              onBlur={handleBlur}
             />
           </FormControl>
           <FormControl className="form-fields form-fields-50">
             <TextField
               required
-              error={!formValues.first_name}
+              error={touched.first_name && !formValues.first_name}
               helperText={
-                !formValues.first_name ? "First name is required" : ""
+                touched.first_name && !formValues.first_name ? "First name is required" : ""
               }
               name="first_name"
               id="outlined-basic"
               label="First Name"
               variant="outlined"
               onChange={handleTextChange}
+              onBlur={handleBlur}
             />
           </FormControl>
           <FormControl className="form-fields form-fields-50">
             <TextField
               required
-              error={!formValues.last_name}
-              helperText={!formValues.last_name ? "Last name is required" : ""}
+              error={touched.last_name && !formValues.last_name}
+              helperText={touched.last_name && !formValues.last_name ? "Last name is required" : ""}
               name="last_name"
               id="outlined-basic"
               label="Last Name"
               variant="outlined"
               onChange={handleTextChange}
+              onBlur={handleBlur}
             />
           </FormControl>
 
@@ -466,7 +483,11 @@ const AddStudentForm: React.FC<Props> = ({
                   {...params}
                   label="School"
                   required
-                  error={!formValues.school}
+                  error={touched.school && !formValues.school}
+                  onBlur={() => {
+                    setTouched((prevTouched) => ({ ...prevTouched, school: true }));
+                    checkFormValidity(formValues);
+                  }}
                 />
               )}
             />
@@ -485,33 +506,39 @@ const AddStudentForm: React.FC<Props> = ({
                   {...params}
                   label="Grade"
                   required
-                  error={!formValues.grade}
+                  error={touched.grade && !formValues.grade}
+                  onBlur={() => {
+                    setTouched((prevTouched) => ({ ...prevTouched, grade: true }));
+                    checkFormValidity(formValues);
+                  }}
                 />
               )}
             />
           </FormControl>
           <FormControl className="form-fields form-fields-50">
             <TextField
-              required
               name="home_room_teacher"
               id="outlined-basic"
               label="Home Room Teacher"
               variant="outlined"
               onChange={handleTextChange}
+              onBlur={handleBlur}
             />
           </FormControl>
           <FormControl
             required
-            error={!formValues.intervention_program}
+            error={touched.intervention_program && !formValues.intervention_program}
             className="form-fields form-fields-50"
           >
             <InputLabel id="demo-simple-select-label">Program</InputLabel>
             <Select
-              // labelId="demo-simple-select-label"
-              // id="demo-simple-select"
               value={studentProgram}
               label="Program"
               onChange={handleProgramChange}
+              onBlur={() => {
+                setTouched((prevTouched) => ({ ...prevTouched, intervention_program: true }));
+                checkFormValidity(formValues);
+              }}
             >
               {session.appSettings.program_options.sort().map((program) => (
                 <MenuItem key={program} value={program}>
@@ -521,63 +548,56 @@ const AddStudentForm: React.FC<Props> = ({
             </Select>
           </FormControl>
 
-          <FormControl className="form-fields form-fields-50">
-            <Autocomplete
-              disablePortal
-              id="school-autocomplete"
-              options={schoolOptions}
-              value={studentSchool} // Ensure this is managed correctly in your state
-              onChange={(event, newValue) => {
-                handleSchoolChange(newValue); // Adapt this handler as necessary
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="School"
-                  required
-                  error={!formValues.school}
-                />
-              )}
-            />
-          </FormControl>
-
           <FormControl
-            required
-            error={!formValues.tutor_id}
             className="form-fields form-fields-50"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: studentTutor === null ? "orange" : "default",
+                },
+                "&.Mui-focused:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: studentTutor === null ? "orange" : "default",
+                },
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderColor: studentTutor === null ? "orange" : "default",
+                },
+              },
+            }}
           >
             <InputLabel id="demo-simple-select-label">Tutor</InputLabel>
             <Select
-              // labelId="demo-simple-select-label"
-              // id="demo-simple-select"
-              value={studentTutor?.toString()}
+              value={studentTutor !== null ? studentTutor.toString() : "unassigned"}
               label="Tutor"
               onChange={handleTutorChange}
+              onBlur={() => {
+                setTouched((prevTouched) => ({ ...prevTouched, tutor_id: true }));
+              }}
             >
+              <MenuItem value="unassigned">
+                <ListItemText primary="Unassigned" />
+              </MenuItem>
               {users
                 .sort((a, b) => {
-                  const lastNameA = (a.last_name || "").toUpperCase(); // Handle undefined case
-                  const lastNameB = (b.last_name || "").toUpperCase(); // Handle undefined case
+                  const lastNameA = (a.last_name || "").toUpperCase();
+                  const lastNameB = (b.last_name || "").toUpperCase();
                   if (lastNameA < lastNameB) {
-                    return -1; // a comes before b
+                    return -1;
                   }
                   if (lastNameA > lastNameB) {
-                    return 1; // b comes before a
+                    return 1;
                   }
-                  return 0; // a and b are equal
+                  return 0;
                 })
                 .map((user) => (
                   <MenuItem key={user.id} value={user.id}>
                     <ListItemText
-                      primary={`${user.first_name || ""} ${
-                        user.last_name || ""
-                      }`}
+                      primary={`${user.first_name || ""} ${user.last_name || ""}`}
                     />
                   </MenuItem>
                 ))}
             </Select>
           </FormControl>
-          <FormControl required error={!formValues.services} className="w-full">
+          <FormControl required error={touched.services && !formValues.services} className="w-full">
             <InputLabel id="demo-simple-select-label">Services</InputLabel>
             <Select
               multiple
@@ -586,6 +606,10 @@ const AddStudentForm: React.FC<Props> = ({
               onChange={handleServicesChange}
               renderValue={(selected) => selected.join(", ")}
               MenuProps={MenuProps}
+              onBlur={() => {
+                setTouched((prevTouched) => ({ ...prevTouched, services: true }));
+                checkFormValidity(formValues);
+              }}
             >
               {session.appSettings.services_options.sort().map((service) => (
                 <MenuItem key={service} value={service}>
@@ -597,11 +621,11 @@ const AddStudentForm: React.FC<Props> = ({
           </FormControl>
           <FormControl className="form-fields form-fields-50">
             <TextField
-              required
               name="level_lesson"
               label="Level/Lesson"
               variant="outlined"
               onChange={handleTextChange}
+              onBlur={handleBlur}
             />
           </FormControl>
           <FormControl className="form-fields form-fields-50">
@@ -616,13 +640,13 @@ const AddStudentForm: React.FC<Props> = ({
           </FormControl>
           <FormControl className="form-fields w-full">
             <TextField
-              required
               multiline
               maxRows={4}
               name="additional_comments"
               label="Additional Comments"
               variant="outlined"
               onChange={handleTextChange}
+              onBlur={handleBlur}
             />
           </FormControl>
         </div>

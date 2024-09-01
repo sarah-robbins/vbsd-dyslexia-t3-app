@@ -1,7 +1,6 @@
 import * as React from "react";
 import Image from "next/image";
 import { styled, type Theme, type CSSObject } from "@mui/material/styles";
-import Drawer from "@mui/material/Drawer";
 import MuiDrawer from "@mui/material/Drawer";
 import MuiAppBar, {
   type AppBarProps as MuiAppBarProps,
@@ -12,14 +11,9 @@ import CssBaseline from "@mui/material/CssBaseline";
 import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
-import MenuIcon from "@mui/icons-material/Menu";
-import CloseIcon from "@mui/icons-material/Close";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
 import LightbulbIcon from "@mui/icons-material/Lightbulb";
 import Box from "@mui/material/Box";
 import Menu from "@mui/material/Menu";
@@ -38,34 +32,13 @@ import { TextField } from "@mui/material";
 import Link from "next/link";
 import { api } from "@/utils/api";
 import { useMemo } from "react";
+import { SvgIcon } from "@mui/material";
 
-const drawerWidth = 180;
-
-interface Link {
-  text: string;
-  link: string;
-  icon: string;
-}
-
-const openedMixin = (theme: Theme): CSSObject => ({
-  width: drawerWidth,
-  transition: theme.transitions.create("width", {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.enteringScreen,
-  }),
-  overflowX: "hidden",
-});
+const drawerWidth = 56; // Adjusted for 24x24 icons with some padding
 
 const closedMixin = (theme: Theme): CSSObject => ({
-  transition: theme.transitions.create("width", {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
+  width: `${drawerWidth}px`,
   overflowX: "hidden",
-  width: `calc(${theme.spacing(7)} + 1px)`,
-  [theme.breakpoints.up("sm")]: {
-    width: `calc(${theme.spacing(8)} + 1px)`,
-  },
 });
 
 const DrawerHeader = styled("div")(({ theme }) => ({
@@ -94,29 +67,28 @@ const AppBar = styled(MuiAppBar, {
   }),
 }));
 
-const MiniDrawer = styled(MuiDrawer, {
+const Drawer = styled(MuiDrawer, {
   shouldForwardProp: (prop) => prop !== "open",
-})(({ theme, open }) => ({
+})(({ theme }) => ({
   width: drawerWidth,
   flexShrink: 0,
   whiteSpace: "nowrap",
   boxSizing: "border-box",
-  ...(open && {
-    ...openedMixin(theme),
-    "& .MuiDrawer-paper": openedMixin(theme),
-  }),
-  ...(!open && {
-    ...closedMixin(theme),
-    "& .MuiDrawer-paper": closedMixin(theme),
-  }),
+  ...closedMixin(theme),
+  "& .MuiDrawer-paper": closedMixin(theme),
 }));
+
+interface Link {
+  text: string;
+  link: string;
+  icon: string;
+}
 
 const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
   const { data: session } = useSession();
   const { setRoute } = useRouting();
 
-  const [open, setOpen] = React.useState(false);
-  const drawerRef = React.useRef<HTMLDivElement>(null);
+  // const drawerRef = React.useRef<HTMLDivElement>(null);
 
   const links: Link[] = [
     {
@@ -185,31 +157,7 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
   const setNewRoute = (link: Link) => {
     const newRoute = link.text.toLowerCase();
     setRoute(newRoute);
-    setOpen(false);
   };
-
-  const handleDrawerToggle = () => {
-    setOpen(!open);
-  };
-
-  React.useEffect(() => {
-    const handleOutsideClick = (event: MouseEvent) => {
-      if (
-        drawerRef.current &&
-        !drawerRef.current.contains(event.target as Node)
-      ) {
-        setOpen(false);
-      }
-    };
-
-    if (open) {
-      document.addEventListener("mousedown", handleOutsideClick);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-    };
-  }, [open]);
 
   const [phone, setPhone] = React.useState<string>(session?.user.phone || "");
 
@@ -263,70 +211,63 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
   }
 
   const drawer = (
-    <div
-      className="flex flex-column justify-content-between"
-      style={{ height: "100%" }}
-    >
+    <div className="flex flex-column justify-content-between" style={{ height: "100%" }}>
       <div>
         <DrawerHeader></DrawerHeader>
-        <Divider />
-        <div className="w-12 h-3rem no-wrap justify-content-between align-items-center hidden md:flex ">
-          {!open ? (
-            ""
-          ) : (
-            <Typography variant="h6" noWrap component="div" className="px-4">
-              Menu
-            </Typography>
-          )}
-          {/* <h3 className='px-4 py-2'>Menu</h3> */}
-          <IconButton
-            onClick={handleDrawerToggle}
-            className="mobile-menu-toggle py-2"
-          >
-            {!open ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-          </IconButton>
-        </div>
         <Divider />
         <List>
           {filteredLinks.map((link) => (
             <ListItem key={link.text} disablePadding sx={{ display: "block" }}>
-              <ListItemButton onClick={() => setNewRoute(link)}>
-                <ListItemIcon
+              <Tooltip title={link.text} placement="right">
+                <ListItemButton 
+                  onClick={() => setNewRoute(link)}
                   sx={{
-                    minWidth: 0,
-                    mr: open ? 3 : "auto",
+                    minHeight: 48,
                     justifyContent: "center",
+                    px: 2.5,
                   }}
                 >
-                  {React.createElement(
-                    iconMap[link.icon as keyof typeof iconMap]
-                  )}
-                </ListItemIcon>
-                <ListItemText
-                  primary={link.text}
-                  sx={{ opacity: open ? 1 : 0 }}
-                />
-              </ListItemButton>
+                  <ListItemIcon 
+                    sx={{ 
+                      minWidth: 0, 
+                      mr: "auto",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <SvgIcon 
+                      component={iconMap[link.icon as keyof typeof iconMap]} 
+                      sx={{ fontSize: 24 }}
+                    />
+                  </ListItemIcon>
+                </ListItemButton>
+              </Tooltip>
             </ListItem>
           ))}
         </List>
       </div>
       <div className="tutorial-icon">
-        <Link
-          href="https://google.com"
-          className="flex align-items-center
-          justify-content-center"
-          style={{ width: "100%" }}
-        >
-          <IconButton aria-label="Tutorial" disabled>
-            <LightbulbIcon />
-          </IconButton>
-        </Link>
+        <Tooltip title="Tutorial" placement="right">
+          <Link
+            href="https://google.com"
+            className="flex align-items-center justify-content-center"
+            style={{ width: "100%" }}
+          >
+            <IconButton 
+              aria-label="Tutorial" 
+              disabled
+              sx={{
+                minHeight: 48,
+                justifyContent: "center",
+                px: 2.5,
+              }}
+            >
+              <SvgIcon component={LightbulbIcon} sx={{ fontSize: 24 }} />
+            </IconButton>
+          </Link>
+        </Tooltip>
       </div>
     </div>
   );
-  const container =
-    window && window.document ? () => window.document.body : undefined;
 
   const userProfile = (
     <div className="flex flex-column justify-content-center align-items-center gap-3">
@@ -362,16 +303,9 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
   return (
     <>
       <CssBaseline />
-      <AppBar position="fixed" open={open}>
+      <AppBar position="fixed">
         <Toolbar className="flex justify-content-between">
           <div className="flex align-items-center">
-            <IconButton
-              onClick={handleDrawerToggle}
-              className="md:hidden text-white p-0 mr-4"
-            >
-              {!open ? <MenuIcon /> : <CloseIcon />}
-            </IconButton>
-
             <Image
               src="/logo.svg"
               width={36}
@@ -450,31 +384,9 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
           </Box>
         </Toolbar>
       </AppBar>
-      <Drawer
-        container={container}
-        variant="temporary"
-        open={open}
-        onClose={handleDrawerToggle}
-        ModalProps={{
-          keepMounted: true,
-        }}
-        sx={{
-          display: { xs: "block", sm: "none" },
-          "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth },
-        }}
-      >
+      <Drawer variant="permanent">
         {drawer}
       </Drawer>
-      <MiniDrawer
-        ref={drawerRef}
-        variant="permanent"
-        open={open}
-        sx={{
-          display: { xs: "none", md: "flex" },
-        }}
-      >
-        {drawer}
-      </MiniDrawer>
     </>
   );
 };

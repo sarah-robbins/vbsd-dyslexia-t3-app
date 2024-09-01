@@ -51,15 +51,16 @@ import { Skeleton } from "primereact/skeleton";
 import MeetingForm from "@/components/Meetings/MeetingForm/MeetingForm";
 import MeetingList from "@/components/Meetings/MeetingList/MeetingList";
 import AddStudentForm from "../AddStudentForm";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+// import jsPDF from "jspdf";
+// import autoTable from "jspdf-autotable";
 import {
   type WorkBook,
   type WorkSheet,
   utils as XLSXUtils,
   write as XLSXWrite,
 } from "xlsx";
-import { PictureAsPdf, TableRows, TextSnippet } from "@mui/icons-material";
+// import { PictureAsPdf, TableRows, TextSnippet } from "@mui/icons-material";
+import { TableRows, TextSnippet } from "@mui/icons-material";
 
 interface TutorOption {
   label: string;
@@ -131,24 +132,36 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   const [meetings, setMeetings] = useState<MeetingWithAttendees[]>([]);
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [selectedMeetings, setSelectedMeetings] = useState<
-    MeetingWithAttendees[]
+  MeetingWithAttendees[]
   >([]);
   const [selectedMeetingAttendees] = useState<MeetingAttendees[]>([]);
   const [datedMeetingsWithAttendees, setDatedMeetingsWithAttendees] = useState<
     MeetingWithAttendees[]
   >([]);
-  const [attendeesName] = useState<string[]>([]);
+  // const [attendeesName] = useState<string[]>([]);
   const [isOnStudentsPage] = useState<boolean>(true);
   const [myStudents, setMyStudents] = useState<Student[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [formattedTutors, setFormattedTutors] = useState<TutorOption[]>([]);
+  const [isFormValid, setIsFormValid] = useState<{ [key: number]: boolean }>({});
+  const [editingRows] = useState({});
+  const [selectedTutorIds, setSelectedTutorIds] = useState<{
+    [key: number]: number;
+  }>({});
+  const [additionalFormValues, setAdditionalFormValues] =
+    useState<FormValues>();
+  const [interventionDate, setInterventionDate] = useState<Dayjs>();
 
   const { data: getStudentsForTutor } =
     api.students.getStudentsForTutor.useQuery(sessionData?.userId || 0) as {
       data: Student[];
     };
-
   const { data: getStudentsForRole } =
     api.students.getStudentsForRole.useQuery() as {
       data: Student[];
+    };
+    const { data: myUsers } = api.users.getUsersForRole.useQuery() as {
+      data: User[];
     };
 
   useEffect(() => {
@@ -164,16 +177,11 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     sessionData?.userId,
   ]);
 
-  const [users, setUsers] = useState<User[]>([]);
-  const { data: myUsers } = api.users.getUsersForRole.useQuery() as {
-    data: User[];
-  };
   useEffect(() => {
     if (myUsers) {
       setUsers(myUsers);
     }
   }, [myUsers]);
-  const [formattedTutors, setFormattedTutors] = useState<TutorOption[]>([]);
 
   const dateToQuery =
     selectedDate && dayjs.isDayjs(selectedDate) ? selectedDate : dayjs();
@@ -182,6 +190,23 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     api.meetings.getMeetingsByRoleAndDate.useQuery(dateToQuery.toDate()) as {
       data: MeetingWithAttendees[];
     };
+
+  const checkFormValidity = (student: Student) => {
+    const isStudentValid = !!(
+      student.student_assigned_id &&
+      student.first_name &&
+      student.last_name &&
+      student.school &&
+      student.grade
+    );
+    setIsFormValid(prev => ({ ...prev, [student.id as number]: isStudentValid }));
+    return isStudentValid;
+  };
+
+  // const onRowEditInit = (event: DataTableRowEditEvent) => {
+  //   const { data } = event;
+  //   checkFormValidity(data as Student);
+  // };
 
   const convertMeetings = (meetings: Meeting[]): MeetingWithAttendees[] => {
     return meetings.map((meeting) => {
@@ -217,7 +242,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         end,
         edited_on,
         recorded_on,
-        attendees: [], // Add the attendees property
+        attendees: [],
       };
     });
   };
@@ -253,7 +278,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         .map((s) => s.trim())
         .join(", ");
     }
-    return rowData.services;
+    return String(rowData.services || '');
   };
 
   useEffect(() => {
@@ -262,17 +287,17 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         ...student,
         services: processServices(student.services).toString(),
         tutorId: student.tutor_id,
-        studentFullName: `${student.last_name as string}, ${
-          student.first_name as string
-        }`,
-        tutorFullName: `${student.Users?.first_name as string} ${
-          student.Users?.last_name as string
-        }`,
+        tutor_id: student.tutor_id,
+        studentFullName: `${student.last_name as string}, ${student.first_name as string}`,
+        tutorFullName: student.tutor_id
+          ? `${student.Users?.first_name as string} ${student.Users?.last_name as string}`
+          : "Unassigned",
         calculateTotalMeetings:
           student.MeetingAttendees?.filter(
             (attendee) => attendee.meeting_status === "Met"
           ).length ?? 0,
       }));
+
       const initialTutorIds: { [key: number]: number } = {};
 
       myStudents.forEach((student) => {
@@ -281,12 +306,27 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         }
       });
 
-      setStudents(processedStudents);
+      const getAllStudentsRecords = () => {
+        return students.length;
+      };
+
+      // Custom sorting function
+      const sortedStudents = processedStudents.sort((a, b) => {
+        if (a.new_student && !b.new_student) return -1;
+        if (!a.new_student && b.new_student) return 1;
+        if ((a.school ?? '') < (b.school ?? '')) return -1;
+        if ((a.school ?? '') > (b.school ?? '')) return 1;
+        if ((a.last_name ?? '') < (b.last_name ?? '')) return -1;
+        if ((a.last_name ?? '') > (b.last_name ?? '')) return 1;
+        return 0;
+      });
+
+      setStudents(sortedStudents);
       setSelectedTutorIds(initialTutorIds);
-      console.log("processed students", processedStudents);
+      console.log("processed students/state updated sorted", sortedStudents);
     }
   }, [myStudents]);
-
+    
   useEffect(() => {
     if (myUsers) {
       const formattedData = myUsers.map((user) => ({
@@ -296,8 +336,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       setFormattedTutors(formattedData);
     }
   }, [myUsers]);
-
-  const [editingRows] = useState({});
 
   const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toLowerCase();
@@ -322,49 +360,55 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     );
 
     setFilteredStudents(filtered);
-    console.log("global filter value", value);
-    console.log("filters", _filters);
-    console.log("filtered students", filtered);
   };
 
   const studentIdEditor = (options: ColumnEditorOptions) => {
     const value = options.value as string;
+    const isError = !value; // Check if the field is empty
     return (
       <InputText
         type="text"
         value={value}
         placeholder="Student ID"
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          options.editorCallback?.(e.target.value)
-        }
+        className={isError ? "input-error" : ""}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          options.editorCallback?.(e.target.value);
+          checkFormValidity({ ...options.rowData, student_assigned_id: e.target.value } as Student);
+        }}
       />
     );
   };
 
   const firstNameEditor = (options: ColumnEditorOptions) => {
     const value = options.value as string;
+    const isError = !value; // Check if the field is empty
     return (
       <InputText
         type="text"
         value={value}
         placeholder="First Name"
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          options.editorCallback?.(e.target.value)
-        }
+        className={isError ? "input-error" : ""}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          options.editorCallback?.(e.target.value);
+          checkFormValidity({ ...options.rowData, first_name: e.target.value } as Student);
+        }}
       />
     );
   };
 
   const lastNameEditor = (options: ColumnEditorOptions) => {
     const value = options.value as string;
+    const isError = !value; // Check if the field is empty
     return (
       <InputText
         type="text"
         value={value}
         placeholder="Last Name"
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          options.editorCallback?.(e.target.value)
-        }
+        className={isError ? "input-error" : ""}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          options.editorCallback?.(e.target.value);
+          checkFormValidity({ ...options.rowData, last_name: e.target.value } as Student);
+        }}
       />
     );
   };
@@ -385,11 +429,16 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
 
   const schoolEditor = (options: ColumnEditorOptions) => {
     const value = options.value as string;
+    const isError = !value; // Check if the field is empty
     return (
       <Dropdown
         value={value}
         options={appSettings.school_options}
-        onChange={(e: DropdownChangeEvent) => options.editorCallback?.(e.value)}
+        className={isError ? "input-error" : ""}
+        onChange={(e: DropdownChangeEvent) => {
+          options.editorCallback?.(e.value);
+          checkFormValidity({ ...options.rowData, school: e.value as string } as Student);
+        }}
         placeholder="School"
         itemTemplate={(option) => {
           return <span>{option}</span>;
@@ -402,11 +451,16 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
 
   const gradeEditor = (options: ColumnEditorOptions) => {
     const value = options.value as string;
+    const isError = !value; // Check if the field is empty
     return (
       <Dropdown
         value={value}
         options={appSettings.grade_options}
-        onChange={(e: DropdownChangeEvent) => options.editorCallback?.(e.value)}
+        className={isError ? "input-error" : ""}
+        onChange={(e: DropdownChangeEvent) => {
+          options.editorCallback?.(e.value);
+          checkFormValidity({ ...options.rowData, grade: e.value as string } as Student);
+        }}
         placeholder="Grade"
         filter
         resetFilterOnHide
@@ -474,54 +528,62 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     return Array.from(new Set(servicesArray)).join(", ");
   };
 
-  const [selectedTutorIds, setSelectedTutorIds] = useState<{
-    [key: number]: number;
-  }>({});
-
   const tutorEditor = (options: ColumnEditorOptions) => {
     const rowData = options.rowData as Student;
     const studentId = rowData.id as number;
-    const currentTutorId = selectedTutorIds[studentId];
-
+    const currentTutorId = selectedTutorIds[studentId] ?? 0; // Default to 0 for "Unassigned"
+  
     const handleTutorChange = (studentId: number, e: DropdownChangeEvent) => {
       const newTutorId = e.value as number;
+      const newTutor = newTutorId === 0 ? null : users.find(user => user.id === newTutorId);
+      const newTutorLabel = newTutor ? `${newTutor.first_name || ''} ${newTutor.last_name || ''}` : "Unassigned";
+    
       setSelectedTutorIds((prevSelectedTutorIds) => ({
         ...prevSelectedTutorIds,
         [studentId]: newTutorId,
       }));
-      const newTutorLabel = formattedTutors.find(
-        (tutor) => tutor.value === newTutorId
-      )?.label;
-
-      setStudents((prevStudents) =>
-        prevStudents.map((student) =>
-          student.id === rowData.id
+    
+      setStudents((prevStudents) => {
+        const updatedStudents = prevStudents.map((student) =>
+          student.id === studentId
             ? {
                 ...student,
                 tutorId: newTutorId,
-                tutor_id: newTutorId,
-                tutorInfo: {
-                  value: newTutorId,
-                  label: newTutorLabel as string,
-                },
-              }
+                tutor_id: newTutorId === 0 ? null : newTutorId,
+                tutorFullName: newTutorLabel,
+                Users: newTutor ? {
+                  id: newTutor.id,
+                  first_name: newTutor.first_name,
+                  last_name: newTutor.last_name,
+                } : null,
+              } as Student
             : student
-        )
-      );
+        );
+        return updatedStudents;
+      });
+    
       options.editorCallback?.({
-        value: e.value as number,
-        label: newTutorLabel,
+        ...options.rowData,
+        tutor_id: newTutorId === 0 ? null : newTutorId,
+        tutorId: newTutorId,
+        tutorFullName: newTutorLabel,
+        Users: newTutor,
       });
     };
-
+    
+    const dropdownOptions = [
+      { label: "Unassigned", value: 0 },
+      ...formattedTutors.map((tutor) => ({
+        label: tutor.label,
+        value: tutor.value,
+      })),
+    ];
+  
     if (formattedTutors.length > 0) {
       return (
         <Dropdown
           value={currentTutorId}
-          options={formattedTutors.map((tutor) => ({
-            label: tutor.label,
-            value: tutor.value,
-          }))}
+          options={dropdownOptions}
           onChange={(e) => handleTutorChange(studentId, e)}
           placeholder="Tutor Name"
           optionLabel="label"
@@ -530,33 +592,44 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         />
       );
     } else {
-      return <div>Loading tutors...</div>;
+      return <span>Tutors loading...</span>;
     }
   };
-
+    
   const updateStudentRowMutation = api.students.updateStudentRow.useMutation();
 
   const onRowEditComplete = (e: DataTableRowEditCompleteEvent) => {
-    let { newData } = e as { newData: Student };
+    const { newData } = e as { newData: Student };
 
-    if (Array.isArray(newData.services)) {
-      newData = {
-        ...newData,
-        services: newData.services.join(", "),
-      };
+    if (!checkFormValidity(newData)) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: "Please fill in all required fields",
+      });
+      return;
     }
 
-    const updatedTutor = formattedTutors.find(
-      (tutor) => tutor.value === newData.tutorId
-    );
-    newData.tutorFullName = updatedTutor ? updatedTutor.label : "";
+    // Ensure tutor_id is handled correctly
+    const tutorId = selectedTutorIds[newData.id as number] ?? 0; // Default to 0 for "Unassigned"
+
+    // Check if the tutorId is valid or "Unassigned"
+    if (tutorId !== 0 && !users.some(user => user.id === tutorId)) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: "Invalid tutor selected",
+      });
+      return;
+    }
 
     const dataForSave = {
       ...newData,
       school: newData.school ?? "",
       grade: newData.grade ?? "",
       home_room_teacher: newData.home_room_teacher ?? "",
-      tutor_id: selectedTutorIds[newData.id as number] ?? null,
+      tutor_id: tutorId === 0 ? null : tutorId,
+      Users: newData.Users,
       intervention_program: newData.intervention_program ?? "",
       first_name: newData.first_name ?? "",
       last_name: newData.last_name ?? "",
@@ -574,37 +647,45 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       created_at: new Date(),
     };
 
-    updateStudentRowMutation.mutate(dataForSave, {
-      onSuccess: (response) => {
-        if (response) {
-          toast.current?.show({
-            severity: "success",
-            summary: "Success",
-            detail: "Student updated",
-          });
-          setStudents((prevStudents) => {
-            const index = prevStudents.findIndex(
-              (student) => student.id === dataForSave.id
-            );
+    // Ensure the id is included in the update operation
+    const { id, ...updateData } = dataForSave;
 
-            if (index !== -1) {
-              const newStudents = [...prevStudents];
-              newStudents[index] = dataForSave;
-              return newStudents;
-            } else {
-              return [dataForSave, ...prevStudents];
-            }
+    if (!id) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: "Student ID is missing",
+      });
+      return;
+    }
+
+    updateStudentRowMutation.mutate(
+      { id, ...updateData },
+      {
+        onSuccess: (response) => {
+          if (response) {
+            toast.current?.show({
+              severity: "success",
+              summary: "Success",
+              detail: "Student updated",
+            });
+            setStudents(prevStudents => 
+              prevStudents.map(student => 
+                student.id === response.id ? { ...student, ...response } : student
+              )
+            );
+          }
+        },
+        onError: (error) => {
+          console.error('Error updating student:', error);
+          toast.current?.show({
+            severity: "error",
+            summary: "Error",
+            detail: error.message,
           });
-        }
-      },
-      onError: (error) => {
-        toast.current?.show({
-          severity: "error",
-          summary: "Error",
-          detail: error.message,
-        });
-      },
-    });
+        },
+      }
+    );
   };
 
   const updateStudentExtraDataMutation =
@@ -673,10 +754,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     }
   };
 
-  const [additionalFormValues, setAdditionalFormValues] =
-    useState<FormValues>();
-
-  const [interventionDate, setInterventionDate] = useState<Dayjs>();
   const handleInterventionDateChange = (date: Dayjs | null) => {
     if (date) {
       setInterventionDate(date);
@@ -687,9 +764,9 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   const currentYear =
     currentDate.month() <= 7 ? currentDate.year() - 1 : currentDate.year();
   const augustFirstLastYear = dayjs(new Date(currentYear, 7, 1));
-
   const [beginningSearchDate, setBeginningSearchDate] =
     useState<Dayjs>(augustFirstLastYear);
+
   const handleBeginningSearchDateChange = (date: Dayjs | null) => {
     if (date) {
       setBeginningSearchDate(date);
@@ -701,6 +778,20 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     if (date) {
       setEndingSearchDate(date);
     }
+  };
+
+  const tutorBodyTemplate = (rowData: Student) => {
+    if (rowData.Users && typeof rowData.Users === 'object') {
+      return <span>{`${rowData.Users.first_name || ''} ${rowData.Users.last_name || ''}`}</span>;
+    }
+    if (typeof rowData.tutorFullName === 'string' && rowData.tutorFullName !== "Unassigned") {
+      return <span>{rowData.tutorFullName}</span>;
+    }
+    if ((rowData.tutor_id === null && rowData.tutorId === undefined) || rowData.tutorFullName === "Unassigned") {
+      return <span>Unassigned</span>;
+    }
+  
+    return <span>Tutor Name Not Available</span>;
   };
 
   const rowExpansionTemplate = (data: Student) => {
@@ -749,7 +840,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         withdrew: data.withdrew,
         graduated: data.graduated,
         additional_comments: additionalFormValues?.additional_comments,
-        tutorFullName: data.tutorFullName,
+        tutorFullName: data.tutorFullName || 'Unassigned',
         tutorInfo: data.tutorInfo,
       };
       updateStudentExtraData(updateData);
@@ -796,8 +887,10 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
             <h3>Additional Info</h3>
             <div className="flex gap-4">
               <TextField
+                required
+                error={!data?.level_lesson}
                 id="outlined-multiline-flexible"
-                value={data?.level_lesson}
+                value={data?.level_lesson?.toString() || ''}
                 onChange={(e) =>
                   setAdditionalFormValues({
                     ...additionalFormValues,
@@ -1034,28 +1127,30 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
             meetings={meetings}
             setMeetings={setMeetings}
             students={students}
-            getDatedMeetings={studentMeetings}
+            myDatedMeetings={studentMeetings}
+            setMyDatedMeetings={() => studentMeetings}
             selectedMeetings={selectedMeetings}
             setSelectedMeetings={setSelectedMeetings}
-            isMeetingSelected={!!selectedMeetings}
+            // isMeetingSelected={!!selectedMeetings}
             selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
+            // setSelectedDate={setSelectedDate}
             datedMeetingsWithAttendees={datedMeetingsWithAttendees}
             setDatedMeetingsWithAttendees={setDatedMeetingsWithAttendees}
             selectedMeetingAttendees={selectedMeetingAttendees}
             isOnStudentsPage={isOnStudentsPage}
-            isOnMeetingsPage={false}
-          />
+            isOnMeetingsPage={false} setAllMeetings={function (meetings: MeetingWithAttendees[] | ((prevMeetings: MeetingWithAttendees[]) => MeetingWithAttendees[])): void {
+              throw new Error("Function not implemented.");
+            } }          />
           <MeetingList
             meetings={meetings}
             students={students}
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
-            getDatedMeetings={studentMeetings}
+            // setMyDatedMeetings={() => studentMeetings}
             selectedMeetings={selectedMeetings}
             setSelectedMeetings={setSelectedMeetings}
             datedMeetingsWithAttendees={datedMeetingsWithAttendees}
-            attendeesName={attendeesName}
+            // attendeesName={attendeesName}
             isOnStudentsPage={isOnStudentsPage}
             isOnMeetingsPage={false}
           />
@@ -1270,8 +1365,8 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
               placeholder="Search"
             />
           </span>
-        </div>
-        <div className="flex align-items-center justify-content-end gap-2">
+        {/* </div>
+        <div className="flex align-items-center justify-content-end gap-2"> */}
           <IconButton onClick={() => exportCSV(false)} aria-label="CSV">
             <TextSnippet />
           </IconButton>
@@ -1321,31 +1416,39 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     <>
       {options.rowEditor?.editing ? (
         <div className="flex gap-1 justify-content-center">
-          <CheckIcon
+          <IconButton
             onClick={(e) =>
+              isFormValid[rowData.id as number] &&
               options.rowEditor?.onSaveClick &&
               options.rowEditor?.onSaveClick(e)
             }
-            color="primary"
-          />
-          <CloseIcon
+            color={isFormValid[rowData.id as number] ? "primary" : "default"}
+            disabled={!isFormValid[rowData.id as number]}
+          >
+            <CheckIcon />
+          </IconButton>
+          <IconButton
             onClick={(e) =>
               options.rowEditor?.onCancelClick &&
               options.rowEditor?.onCancelClick(e)
             }
             color="error"
-          />
+          >
+            <CloseIcon />
+          </IconButton>
         </div>
       ) : (
         <div className="flex gap-1 justify-content-center">
-          <CreateIcon
-            onClick={(e) =>
+          <IconButton
+            onClick={(e) => {
+              checkFormValidity(rowData);
               options.rowEditor?.onInitClick &&
-              options.rowEditor?.onInitClick(e)
-            }
-            color="warning"
-          />
-          <DeleteIcon
+              options.rowEditor?.onInitClick(e);
+            }}
+          >
+            <CreateIcon />
+          </IconButton>
+          <IconButton
             color="error"
             onClick={() => {
               if (rowData.id && rowData.id < 0) {
@@ -1357,12 +1460,14 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
                 handleDeleteStudent(studentId);
               }
             }}
-          />
+          >
+            <DeleteIcon />
+          </IconButton>
         </div>
       )}
     </>
   );
-
+  
   return (
     <>
       <AddStudentForm
@@ -1470,7 +1575,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
           <Column
             field="tutorFullName"
             header="Tutor"
-            style={{ whiteSpace: "nowrap" }}
+            body={tutorBodyTemplate}
             editor={(options) => tutorEditor(options)}
             sortable
           />
@@ -1501,5 +1606,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     </>
   );
 };
+
 
 export default Students;

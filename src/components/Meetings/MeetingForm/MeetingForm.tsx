@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, ChangeEvent } from "react";
+import React, { useEffect, useState, useRef, type ChangeEvent } from "react";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import FormControl from "@mui/material/FormControl";
@@ -22,7 +22,7 @@ import type {
   MeetingAttendees,
   FormValues,
   MeetingWithAttendees,
-  Meeting,
+  // Meeting,
 } from "@/types";
 import { OutlinedInput } from "@mui/material";
 import { useSession } from "next-auth/react";
@@ -68,45 +68,30 @@ interface UpdatedMeetingValues {
   }[];
 }
 
-// interface DeletedMeetingValues {
-//   MeetingAttendes: {
-//     id: number;
-//   };
-//   edited_by: string;
-//   edited_on: Date;
-//   end: Date;
-//   id: number;
-//   level_lesson: string;
-//   meeting_notes: string;
-//   program: string;
-//   recorded_by: string;
-//   recorded_on: Date;
-//   start: Date;
-//   tutor_id: number;
-// }
-
 interface Props {
   meetings: MeetingWithAttendees[];
-  setMeetings: (meetings: MeetingWithAttendees[]) => void;
+  setAllMeetings: (meetings: MeetingWithAttendees[] | ((prevMeetings: MeetingWithAttendees[]) => MeetingWithAttendees[])) => void;
+  setMeetings: (meetings: MeetingWithAttendees[] | ((prevMeetings: MeetingWithAttendees[]) => MeetingWithAttendees[])) => void;
   students: Student[];
-  getDatedMeetings: MeetingWithAttendees[];
+  myDatedMeetings: MeetingWithAttendees[];
+  setMyDatedMeetings: (myDatedMeetings: MeetingWithAttendees[] | ((prevMeetings: MeetingWithAttendees[]) => MeetingWithAttendees[])) => void;
   selectedMeetings: MeetingWithAttendees[];
   setSelectedMeetings: (meetings: MeetingWithAttendees[]) => void;
-  isMeetingSelected: boolean;
+  selectedMeetingAttendees: MeetingAttendees[];
   selectedDate: Dayjs;
-  setSelectedDate: (date: Dayjs) => void;
   datedMeetingsWithAttendees: MeetingWithAttendees[];
   setDatedMeetingsWithAttendees: (meetings: MeetingWithAttendees[]) => void;
-  selectedMeetingAttendees: MeetingAttendees[];
   isOnMeetingsPage: boolean;
   isOnStudentsPage: boolean;
 }
 
 const MeetingForm: React.FC<Props> = ({
   meetings,
+  setAllMeetings,
   setMeetings,
   students = [],
-  getDatedMeetings = [],
+  myDatedMeetings = [],
+  setMyDatedMeetings,
   selectedMeetings = [],
   setSelectedMeetings,
   selectedDate,
@@ -119,11 +104,11 @@ const MeetingForm: React.FC<Props> = ({
 
   const toast = useRef<Toast>(null);
   const toastDelete = useRef<Toast>(null);
+
   const [attendees, setAttendees] = useState<MeetingAttendees[]>([]);
   const [formDate, setFormDate] = useState(selectedDate);
   const [isFormEditable, setIsFormEditable] = useState(false);
   const [formValues, setFormValues] = useState<FormValues>({
-    // name: '',
     name: [],
     student_id: 0,
     start: dayjs(),
@@ -138,28 +123,38 @@ const MeetingForm: React.FC<Props> = ({
     edited_on: dayjs(),
     attendees: [],
   });
+  const [isFormValid, setIsFormValid] = useState(false);
+  const [name, setName] = useState<string[]>([]);
+  const [studentNames, setStudentNames] = useState<string[]>([]);
+  const [selectedNames, setSelectedNames] = useState<string[]>([]);
+  const [namesForSelect, setNamesForSelect] = useState<string[]>([]);
+  const [removedAttendees, setRemovedAttendees] = useState<number[]>([]);
+  const [selectedAttendees, setSelectedAttendees] = useState<MeetingAttendees[]>([]);
+  const [startTime, setStartTime] = useState<Dayjs>(dayjs());
+  const [endTime, setEndTime] = useState<Dayjs>(dayjs());
+  const [individualStatuses, setIndividualStatuses] = useState<{ [key: string]: string }>({});
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [selectedProgram, setSelectedProgram] = useState<string>("");
 
-  // const [isFormValid, setIsFormValid] = useState(false);
-  // const checkFormValidity = (formValues: formValues) => {
-  //   // Use the double NOT operator to ensure the result is always a boolean
-  //   const isValid = !!(
-  //     formValues.name &&
-  //     formValues.start &&
-  //     formValues.end &&
-  //     formValues.meeting_status &&
-  //     formValues.program &&
-  //     formValues.level_lesson
-  //   );
+  const checkFormValidity = () => {
+    const isNameValid = selectedNames.length > 0;
+    const isDateValid = !!formDate;
+    const isTimeValid = !!startTime && !!endTime;
+    const isStatusValid = selectedNames.every(name => individualStatuses[name]);
+    const isProgramValid = formValues.program !== "" || !isFormEditable;
 
-  //   setIsFormValid(isValid);
-  // };
+    const isValid = isNameValid && isDateValid && isTimeValid && isStatusValid && isProgramValid;
+    setIsFormValid(isValid);
+  };
 
-  // setDatedMeetings
   useEffect(() => {
-    if (selectedDate && getDatedMeetings) {
+    checkFormValidity();
+  }, [selectedNames, formDate, startTime, endTime, individualStatuses, formValues.program, isFormEditable]);
+
+  useEffect(() => {
+    if (selectedDate && myDatedMeetings) {
       const datedMeetingsWithAttendees: MeetingWithAttendees[] =
-        getDatedMeetings.map((meeting): MeetingWithAttendees => {
-          // const students = getStudentsBySchool;
+        myDatedMeetings.map((meeting): MeetingWithAttendees => {
           const attendees = (meeting.MeetingAttendees ?? [])
             .map((attendee) => {
               const student = students?.find(
@@ -195,48 +190,8 @@ const MeetingForm: React.FC<Props> = ({
         });
       setDatedMeetingsWithAttendees(datedMeetingsWithAttendees);
     }
-    // if (selectedDate && getDatedMeetings && isOnStudentsPage) {
-    //   const datedMeetingsWithAttendees: MeetingWithAttendees[] =
-    //     getDatedMeetings
-    //       .map((meeting): MeetingWithAttendees => {
-    //         const attendees = (meeting.MeetingAttendees ?? [])
-    //           .map((attendee) => {
-    //             const student = students?.find(
-    //               (s) => s.id === attendee.student_id
-    //             );
-    //             if (!student) return;
-    //             return {
-    //               ...attendee,
-    //               id: attendee.student_id,
-    //               name: `${student.first_name ?? ""} ${
-    //                 student.last_name ?? ""
-    //               }`,
-    //             };
-    //           })
-    //           .filter(
-    //             (
-    //               a
-    //             ): a is {
-    //               id: number;
-    //               meeting_id: number;
-    //               student_id: number;
-    //               meeting_status: string;
-    //               created_at: Dayjs;
-    //               name: string;
-    //             } => Boolean(a)
-    //           );
-
-    //         return { ...meeting, attendees };
-    //       })
-    //       // Here we filter the meetings to only include those with attendees that match the idOfStudent
-    //       .filter((meeting) =>
-    //         meeting.attendees?.some((attendee) => idOfStudent === attendee.id)
-    //       );
-
-    //   setDatedMeetingsWithAttendees(datedMeetingsWithAttendees);
-    // }
   }, [
-    getDatedMeetings,
+    myDatedMeetings,
     meetings,
     students,
     selectedDate,
@@ -247,7 +202,7 @@ const MeetingForm: React.FC<Props> = ({
     const { name, value } = event.target;
     setFormValues((prevFormValues) => {
       const updatedFormValues = { ...prevFormValues, [name]: value };
-      // checkFormValidity(updatedFormValues);
+      checkFormValidity();
       return updatedFormValues;
     });
   };
@@ -255,15 +210,6 @@ const MeetingForm: React.FC<Props> = ({
   /* -------------------------------------------------------------------------- */
   /*                             HANDLE NAME CHANGE                             */
   /* -------------------------------------------------------------------------- */
-
-  const [name, setName] = React.useState<string[]>([]);
-  const [studentNames, setStudentNames] = React.useState<string[]>([]);
-  const [selectedNames, setSelectedNames] = React.useState<string[]>([]);
-  const [namesForSelect, setNamesForSelect] = React.useState<string[]>([]);
-  const [removedAttendees, setRemovedAttendees] = useState<number[]>([]);
-  const [selectedAttendees, setSelectedAttendees] = useState<
-    MeetingAttendees[]
-  >([]);
 
   const meeting_id = selectedMeetings[0]?.id ?? 0;
   const { data: mySelectedAttendees } =
@@ -326,11 +272,8 @@ const MeetingForm: React.FC<Props> = ({
 
     setSelectedNames(newSelectedNames);
     setRemovedAttendees(updatedRemovedAttendees);
+    checkFormValidity();
   };
-
-  // useEffect(() => {
-  //   console.log("removedAttendees updated: ", removedAttendees);
-  // }, [removedAttendees]);
 
   /* -------------------------------------------------------------------------- */
   /*                            HANDLE DATE AND TIME                            */
@@ -362,10 +305,9 @@ const MeetingForm: React.FC<Props> = ({
         start: startDateTime, // Now a Date object
         end: endDateTime, // Now a Date object
       });
+      checkFormValidity();
     }
   };
-  const [startTime, setStartTime] = useState<Dayjs>(dayjs());
-  const [endTime, setEndTime] = useState<Dayjs>(dayjs());
 
   const handleStartTime = (time: Dayjs | null) => {
     if (time) {
@@ -378,6 +320,7 @@ const MeetingForm: React.FC<Props> = ({
         .set("date", dateFromForm?.date());
 
       setFormValues({ ...formValues, start: updatedStart });
+      checkFormValidity();
     }
   };
   const handleEndTime = (time: Dayjs | null) => {
@@ -391,6 +334,7 @@ const MeetingForm: React.FC<Props> = ({
         .set("date", dateFromForm?.date());
 
       setFormValues({ ...formValues, end: updatedEnd });
+      checkFormValidity();
     }
   };
 
@@ -411,9 +355,6 @@ const MeetingForm: React.FC<Props> = ({
   /* -------------------------------------------------------------------------- */
   /*                               Status Options                               */
   /* -------------------------------------------------------------------------- */
-  const [individualStatuses, setIndividualStatuses] = useState<{
-    [key: string]: string;
-  }>({});
 
   const statusOptions: string[] = [
     "Met",
@@ -424,8 +365,6 @@ const MeetingForm: React.FC<Props> = ({
   ];
 
   const options = [...statusOptions];
-
-  const [selectedStatus, setSelectedStatus] = useState<string>("");
 
   useEffect(() => {
     const allAttendees = selectedMeetings.flatMap(
@@ -531,7 +470,11 @@ const MeetingForm: React.FC<Props> = ({
     studentName: string,
     status: string
   ) => {
-    setIndividualStatuses((prev) => ({ ...prev, [studentName]: status }));
+    setIndividualStatuses(prev => {
+      const newStatuses = { ...prev, [studentName]: status };
+      checkFormValidity();
+      return newStatuses;
+    });
   };
 
   /* -------------------------------------------------------------------------- */
@@ -542,11 +485,11 @@ const MeetingForm: React.FC<Props> = ({
 
   const programs = [...programOptions];
 
-  const [selectedProgram, setSelectedProgram] = useState<string>("");
   const handleProgramChange = (event: SelectChangeEvent) => {
     const selectedProgram = event.target.value; // selected id
     setFormValues({ ...formValues, program: selectedProgram });
     setSelectedProgram(selectedProgram);
+    checkFormValidity();
   };
 
   /* -------------------------------------------------------------------------- */
@@ -713,8 +656,12 @@ const MeetingForm: React.FC<Props> = ({
   }, [formValues.attendees]);
 
   const handleAdd = (formValues: FormValues) => {
+    if(!isFormValid) {
+      toast.current?.show({ severity: "error", summary: "Error", detail: "Please fill out all required fields." });
+      return;
+    }
     const validAttendees = attendees
-      .filter((attendee) => attendee.student_id !== undefined) // Filter out undefined student IDs
+      .filter((attendee) => attendee.student_id !== undefined)
       .map((attendee) => ({
         student_id: attendee.student_id as number,
         meeting_status: attendee.meeting_status || "",
@@ -725,7 +672,7 @@ const MeetingForm: React.FC<Props> = ({
           students.find((s) => s.id === attendee.student_id)?.last_name || ""
         }`,
       }));
-
+  
     const newMeeting: NewMeetingValues = {
       start: dayjs(start).toDate(),
       end: dayjs(end).toDate(),
@@ -740,8 +687,19 @@ const MeetingForm: React.FC<Props> = ({
 
     createMeetingMutation.mutate(newMeeting, {
       onSuccess: (response) => {
-        if (response) {
-          meetings.push(newMeeting);
+        if (response && response.success) {
+          // const newMeeting = response.meeting;
+          const newMeetingWithAttendees: MeetingWithAttendees = {
+            ...response.meeting,
+            MeetingAttendees: validAttendees // Use the attendees you already have
+          };
+
+          setMyDatedMeetings((prevMeetings: MeetingWithAttendees[]) => {
+            const updatedMeetings = [...prevMeetings, newMeetingWithAttendees];
+            return updatedMeetings;
+          });
+          setAllMeetings((prevMeetings: MeetingWithAttendees[]) => [...prevMeetings, newMeetingWithAttendees]);
+
           toast.current?.show({
             severity: "success",
             summary: "Meeting successfully added.",
@@ -763,12 +721,14 @@ const MeetingForm: React.FC<Props> = ({
             edited_on: dayjs.utc(),
             attendees: [],
           });
-          location.reload();
+
           setName([]);
           setSelectedNames([]);
           setSelectedStatus("");
           setStartTime(dayjs());
           setEndTime(dayjs());
+        } else {
+          console.error('Invalid response structure:', response);
         }
       },
       onError: (error) => {
@@ -788,6 +748,15 @@ const MeetingForm: React.FC<Props> = ({
 
   const editMeeting = (formValues: FormValues) => {
     if (!selectedMeetings.length) {
+      return;
+    }
+
+    if (!isFormValid) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Form is not valid",
+        detail: "Please fill in all required fields.",
+      });
       return;
     }
 
@@ -835,15 +804,47 @@ const MeetingForm: React.FC<Props> = ({
 
     updateMeetingMutation.mutate(meetingData, {
       onSuccess: (response) => {
-        if (response) {
-          meetings.push(meetingData);
+        if (response && response.success) {
+          setMyDatedMeetings((prevMeetings: MeetingWithAttendees[]) => {
+            return prevMeetings.map((meeting) => 
+              meeting.id === meetingData.id 
+                ? {
+                    ...meeting,
+                    ...meetingData,
+                    MeetingAttendees: meetingData.attendees.map(att => ({
+                      student_id: att.student_id,
+                      meeting_status: att.meeting_status || "",
+                      name: `${students.find(s => s.id === att.student_id)?.first_name ?? ""} ${
+                              students.find(s => s.id === att.student_id)?.last_name ?? ""
+                            }`,
+                    }))
+                  }
+                : meeting
+            );
+          });
+          setAllMeetings((prevMeetings: MeetingWithAttendees[]) => {
+            return prevMeetings.map((meeting) => 
+              meeting.id === meetingData.id 
+                ? {
+                    ...meeting,
+                    ...meetingData,
+                    MeetingAttendees: meetingData.attendees.map(att => ({
+                      student_id: att.student_id,
+                      meeting_status: att.meeting_status || "",
+                      name: `${students.find(s => s.id === att.student_id)?.first_name ?? ""} ${
+                              students.find(s => s.id === att.student_id)?.last_name ?? ""
+                            }`,
+                    }))
+                  }
+                : meeting
+            );
+          });
+          setSelectedMeetings([]);
           toast.current?.show({
             severity: "success",
             summary: "Meeting successfully updated.",
             life: 3000,
           });
-          location.reload();
-          setSelectedMeetings([]);
         }
       },
       onError: (error) => {
@@ -855,7 +856,7 @@ const MeetingForm: React.FC<Props> = ({
         });
       },
     });
-  };
+          };
 
   /* ------------------------------ DELETEMEETING ----------------------------- */
 
@@ -895,6 +896,11 @@ const MeetingForm: React.FC<Props> = ({
                           (meeting) => meeting.id !== id
                         );
                         setMeetings(updatedMeetings);
+                        const myUpdatedMeetings = myDatedMeetings.filter(
+                          (meeting) => meeting.id !== id
+                        );
+                        setMyDatedMeetings(myUpdatedMeetings);
+                        setAllMeetings((prevMeetings: MeetingWithAttendees[]) => prevMeetings.filter(meeting => meeting.id !== id));
 
                         toast.current?.show({
                           severity: "success",
@@ -922,7 +928,7 @@ const MeetingForm: React.FC<Props> = ({
                         setStartTime(dayjs());
                         setEndTime(dayjs());
 
-                        location.reload();
+                        // location.reload();
                       }
                     },
                     onError: () => {
@@ -1175,6 +1181,7 @@ const MeetingForm: React.FC<Props> = ({
                     console.error("Error in action:", error);
                   });
               }}
+              disabled={!isFormValid}
             >
               {existingMeeting ? "Save" : "Add"}
             </Button>

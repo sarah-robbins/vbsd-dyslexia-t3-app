@@ -1,6 +1,6 @@
 {
   "name": "vbsd-dyslexia-t3-app",
-  "version": "2.0.5 - Beta",
+  "version": "2.1.0 - Beta",
   "private": true,
   "scripts": {
     "build": "next build",

@@ -14,7 +14,7 @@ import { type Session } from "next-auth";
 import { api } from "@/utils/api";
 import { type Toast } from "primereact/toast";
 import CloseIcon from "@mui/icons-material/Close";
-import Autocomplete from "@mui/material/Autocomplete";
+// import Autocomplete from "@mui/material/Autocomplete";
 
 const style = {
   position: "absolute",
@@ -75,17 +75,29 @@ const AddUserForm: React.FC<Props> = ({
 }) => {
   const toast = useRef<Toast>(null);
   const handleClose = () => {
-    setOpen(false),
-      setFormValues({
-        first_name: "",
-        last_name: "",
-        school: "",
-        email: "",
-        phone: "",
-        role: "",
-        view: "",
-        created_at: new Date(),
-      });
+    setOpen(false);
+    resetForm();
+  };
+
+  const resetForm = () => {
+    setFormValues({
+      first_name: "",
+      last_name: "",
+      school: "",
+      email: "",
+      phone: "",
+      role: "",
+      view: "",
+      created_at: new Date(),
+    });
+    setTouchedFields({
+      first_name: false,
+      last_name: false,
+      school: false,
+      email: false,
+      role: false,
+      view: false,
+    });
     setUserSchools([]);
     setUserRoles([]);
     setUserView("");
@@ -93,11 +105,24 @@ const AddUserForm: React.FC<Props> = ({
 
   const [userSchools, setUserSchools] = React.useState<string[]>([]);
 
+  const [touchedFields, setTouchedFields] = React.useState({
+    first_name: false,
+    last_name: false,
+    school: false,
+    email: false,
+    role: false,
+    view: false,
+  });
+
   const handleTextChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setFormValues((prevFormValues) => ({
       ...prevFormValues,
       [name]: value,
+    }));
+    setTouchedFields((prevTouchedFields) => ({
+      ...prevTouchedFields,
+      [name]: true,
     }));
   };
 
@@ -109,6 +134,10 @@ const AddUserForm: React.FC<Props> = ({
     setFormValues((prevFormValues) => ({
       ...prevFormValues,
       school: typeof value === "string" ? value : value.join(","),
+    }));
+    setTouchedFields((prevTouchedFields) => ({
+      ...prevTouchedFields,
+      school: true,
     }));
   };
 
@@ -123,6 +152,10 @@ const AddUserForm: React.FC<Props> = ({
       ...prevFormValues,
       role: typeof value === "string" ? value : value.join(","),
     }));
+    setTouchedFields((prevTouchedFields) => ({
+      ...prevTouchedFields,
+      role: true,
+    }));
   };
 
   const [userView, setUserView] = React.useState("");
@@ -132,6 +165,10 @@ const AddUserForm: React.FC<Props> = ({
     setFormValues((prevFormValues) => ({
       ...prevFormValues,
       view: event.target.value,
+    }));
+    setTouchedFields((prevTouchedFields) => ({
+      ...prevTouchedFields,
+      view: true,
     }));
   };
 
@@ -147,6 +184,17 @@ const AddUserForm: React.FC<Props> = ({
   });
 
   const createUserMutation = api.users.createUser.useMutation();
+
+  const isFormValid = () => {
+    return (
+      formValues.first_name &&
+      formValues.last_name &&
+      formValues.school &&
+      formValues.email &&
+      formValues.role &&
+      formValues.view
+    );
+  };
 
   const saveNewUser = () => {
     createUserMutation.mutate(formValues, {
@@ -167,19 +215,7 @@ const AddUserForm: React.FC<Props> = ({
         }
         setOpen(false);
         setRunSuccessToast(true);
-        setFormValues({
-          first_name: "",
-          last_name: "",
-          school: "",
-          email: "",
-          phone: "",
-          role: "",
-          view: "",
-          created_at: new Date(),
-        });
-        setUserSchools([]);
-        setUserRoles([]);
-        setUserView("");
+        resetForm();
         // Return an empty array or the current array of users
         return [];
       },
@@ -198,6 +234,14 @@ const AddUserForm: React.FC<Props> = ({
     });
   };
 
+  const handleBlur = (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name } = event.target;
+    setTouchedFields((prevTouchedFields) => ({
+      ...prevTouchedFields,
+      [name]: true,
+    }));
+  };
+
   if (!session || !isCustomSession(session)) {
     return null;
   }
@@ -210,7 +254,7 @@ const AddUserForm: React.FC<Props> = ({
     >
       <Box
         sx={style}
-        className="form-container flex flex-column flex-wrap sm:flex-row justify-content-start align-items-stretch"
+        className="form-container flex flex-column max-w-1024 justify-content-start align-items-stretch"
       >
         <div className="modal-header flex justify-content-between align-items-center w-full mb-4">
           <h2>Add User</h2>
@@ -226,6 +270,8 @@ const AddUserForm: React.FC<Props> = ({
               label="First Name"
               variant="outlined"
               onChange={handleTextChange}
+              onBlur={handleBlur}
+              error={touchedFields.first_name && !formValues.first_name}
             />
           </FormControl>
           <FormControl className="form-fields form-fields-50">
@@ -236,19 +282,21 @@ const AddUserForm: React.FC<Props> = ({
               label="Last Name"
               variant="outlined"
               onChange={handleTextChange}
+              onBlur={handleBlur}
+              error={touchedFields.last_name && !formValues.last_name}
             />
           </FormControl>
           <FormControl required className="w-full">
             <InputLabel id="demo-simple-select-label">Schools</InputLabel>
             <Select
-              // labelId="demo-multiple-checkbox-label"
-              // id="demo-multiple-checkbox"
               multiple
               value={userSchools}
               label="School"
               onChange={handleSchoolChange}
+              onBlur={() => setTouchedFields((prev) => ({ ...prev, school: true }))}
               renderValue={(selected) => selected.join(", ")}
               MenuProps={MenuProps}
+              error={touchedFields.school && !formValues.school}
             >
               {session.appSettings.school_options.sort().map((school) => (
                 <MenuItem key={school} value={school}>
@@ -265,6 +313,8 @@ const AddUserForm: React.FC<Props> = ({
               label="Email"
               variant="outlined"
               onChange={handleTextChange}
+              onBlur={handleBlur}
+              error={touchedFields.email && !formValues.email}
             />
           </FormControl>
           <FormControl className="form-fields form-fields-50">
@@ -278,14 +328,13 @@ const AddUserForm: React.FC<Props> = ({
           <FormControl required className="form-fields form-fields-50">
             <InputLabel id="demo-simple-select-label">Roles</InputLabel>
             <Select
-              // labelId="demo-multiple-checkbox-label"
-              // id="demo-multiple-checkbox"
               multiple
               value={userRoles}
               label="Role"
               onChange={handleRolesChange}
-              // input={<OutlinedInput label="Tag" />}
+              onBlur={() => setTouchedFields((prev) => ({ ...prev, role: true }))}
               renderValue={(selected) => selected.join(", ")}
+              error={touchedFields.role && !formValues.role}
             >
               {session.appSettings.user_role_options.sort().map((role) => (
                 <MenuItem key={role} value={role}>
@@ -298,11 +347,11 @@ const AddUserForm: React.FC<Props> = ({
           <FormControl required className="form-fields form-fields-50">
             <InputLabel id="demo-simple-select-label">View</InputLabel>
             <Select
-              // labelId="demo-simple-select-label"
-              // id="demo-simple-select"
               value={userView}
               label="View"
               onChange={handleViewChange}
+              onBlur={() => setTouchedFields((prev) => ({ ...prev, view: true }))}
+              error={touchedFields.view && !formValues.view}
             >
               {session.appSettings.initial_view_options.sort().map((view) => (
                 <MenuItem key={view} value={view}>
@@ -313,7 +362,7 @@ const AddUserForm: React.FC<Props> = ({
           </FormControl>
         </div>
         <div className="mt-4 form-button-container flex gap-4">
-          <Button variant="contained" onClick={saveNewUser}>
+          <Button variant="contained" onClick={saveNewUser} disabled={!isFormValid()}>
             Add User
           </Button>
           <Button variant="contained" color="error" onClick={handleClose}>

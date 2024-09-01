@@ -2,37 +2,36 @@ import React, { type SyntheticEvent, useMemo } from "react";
 import { Calendar, type CalendarDateTemplateEvent } from "primereact/calendar";
 import { Card } from "primereact/card";
 import dayjs, { type Dayjs } from "dayjs";
-import { type Meeting } from "@/types";
 import { type FormEvent } from "primereact/ts-helpers";
+import { type Meeting } from "@/types";
+// import { api } from "@/utils/api";
 
 interface Props {
-  date: Dayjs | null;
+  allMeetings: Meeting[];
   selectedDate?: Dayjs;
-  meetings: Meeting[];
   setSelectedDate: (date: Dayjs) => void;
   uniqueKey: number;
   viewDate: Dayjs;
-  setDate: (date: Dayjs) => void;
 }
 
 const MeetingCalendar: React.FC<Props> = ({
+  allMeetings,
   selectedDate,
-  meetings,
   setSelectedDate,
   uniqueKey,
   viewDate,
-  // date,
-  // setDate,
 }) => {
+  // const { data: getAllMeetings } = api.meetings.getAllMeetings.useQuery();
+
   const meetingDates: string[] = useMemo(() => {
-    if (meetings) {
+    if (allMeetings) {
       const uniqueDates = new Set(
-        meetings.map((meeting) => dayjs(meeting.start).format("YYYY-MM-DD"))
+        allMeetings.map((meeting) => dayjs(meeting.start).format("YYYY-MM-DD"))
       );
       return Array.from(uniqueDates);
     }
     return [];
-  }, [meetings]);
+  }, [allMeetings]);
 
   const handleDateChange = (
     event: FormEvent<Date, SyntheticEvent<Element, Event>>
@@ -45,7 +44,6 @@ const MeetingCalendar: React.FC<Props> = ({
       selected = dayjs(event.value);
     }
 
-    console.log("date from MeetingCalendar.tsx:", selected);
     setSelectedDate(selected);
     return dayjs(selectedDate).toDate();
   };
@@ -72,14 +70,11 @@ const MeetingCalendar: React.FC<Props> = ({
         <Calendar
           key={uniqueKey}
           value={selectedDateValue}
-          // value={date}
           onChange={handleDateChange}
-          // onChange={(e) => setSelectedDate(e.value)}
           numberOfMonths={3}
           inline
           className="w-full"
           dateTemplate={dateTemplate}
-          // viewDate={firstMonthInView}
           viewDate={viewDate.toDate()}
         />
       </Card>

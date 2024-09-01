@@ -7,7 +7,7 @@ import dayjs, { type Dayjs } from 'dayjs';
 type SetUniqueKey = React.Dispatch<React.SetStateAction<number>>;
 
 interface Props {
-  setSelectedDate: (date: Dayjs) => void | null;
+  // setSelectedDate: (date: Dayjs) => void | null;
   setDate: (date: Dayjs) => void | null;
   setViewDate: (date: Dayjs) => void | null;
   setUniqueKey: SetUniqueKey;

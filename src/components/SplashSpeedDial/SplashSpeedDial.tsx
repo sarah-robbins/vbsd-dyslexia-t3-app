@@ -51,6 +51,7 @@ export default function SplashSpeedDial() {
         });
       },
     },
+    // TODO: wait to go to callbackUrl until user is logged in and state is set.
     {
       label: 'Login',
       icon: 'pi pi-external-link',

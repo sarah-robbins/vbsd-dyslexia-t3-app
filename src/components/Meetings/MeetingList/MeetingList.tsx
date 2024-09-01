@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Card } from "primereact/card";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
@@ -9,16 +9,116 @@ import { type Meeting, type Student, type MeetingWithAttendees } from "@/types";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
+// Extracted constants
+const MEETING_STATUSES = {
+  MET: "Met",
+  STUDENT_ABSENT: "Student Absent",
+  TUTOR_ABSENT: "Tutor Absent",
+  STUDENT_UNAVAILABLE: "Student Unavailable",
+  TUTOR_UNAVAILABLE: "Tutor Unavailable",
+};
+
+const STATUS_COLORS = {
+  [MEETING_STATUSES.MET]: "primary",
+  [MEETING_STATUSES.STUDENT_ABSENT]: "secondary",
+  [MEETING_STATUSES.TUTOR_ABSENT]: "secondary",
+  [MEETING_STATUSES.STUDENT_UNAVAILABLE]: "secondary",
+  [MEETING_STATUSES.TUTOR_UNAVAILABLE]: "secondary",
+};
+
+// Custom hook for filtering meetings
+const useFilteredMeetings = (
+  meetings: MeetingWithAttendees[], // Ensure this is an array
+  selectedDate: Dayjs, // This is a Dayjs object
+  isOnMeetingsPage: boolean,
+  isOnStudentsPage: boolean,
+  students: Student[]
+) => {
+  const [filteredMeetings, setFilteredMeetings] = useState<MeetingWithAttendees[]>([]);
+
+  useEffect(() => {
+    if (selectedDate) {
+      let filtered: MeetingWithAttendees[] = [];
+      if (isOnMeetingsPage) {
+        filtered = meetings
+          .map((meeting) => ({
+            ...meeting,
+            dateString: dayjs(meeting.start).format("YYYY-MM-DD"),
+          }))
+          .filter((meeting) => dayjs(meeting.start).isSame(selectedDate.toDate(), "day")); // Convert here
+      } else if (isOnStudentsPage) {
+        const datedMeetingsWithAttendees = meetings.map((meeting): MeetingWithAttendees => {
+          const attendees = (meeting.MeetingAttendees ?? [])
+            .map((attendee) => {
+              const student = students?.find((s) => s.id === attendee.student_id);
+              if (!student) return null;
+              return {
+                ...attendee,
+                id: attendee.student_id,
+                name: `${student.first_name ?? ""} ${student.last_name ?? ""}`,
+              };
+            })
+            .filter((a): a is { id: number; meeting_id: number; student_id: number; meeting_status: string; created_at: Dayjs; name: string; } => Boolean(a));
+          return { ...meeting, attendees };
+        });
+  
+        filtered = datedMeetingsWithAttendees
+          .map((meeting) => ({
+            ...meeting,
+            dateString: dayjs(meeting.start).format("YYYY-MM-DD"),
+          }))
+          .filter((meeting) => dayjs(meeting.start).isSame(selectedDate.toDate(), "day")); // Convert here
+      }
+      setFilteredMeetings(filtered);
+    }
+  }, [meetings, selectedDate, isOnMeetingsPage, isOnStudentsPage, students]);  return filteredMeetings;
+};
+// Extracted smaller components
+const MeetingStatusChip: React.FC<{ status: string }> = React.memo(({ status }) => (
+  <Chip
+    color={(STATUS_COLORS[status] as "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning") || "default"}
+    label={status || "Unknown Status"}
+    className="meeting-status-chips"
+  />
+));
+
+MeetingStatusChip.displayName = "MeetingStatusChip";
+
+const MeetingTime: React.FC<{ start: Date | Dayjs; end: Date | Dayjs }> = React.memo(({ start, end }) => {
+  const formatTime = (time: Date | Dayjs): string => {
+    const date = dayjs(time);
+    const hours = date.hour();
+    const minutes = date.minute();
+    const isPM = hours >= 12;
+    const formattedHours = isPM ? hours % 12 || 12 : hours;
+    const formattedMinutes = minutes.toString().padStart(2, "0");
+    const period = isPM ? "pm" : "am";
+    return `${formattedHours}:${formattedMinutes}${period}`;
+  };
+
+  const startTime = formatTime(start);
+  const endTime = formatTime(end);
+  const timeSpan = `${startTime} - ${endTime}`;
+
+  return (
+    <div className="flex align-items-center gap-2">
+      <span>{timeSpan}</span>
+    </div>
+  );
+});
+
+MeetingTime.displayName = "MeetingTime";
 interface Props {
   meetings: MeetingWithAttendees[];
+  // setMeetings: (meetings: MeetingWithAttendees[]) => void;
   students: Student[];
   selectedDate: Dayjs;
-  getDatedMeetings: MeetingWithAttendees[];
+  // meetings: MeetingWithAttendees[];
   selectedMeetings: MeetingWithAttendees[];
   setSelectedDate: (date: Dayjs) => void;
   setSelectedMeetings: (meetings: MeetingWithAttendees[]) => void;
   datedMeetingsWithAttendees: MeetingWithAttendees[];
-  attendeesName: string[];
+  // attendeesName: string[];
   isOnMeetingsPage: boolean;
   isOnStudentsPage: boolean;
 }
@@ -27,107 +127,27 @@ const MeetingList: React.FC<Props> = ({
   meetings = [],
   selectedDate,
   setSelectedDate,
-  getDatedMeetings = [],
   selectedMeetings = [],
   students = [],
-  setSelectedMeetings = () => {
-    meetings;
-  },
+  setSelectedMeetings,
   datedMeetingsWithAttendees = [],
   isOnMeetingsPage,
   isOnStudentsPage,
 }) => {
   const hiddenOnMeetingPage = isOnMeetingsPage ? "hidden" : "";
   const showOnStudentsPage = isOnStudentsPage ? "" : "hidden";
-  const [filteredMeetings, setFilteredMeetings] = useState<
-    MeetingWithAttendees[]
-  >([]);
   const selectAllCheckboxRef = useRef<HTMLInputElement>(null);
   const [formDate, setFormDate] = useState(selectedDate);
 
-  // FIXME: This page needs to filter the meetings in the list to matching tutors on the Meetings page and student id of the row on the Students page.
+  const filteredMeetings = useFilteredMeetings(datedMeetingsWithAttendees, selectedDate, isOnMeetingsPage, isOnStudentsPage, students);
 
-  const handleFormDateChange = (date: Dayjs | null) => {
+  const handleFormDateChange = useCallback((date: Dayjs | null) => {
     if (date) {
       setFormDate(date);
       setSelectedDate(date);
     }
-  };
+  }, [setSelectedDate]);
 
-  useEffect(() => {
-    if (selectedDate && isOnMeetingsPage) {
-      const filtered = datedMeetingsWithAttendees
-        .map((meeting) => ({
-          ...meeting,
-          dateString: dayjs(meeting.start).format("YYYY-MM-DD"),
-        }))
-        .filter((meeting) => {
-          const meetingDate = dayjs(meeting.start);
-          return meetingDate.isSame(selectedDate, "day");
-        });
-      console.log("filtered from the MeetingList.tsx:", filtered);
-      setFilteredMeetings(filtered);
-    }
-    if (selectedDate && isOnStudentsPage) {
-      const datedMeetingsWithAttendees: MeetingWithAttendees[] =
-        getDatedMeetings.map((meeting): MeetingWithAttendees => {
-          // const students = getStudentsBySchool;
-          const attendees = (meeting.MeetingAttendees ?? [])
-            .map((attendee) => {
-              const student = students?.find(
-                (s) => s.id === attendee.student_id
-              );
-              if (!student) return;
-              return {
-                ...attendee,
-                id: attendee.student_id,
-                name: `${student.first_name ?? ""} ${student.last_name ?? ""}`,
-              };
-            })
-            .filter(
-              (
-                a
-              ): a is {
-                id: number;
-                meeting_id: number;
-                student_id: number;
-                meeting_status: string;
-                created_at: Dayjs;
-                name: string;
-              } => Boolean(a)
-            ) as {
-            id: number;
-            meeting_id: number;
-            student_id: number;
-            meeting_status: string;
-            created_at: Dayjs;
-            name: string;
-          }[];
-          return { ...meeting, attendees };
-        });
-
-      const filtered = datedMeetingsWithAttendees
-        .map((meeting) => ({
-          ...meeting,
-          dateString: dayjs(meeting.start).format("YYYY-MM-DD"),
-        }))
-        .filter((meeting) => {
-          const meetingDate = dayjs(meeting.start);
-          return meetingDate.isSame(selectedDate, "day");
-        });
-      setFilteredMeetings(filtered);
-    }
-  }, [
-    datedMeetingsWithAttendees,
-    getDatedMeetings,
-    isOnMeetingsPage,
-    isOnStudentsPage,
-    selectedDate,
-    meetings,
-    students,
-  ]);
-
-  // Update the indeterminate state of the "Check All" checkbox
   useEffect(() => {
     if (selectAllCheckboxRef.current) {
       selectAllCheckboxRef.current.indeterminate =
@@ -136,7 +156,7 @@ const MeetingList: React.FC<Props> = ({
     }
   }, [selectedMeetings, filteredMeetings]);
 
-  const headerTemplate = (data: Meeting) => {
+  const headerTemplate = useCallback((data: Meeting) => {
     const originalDate = dayjs(data.start);
     const newDate = originalDate.startOf("day").toDate();
 
@@ -148,19 +168,13 @@ const MeetingList: React.FC<Props> = ({
     };
 
     const getOrdinalSuffix = (day: number) => {
-      if (day >= 11 && day <= 13) {
-        return "th";
-      }
+      if (day >= 11 && day <= 13) return "th";
       const lastDigit = day % 10;
       switch (lastDigit) {
-        case 1:
-          return "st";
-        case 2:
-          return "nd";
-        case 3:
-          return "rd";
-        default:
-          return "th";
+        case 1: return "st";
+        case 2: return "nd";
+        case 3: return "rd";
+        default: return "th";
       }
     };
 
@@ -175,109 +189,52 @@ const MeetingList: React.FC<Props> = ({
     );
 
     return (
-      <React.Fragment>
-        <div className="flex justify-content-between">
-          <div className="flex align-items-center gap-2">
-            <span className="font-bold">{finalFormattedDate}</span>
-          </div>
-          <div>
-            <div className="flex justify-content-end font-bold w-full">
-              Total Meetings:{" "}
-              {calculateMeetingTotal(data.start?.toString() ?? "")}
-            </div>
-          </div>
+      <div className="flex justify-content-between">
+        <div className="flex align-items-center gap-2">
+          <span className="font-bold">{finalFormattedDate}</span>
         </div>
-      </React.Fragment>
+        <div className="flex justify-content-end font-bold w-full">
+          Total Meetings: {calculateMeetingTotal(data.start?.toString() ?? "")}
+        </div>
+      </div>
     );
-  };
+  }, []);
 
-  const footerTemplate = () => {
-    return <td colSpan={5} className="h-auto"></td>;
-  };
+  const footerTemplate = useCallback(() => <td colSpan={5} className="h-auto" />, []);
 
-  const statusBodyTemplate = (rowData: MeetingWithAttendees) => {
-    // Check if attendees are present
+  const statusBodyTemplate = useCallback((rowData: MeetingWithAttendees) => {
     if (!rowData.attendees || rowData.attendees.length === 0) {
-      return <span>No Attendees</span>; // Or handle this case as appropriate
+      return <span>No Attendees</span>;
     }
 
-    // Map each attendee to a Chip with their status
-    return rowData.attendees.map((attendee, index) => (
+    return rowData.attendees.map((attendee) => (
       <React.Fragment key={attendee.id}>
-        {" "}
-        <Chip
-          key={index}
-          color={getStatusColorForTable(attendee.meeting_status ?? "")}
-          label={attendee.meeting_status ?? "Unknown Status"}
-          className="meeting-status-chips"
-        />
+        <MeetingStatusChip status={attendee.meeting_status ?? ""} />
         <br />
       </React.Fragment>
     ));
-  };
+  }, []);
 
-  const formatMeetingTime = (data: Meeting) => {
-    const { start, end } = data;
-
-    const formatTime = (time: Date | Dayjs | null): string => {
-      const date = dayjs(time ? time.toISOString() : undefined);
-      const hours = date.hour();
-      const minutes = date.minute();
-
-      const isPM = hours >= 12;
-      const formattedHours = isPM ? hours % 12 || 12 : hours;
-      const formattedMinutes = minutes.toString().padStart(2, "0");
-      const period = isPM ? "pm" : "am";
-
-      return `${formattedHours}:${formattedMinutes}${period}`;
-    };
-
-    const startTime = formatTime(start);
-    const endTime = formatTime(end);
-    const timeSpan = `${startTime} - ${endTime}`;
-
-    return (
-      <div className="flex align-items-center gap-2">
-        <span>{timeSpan}</span>
-      </div>
-    );
-  };
-  // calculate the total amount of meetings on a given day in the meeting list
-  const calculateMeetingTotal = (start: string): number => {
-    let total = 0;
-
-    // Convert start string to a dayjs object
+  const calculateMeetingTotal = useCallback((start: string): number => {
     const startDate = dayjs(start);
-
-    // Extract day, month, and year from start
     const startDay = startDate.date();
     const startMonth = startDate.month();
     const startYear = startDate.year();
 
-    if (getDatedMeetings) {
-      for (const meeting of getDatedMeetings) {
-        // Convert meeting.start string to a dayjs object
-        const meetingDate = dayjs(meeting.start);
-
-        // Extract day, month, and year from meeting.start
-        const meetingDay = meetingDate.date();
-        const meetingMonth = meetingDate.month();
-        const meetingYear = meetingDate.year();
-
-        // Compare extracted values
-        if (
-          meetingDay === startDay &&
-          meetingMonth === startMonth &&
-          meetingYear === startYear
-        ) {
-          total++;
-        }
+    return meetings.reduce((total, meeting) => {
+      const meetingDate = dayjs(meeting.start);
+      if (
+        meetingDate.date() === startDay &&
+        meetingDate.month() === startMonth &&
+        meetingDate.year() === startYear
+      ) {
+        return total + 1;
       }
-    }
-    return total;
-  };
+      return total;
+    }, 0);
+  }, [meetings]);
 
-  const getName = (rowData: MeetingWithAttendees) => {
+  const getName = useCallback((rowData: MeetingWithAttendees) => {
     if (!datedMeetingsWithAttendees || !rowData) {
       return <div>Loading...</div>;
     }
@@ -286,80 +243,52 @@ const MeetingList: React.FC<Props> = ({
         {attendee.name}
       </div>
     ));
-  };
+  }, [datedMeetingsWithAttendees]);
 
-  const getStatusColorForTable = (getStatusForTable: string) => {
-    switch (getStatusForTable) {
-      case "Met":
-        return "primary";
+  const toggleAllCheckboxes = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedMeetings(event.target.checked ? filteredMeetings : []);
+  }, [filteredMeetings, setSelectedMeetings]);
 
-      case "Student Absent":
-        return "secondary";
+  const isCheckboxChecked = useCallback((meeting: MeetingWithAttendees) => {
+    return selectedMeetings.some((selectedMeeting) => selectedMeeting.id === meeting.id);
+  }, [selectedMeetings]);
 
-      case "Tutor Absent":
-        return "secondary";
-
-      case "Student Unavailable":
-        return "secondary";
-
-      case "Tutor Unavailable":
-        return "secondary";
-    }
-  };
-
-  const toggleAllCheckboxes = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.checked) {
-      setSelectedMeetings(filteredMeetings);
-    } else {
-      setSelectedMeetings([]);
-    }
-  };
-
-  const isCheckboxChecked = (meeting: MeetingWithAttendees) => {
-    return selectedMeetings.some(
-      (selectedMeeting) => selectedMeeting.id === meeting.id
-    );
-  };
-
-  const toggleCheckbox = (meeting: MeetingWithAttendees) => {
-    // If checked, remove
+  const toggleCheckbox = useCallback((meeting: MeetingWithAttendees) => {
     if (isCheckboxChecked(meeting)) {
       setSelectedMeetings(selectedMeetings.filter((m) => m.id !== meeting.id));
-      return;
+    } else {
+      setSelectedMeetings([meeting]);
     }
-    // Else select only this one
-    setSelectedMeetings([meeting]);
-    if (selectedMeetings.length > 0) {
-    }
-  };
+  }, [isCheckboxChecked, selectedMeetings, setSelectedMeetings]);
 
-  // Whenever selectedDate changes, reset the selected meetings.
   useEffect(() => {
     setSelectedMeetings([]);
   }, [selectedDate, setSelectedMeetings]);
+
+  const datePicker = useMemo(() => (
+    <div className={`selectDate ${hiddenOnMeetingPage} ${showOnStudentsPage}`}>
+      <span>
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DatePicker
+            label="Date"
+            className="w-12"
+            value={formDate}
+            onChange={handleFormDateChange}
+          />
+        </LocalizationProvider>
+      </span>
+    </div>
+  ), [formDate, handleFormDateChange, hiddenOnMeetingPage, showOnStudentsPage]);
 
   return (
     <Card className="lg:w-7 flex-order-1 lg:flex-order-2 elevate-item">
       <div className="meeting-list-name-select flex justify-content-between align-items-center gap-4">
         <h3>Meetings</h3>
       </div>
-      <div
-        className={`selectDate ${hiddenOnMeetingPage} ${showOnStudentsPage}`}
-      >
-        <span>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DatePicker
-              label="Date"
-              className="w-12"
-              value={formDate}
-              onChange={handleFormDateChange}
-            />
-          </LocalizationProvider>
-        </span>
-      </div>
+      {datePicker}
       <DataTable
         value={filteredMeetings}
-        emptyMessage="No meetings today."
+        emptyMessage="No meetings on this day."
         rowGroupMode="subheader"
         groupRowsBy="dateString"
         sortMode="single"
@@ -402,7 +331,7 @@ const MeetingList: React.FC<Props> = ({
         <Column
           field="time"
           header="Time"
-          body={formatMeetingTime}
+          body={(rowData: Meeting) => <MeetingTime start={dayjs(rowData.start).toDate()} end={dayjs(rowData.end).toDate()} />}
           style={{ minWidth: "170px", maxWidth: "calc(170px + 1.5rem)" }}
           sortable
         />
@@ -425,4 +354,4 @@ const MeetingList: React.FC<Props> = ({
   );
 };
 
-export default MeetingList;
+export default React.memo(MeetingList);

@@ -7,28 +7,26 @@ import dayjs, { type Dayjs } from "dayjs";
 import { api } from "@/utils/api";
 import {
   type Student,
-  type MeetingAttendees,
   type MeetingWithAttendees,
 } from "@/types";
 import Students from "../Students/Students";
-import { useSession } from "next-auth/react";
+// import { useSession } from "next-auth/react";
 
+// Initialization
 const Meetings = () => {
-  const { data: session } = useSession();
-  const sessionData = session?.user;
+  // const { data: session } = useSession();
+  // const sessionData = session?.user;
+
+  // State Management
   const [meetings, setMeetings] = useState<MeetingWithAttendees[]>([]);
+  const [allMeetings, setAllMeetings] = useState<MeetingWithAttendees[]>([]);
   const [date, setDate] = useState<Dayjs | null>(dayjs());
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
-  const [selectedMeetings, setSelectedMeetings] = useState<
-    MeetingWithAttendees[]
-  >([]);
-  const [selectedMeetingAttendees] = useState<MeetingAttendees[]>([]);
-  const [datedMeetingsWithAttendees, setDatedMeetingsWithAttendees] = useState<
-    MeetingWithAttendees[]
-  >([]);
-  const [attendeesName] = useState<string[]>([]);
+  const [selectedMeetings, setSelectedMeetings] = useState<MeetingWithAttendees[]>([]);
+  const [datedMeetingsWithAttendees, setDatedMeetingsWithAttendees] = useState<MeetingWithAttendees[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [isOnMeetingsPage] = useState<boolean>(true);
+  const [myDatedMeetings, setMyDatedMeetings] = useState<MeetingWithAttendees[]>([]);
 
   function getFirstMonthInView() {
     const currentDate = dayjs();
@@ -39,12 +37,12 @@ const Meetings = () => {
   const [viewDate, setViewDate] = useState(getFirstMonthInView());
   const [uniqueKey, setUniqueKey] = useState<number>(1);
 
-  const dateToQuery =
-    selectedDate && dayjs.isDayjs(selectedDate) ? selectedDate : dayjs();
+  const dateToQuery = selectedDate && dayjs.isDayjs(selectedDate) ? selectedDate : dayjs();
 
-  const getMeetingsByDate = api.meetings.getMeetingsByRoleAndDate.useQuery(
-    dateToQuery.toDate()
-  ) as {
+  // API Calls
+  const { data: getAllMeetings } = api.meetings.getAllMeetings.useQuery();
+
+  const getMeetingsByDate = api.meetings.getMeetingsByRoleAndDate.useQuery(dateToQuery.toDate()) as {
     data: MeetingWithAttendees[];
   };
   const getDatedMeetings = getMeetingsByDate.data;
@@ -53,83 +51,80 @@ const Meetings = () => {
     data: Student[];
   };
 
+  // Update State based on API calls
   useEffect(() => {
+    if (getDatedMeetings) {
+      setMyDatedMeetings(getDatedMeetings);
+    }
     if (myStudents) {
       setStudents(myStudents);
     }
-  }, [myStudents]);
-
-  const { data: getMeetingsByTutorId } =
-    api.meetings.getMeetingsByTutorId.useQuery({
-      tutorId: sessionData?.userId ?? 0,
-    });
-  const tutorMeetings = getMeetingsByTutorId;
+  }, [getDatedMeetings, myStudents]);
 
   useEffect(() => {
-    if (tutorMeetings) {
-      const transformedMeetings = tutorMeetings.map((meeting) => ({
+    if (getAllMeetings) {
+      const formattedMeetings = getAllMeetings.map(meeting => ({
         ...meeting,
-        MeetingAttendees: meeting.MeetingAttendees.map((attendee) => ({
+        MeetingAttendees: meeting.MeetingAttendees.map(attendee => ({
           ...attendee,
-          name: attendee.name === null ? undefined : attendee.name,
+          name: attendee.name || undefined,
         })),
       }));
-      setMeetings(transformedMeetings);
+      setAllMeetings(formattedMeetings);
     }
-  }, [tutorMeetings]);
+    console.log(allMeetings);
+  }, [getAllMeetings]);
 
+  // Render Components
   return (
     <div className="flex flex-column justify-content-center gap-4">
       <div className="flex gap-4 align-items-center justify-content-between w-full">
-        <MeetingsTitleBar
-          setSelectedDate={setSelectedDate}
-          setDate={setDate}
-          setViewDate={setViewDate}
-          setUniqueKey={setUniqueKey}
-        />
+      <MeetingsTitleBar
+        setDate={setDate}
+        setViewDate={setViewDate}
+        setUniqueKey={setUniqueKey}
+      />
       </div>
       <div className="flex">
-        <MeetingCalendar
-          date={date}
-          selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
-          meetings={meetings}
-          viewDate={viewDate}
-          setDate={setDate}
-          uniqueKey={uniqueKey}
-        />
+      <MeetingCalendar
+        allMeetings={allMeetings}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        uniqueKey={uniqueKey}
+        viewDate={viewDate}
+      />
       </div>
       <div className="flex flex-column lg:flex-row gap-4">
         <MeetingForm
           meetings={meetings}
+          setAllMeetings={setAllMeetings}
           setMeetings={setMeetings}
           students={students}
-          getDatedMeetings={getDatedMeetings}
+          myDatedMeetings={myDatedMeetings}
+          setMyDatedMeetings={setMyDatedMeetings}
           selectedMeetings={selectedMeetings}
           setSelectedMeetings={setSelectedMeetings}
-          isMeetingSelected={!!selectedMeetings}
-          selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
+          selectedMeetingAttendees={[]}
           datedMeetingsWithAttendees={datedMeetingsWithAttendees}
+          selectedDate={selectedDate}
           setDatedMeetingsWithAttendees={setDatedMeetingsWithAttendees}
-          selectedMeetingAttendees={selectedMeetingAttendees}
           isOnMeetingsPage={isOnMeetingsPage}
           isOnStudentsPage={false}
         />
         <MeetingList
           meetings={meetings}
-          students={students}
+          // setMeetings={setMeetings}
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
-          getDatedMeetings={getDatedMeetings}
+          // getDatedMeetings={getDatedMeetings}
           selectedMeetings={selectedMeetings}
+          students={students}
           setSelectedMeetings={setSelectedMeetings}
           datedMeetingsWithAttendees={datedMeetingsWithAttendees}
-          attendeesName={attendeesName}
           isOnMeetingsPage={isOnMeetingsPage}
           isOnStudentsPage={false}
-        />
-      </div>
+          />
+        </div>
       <Students isOnMeetingsPage={isOnMeetingsPage} />
     </div>
   );

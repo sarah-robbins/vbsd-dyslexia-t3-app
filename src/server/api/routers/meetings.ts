@@ -260,7 +260,7 @@ export const meetingsRouter = createTRPCRouter({
       });
     }),
 
-  updateMeeting: publicProcedure
+    updateMeeting: publicProcedure
     .input(
       z.object({
         id: z.number().int(),
@@ -297,17 +297,22 @@ export const meetingsRouter = createTRPCRouter({
           tutor_id: input.tutor_id,
         },
       });
-
-      // Update attendees
+  
+      // Get current attendees from the database
+      const currentAttendees = await ctx.prisma.meetingAttendees.findMany({
+        where: {
+          meeting_id: input.id,
+        },
+      });
+  
+      // Update or create attendees
       for (const attendee of input.attendees) {
-        const existingAttendee = await ctx.prisma.meetingAttendees.findFirst({
-          where: {
-            meeting_id: input.id,
-            student_id: attendee.student_id,
-          },
-        });
-
+        const existingAttendee = currentAttendees.find(
+          (a) => a.student_id === attendee.student_id
+        );
+  
         if (existingAttendee) {
+          // Update existing attendee
           await ctx.prisma.meetingAttendees.update({
             where: {
               id: existingAttendee.id,
@@ -317,6 +322,7 @@ export const meetingsRouter = createTRPCRouter({
             },
           });
         } else {
+          // Create new attendee
           await ctx.prisma.meetingAttendees.create({
             data: {
               meeting_id: input.id,
@@ -326,10 +332,24 @@ export const meetingsRouter = createTRPCRouter({
           });
         }
       }
-
+  
+      // Delete attendees that are no longer in the updated list
+      const updatedAttendeeIds = input.attendees.map((a) => a.student_id);
+      const attendeesToDelete = currentAttendees.filter(
+        (a) => !updatedAttendeeIds.includes(a.student_id)
+      );
+  
+      for (const attendee of attendeesToDelete) {
+        await ctx.prisma.meetingAttendees.delete({
+          where: {
+            id: attendee.id,
+          },
+        });
+      }
+  
       return { meeting, success: true };
     }),
-
+  
   deleteAttendeesInput: publicProcedure
     .input(
       z.object({

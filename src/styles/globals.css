@@ -11,6 +11,10 @@
   color-scheme: light;
 }
 
+.input-error {
+  border: 1px solid red !important;
+}
+
 .p-multiselect-label {
   color: #495057 !important;
 }

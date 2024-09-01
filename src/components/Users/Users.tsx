@@ -130,231 +130,31 @@ const Users: React.FC = () => {
     return rowData.role;
   };
 
-  const [editingRows, setEditingRows] = useState({});
-  // const generateTempId = () =>
-  //   Number(
-  //     `-000${Math.floor(Math.random() * 1000)
-  //       .toString()
-  //       .padStart(3, "0")}`
-  //   );
-  // const addNewUser = () => {
-  //   const tempId = generateTempId();
-  //   const newUser: User = {
-  //     id: tempId,
-  //     first_name: "",
-  //     last_name: "",
-  //     school: null,
-  //     email: "",
-  //     phone: "",
-  //     role: null,
-  //     view: null,
-  //     super_admin_role: null,
-  //     picture: null,
-  //     created_at: new Date(),
-  //   };
-  //   setUsers((prev) => [newUser, ...prev]);
-  //   setEditingRows((prevEditingRows) => ({
-  //     ...prevEditingRows,
-  //     [tempId]: true,
-  //   }));
-  // };
+  const [editingRows, setEditingRows] = useState<{ [key: number]: boolean }>({});
+  const [isFormValid, setIsFormValid] = useState<{ [key: number]: boolean }>({});
 
-  const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const _filters = { ...filters };
-
-    if (_filters.global && "value" in _filters.global) {
-      _filters.global.value = value || "";
-    }
-    setFilters(_filters);
-    setGlobalFilterValue(value);
-  };
-
-  const firstNameEditor = (options: ColumnEditorOptions) => {
-    const value = options.value as string;
-    return (
-      <InputText
-        type="text"
-        value={value}
-        placeholder="First Name"
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          options.editorCallback?.(e.target.value)
-        }
-      />
+  const validateRow = (data: User): boolean => {
+    return !!(
+      data.first_name &&
+      data.last_name &&
+      data.email &&
+      data.phone &&
+      data.role &&
+      (Array.isArray(data.role) ? data.role.length > 0 : data.role !== "") &&
+      data.view
     );
   };
 
-  const lastNameEditor = (options: ColumnEditorOptions) => {
-    const value = options.value as string;
-    return (
-      <InputText
-        type="text"
-        value={value}
-        placeholder="Last Name"
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          options.editorCallback?.(e.target.value)
-        }
-      />
-    );
-  };
-
-  const emailEditor = (options: ColumnEditorOptions) => {
-    const value = options.value as string;
-    return (
-      <InputText
-        type="text"
-        value={value}
-        placeholder="Email"
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          options.editorCallback?.(e.target.value)
-        }
-      />
-    );
-  };
-
-  const phoneEditor = (options: ColumnEditorOptions) => {
-    const value = options.value as string;
-    return (
-      <InputText
-        type="text"
-        value={value}
-        placeholder="Phone"
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          options.editorCallback?.(e.target.value)
-        }
-      />
-    );
-  };
-
-  const schoolEditor = (options: ColumnEditorOptions) => {
-    const value = options.value as string | string[] | null | undefined;
-
-    const currentValue = processSchool(value);
-
-    const handleSchoolChange = (e: MultiSelectChangeEvent) => {
-      // Explicitly cast e.value to string[]
-      let selectedSchools: string[] = e.value as string[];
-
-      if (selectedSchools.includes("None") && selectedSchools.length > 1) {
-        selectedSchools = ["None"];
-      } else if (!selectedSchools.includes("None")) {
-        selectedSchools = selectedSchools.filter((school) => school !== "None");
-      }
-
-      options.editorCallback?.(selectedSchools);
-    };
-
-    return (
-      <MultiSelect
-        value={currentValue}
-        options={appSettings.school_options.map((school) => ({
-          label: school,
-          value: school,
-        }))}
-        onChange={handleSchoolChange}
-        placeholder="Schools"
-        optionLabel="label"
-        className="text-black"
-        filter
-        resetFilterOnHide
-        selectAllLabel="All"
-      />
-    );
-  };
-
-  const formatSchoolsForSave = (
-    school: string | string[] | null | undefined
-  ): string => {
-    // If school is a string, split it into an array
-    // If school is null or undefined, use an empty array
-    const schoolArray =
-      typeof school === "string"
-        ? school.split(", ").map((s) => s.trim())
-        : school || [];
-    return Array.from(new Set(schoolArray)).join(", ");
-  };
-
-  // useEffect(() => {
-  //   console.log("**********Updated Users: ", users);
-  // }, [users]);
-
-  useEffect(() => {
-    if (myUsers) {
-      const processedUsers = myUsers.map((user) => ({
-        ...user,
-        school: processSchool(user.school).toString(),
-        // Other fields...
+  const updateFormValidity = (rowData: User) => {
+    if (rowData.id !== undefined) {
+      setIsFormValid((prev) => ({
+        ...prev,
+        [rowData.id as number]: validateRow(rowData),
       }));
-      setUsers(processedUsers);
     }
-  }, [myUsers]);
-
-  const roleEditor = (options: ColumnEditorOptions) => {
-    const value = options.value as string | string[] | undefined;
-
-    const currentValue = processRole(value) as string[] | undefined;
-
-    const handleRoleChange = (e: MultiSelectChangeEvent) => {
-      // Explicitly cast e.value to string[]
-      let selectedRoles: string[] = e.value as string[];
-
-      if (selectedRoles.includes("None") && selectedRoles.length > 1) {
-        selectedRoles = ["None"];
-      } else if (!selectedRoles.includes("None")) {
-        selectedRoles = selectedRoles.filter((role) => role !== "None");
-      }
-
-      options.editorCallback?.(selectedRoles);
-    };
-
-    return (
-      <MultiSelect
-        value={currentValue}
-        options={appSettings.user_role_options.map((role) => ({
-          label: role,
-          value: role,
-        }))}
-        onChange={handleRoleChange}
-        placeholder="Roles"
-        optionLabel="label"
-        selectAllLabel="All"
-        className="text-black"
-      />
-    );
   };
-
-  const formatRolesForSave = (
-    role: string | string[] | null | undefined
-  ): string => {
-    // If role is a string, split it into an array
-    // If role is null or undefined, use an empty array
-    const roleArray =
-      typeof role === "string"
-        ? role.split(", ").map((s) => s.trim())
-        : role || [];
-    return Array.from(new Set(roleArray)).join(", ");
-  };
-
-  const viewEditor = (options: ColumnEditorOptions) => {
-    const value = options.value as string;
-    return (
-      <Dropdown
-        value={value}
-        options={appSettings.initial_view_options}
-        onChange={(e: DropdownChangeEvent) => options.editorCallback?.(e.value)}
-        placeholder="View"
-        itemTemplate={(option) => {
-          return <span>{option}</span>;
-        }}
-      />
-    );
-  };
-
-  const updateUserMutation = api.users.updateUser.useMutation();
-  const createUserMutation = api.users.createUser.useMutation();
 
   const onRowEditComplete = (e: DataTableRowEditCompleteEvent) => {
-    // let newData = e.data as User;
     let { newData } = e as { newData: User };
 
     // Transform the schools array back into a string
@@ -485,6 +285,10 @@ const Users: React.FC = () => {
         },
       });
     }
+    if (newData.id !== undefined) {
+      setEditingRows((prev) => ({ ...prev, [newData.id as number]: false }));
+      setIsFormValid((prev) => ({ ...prev, [newData.id as number]: true }));
+    }
   };
 
   const deleteUserMutation = api.users.deleteUser.useMutation();
@@ -564,12 +368,22 @@ const Users: React.FC = () => {
     });
   };
 
+  const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const _filters = { ...filters };
+
+    if (_filters.global && "value" in _filters.global) {
+      _filters.global.value = value || "";
+    }
+    setFilters(_filters);
+    setGlobalFilterValue(value);
+  };
+
   const renderHeader = () => {
     return (
       <div className="flex justify-content-between">
         <div className="flex align-items-center">
           {session?.user.role !== "Tutor" && (
-            // <Button onClick={addNewUser} variant="contained">
             <Button onClick={handleOpen} variant="contained">
               Add
             </Button>
@@ -590,16 +404,6 @@ const Users: React.FC = () => {
   };
   const header = renderHeader();
 
-  // const rows = [editingRow, ...users].filter((r) => r != null);
-
-  // load animation for the table
-  // if (!getAllUsers.data) return <p>Loading...</p>;
-
-  // choose waht to do when a row in clicked
-  // const rowSelected = (e: DataTableRowEvent) => {
-  //   console.log("e", e);
-  // };
-
   const newRowClass = (data: User) => {
     return {
       "bg-red-50": data.first_name === "",
@@ -612,10 +416,12 @@ const Users: React.FC = () => {
         <div className="flex gap-1 justify-content-center">
           <CheckIcon
             onClick={(e) =>
+              rowData.id !== undefined &&
+              isFormValid[rowData.id] &&
               options.rowEditor?.onSaveClick &&
               options.rowEditor?.onSaveClick(e)
             }
-            color="primary"
+            color={rowData.id !== undefined && isFormValid[rowData.id] ? "primary" : "disabled"}
           />
           <CloseIcon
             onClick={(e) =>
@@ -652,9 +458,203 @@ const Users: React.FC = () => {
     </>
   );
 
+  const firstNameEditor = (options: ColumnEditorOptions) => {
+    const value = options.value as string;
+    return (
+      <InputText
+        type="text"
+        value={value}
+        placeholder="First Name"
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          options.editorCallback?.(e.target.value);
+          updateFormValidity({ ...options.rowData, first_name: e.target.value } as User);
+        }}
+        className={value ? "" : "p-invalid"}
+      />
+    );
+  };
+
+  const lastNameEditor = (options: ColumnEditorOptions) => {
+    const value = options.value as string;
+    return (
+      <InputText
+        type="text"
+        value={value}
+        placeholder="Last Name"
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          options.editorCallback?.(e.target.value);
+          updateFormValidity({ ...options.rowData, last_name: e.target.value } as User);
+        }}
+        className={value ? "" : "p-invalid"}
+      />
+    );
+  };
+
+  const emailEditor = (options: ColumnEditorOptions) => {
+    const value = options.value as string;
+    return (
+      <InputText
+        type="text"
+        value={value}
+        placeholder="Email"
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          options.editorCallback?.(e.target.value);
+          updateFormValidity({ ...options.rowData, email: e.target.value } as User);
+        }}
+        className={value ? "" : "p-invalid"}
+      />
+    );
+  };
+
+  const phoneEditor = (options: ColumnEditorOptions) => {
+    const value = options.value as string;
+    return (
+      <InputText
+        type="text"
+        value={value}
+        placeholder="Phone"
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          options.editorCallback?.(e.target.value);
+          updateFormValidity({ ...options.rowData, phone: e.target.value } as User);
+        }}
+        className={value ? "" : "p-invalid"}
+      />
+    );
+  };
+
+  const schoolEditor = (options: ColumnEditorOptions) => {
+    const value = options.value as string | string[] | null | undefined;
+
+    const currentValue = processSchool(value);
+
+    const handleSchoolChange = (e: MultiSelectChangeEvent) => {
+      // Explicitly cast e.value to string[]
+      let selectedSchools: string[] = e.value as string[];
+
+      if (selectedSchools.includes("None") && selectedSchools.length > 1) {
+        selectedSchools = ["None"];
+      } else if (!selectedSchools.includes("None")) {
+        selectedSchools = selectedSchools.filter((school) => school !== "None");
+      }
+
+      options.editorCallback?.(selectedSchools);
+    };
+
+    return (
+      <MultiSelect
+        value={currentValue}
+        options={appSettings.school_options.map((school) => ({
+          label: school,
+          value: school,
+        }))}
+        onChange={handleSchoolChange}
+        placeholder="Schools"
+        optionLabel="label"
+        className="text-black"
+        filter
+        resetFilterOnHide
+        selectAllLabel="All"
+      />
+    );
+  };
+
+  const formatSchoolsForSave = (
+    school: string | string[] | null | undefined
+  ): string => {
+    // If school is a string, split it into an array
+    // If school is null or undefined, use an empty array
+    const schoolArray =
+      typeof school === "string"
+        ? school.split(", ").map((s) => s.trim())
+        : school || [];
+    return Array.from(new Set(schoolArray)).join(", ");
+  };
+
+  useEffect(() => {
+    if (myUsers) {
+      const processedUsers = myUsers.map((user) => ({
+        ...user,
+        school: processSchool(user.school).toString(),
+        // Other fields...
+      }));
+
+      // Sort the processed users by last name
+      const sortedUsers = processedUsers.sort((a, b) => {
+        return (a.last_name || '').localeCompare(b.last_name || '');
+      });
+
+      setUsers(sortedUsers);
+    }
+  }, [myUsers]);
+
+  const roleEditor = (options: ColumnEditorOptions) => {
+    const value = options.value as string | string[] | undefined;
+
+    const currentValue = processRole(value) as string[] | undefined;
+
+    const handleRoleChange = (e: MultiSelectChangeEvent) => {
+      // Explicitly cast e.value to string[]
+      let selectedRoles: string[] = e.value as string[];
+
+      if (selectedRoles.includes("None") && selectedRoles.length > 1) {
+        selectedRoles = ["None"];
+      } else if (!selectedRoles.includes("None")) {
+        selectedRoles = selectedRoles.filter((role) => role !== "None");
+      }
+
+      options.editorCallback?.(selectedRoles);
+      updateFormValidity({ ...options.rowData, role: selectedRoles } as User);
+    };
+
+    return (
+      <MultiSelect
+        value={currentValue}
+        options={appSettings.user_role_options.map((role) => ({
+          label: role,
+          value: role,
+        }))}
+        onChange={handleRoleChange}
+        placeholder="Roles"
+        optionLabel="label"
+        selectAllLabel="All"
+        className={`text-black ${value && (Array.isArray(value) ? value.length > 0 : value !== "") ? "" : "p-invalid"}`}
+      />
+    );
+  };
+
+  const formatRolesForSave = (
+    role: string | string[] | null | undefined
+  ): string => {
+    // If role is a string, split it into an array
+    // If role is null or undefined, use an empty array
+    const roleArray =
+      typeof role === "string"
+        ? role.split(", ").map((s) => s.trim())
+        : role || [];
+    return Array.from(new Set(roleArray)).join(", ");
+  };
+
+  const viewEditor = (options: ColumnEditorOptions) => {
+    const value = options.value as string;
+    return (
+      <Dropdown
+        value={value}
+        options={appSettings.initial_view_options}
+        onChange={(e: DropdownChangeEvent) => {
+          options.editorCallback?.(e.value);
+        }}
+        placeholder="View"
+        itemTemplate={(option) => <span>{option}</span>}
+        className={value ? "" : "p-invalid"}
+      />
+    );
+  };
+
+  const updateUserMutation = api.users.updateUser.useMutation();
+  const createUserMutation = api.users.createUser.useMutation();
+
   return (
     <>
-      {/* <AddUserForm session={session} users={users} setUsers={setUsers} /> */}
       <AddUserForm
         session={session}
         users={users}
@@ -674,7 +674,6 @@ const Users: React.FC = () => {
         <DataTable
           value={users}
           editMode="row"
-          // onRowEditInit={(e) => setEditingRows(e.data.id)}
           editingRows={editingRows}
           onRowEditComplete={onRowEditComplete}
           dataKey="id"
@@ -682,7 +681,6 @@ const Users: React.FC = () => {
           stripedRows
           removableSort
           rowClassName={newRowClass}
-          // onRowSelect={rowSelected}
           tableStyle={{ minWidth: "60rem" }}
           filters={filters}
           globalFilterFields={[
