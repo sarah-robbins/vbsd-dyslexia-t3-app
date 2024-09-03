@@ -1,1 +1,1 @@
-export { default } from './MeetingList-multiple';
+export { default } from './MeetingList';
