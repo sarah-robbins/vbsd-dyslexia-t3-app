@@ -8,6 +8,14 @@ import dayjs, { type Dayjs } from "dayjs";
 import { type Meeting, type Student, type MeetingWithAttendees } from "@/types";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
+
+// Assume this is the timezone your timestamps are stored in
+const DB_TIMEZONE = 'America/New_York'; // Replace with your actual timezone
 
 // Extracted constants
 const MEETING_STATUSES = {
@@ -39,35 +47,44 @@ const useFilteredMeetings = (
   useEffect(() => {
     if (selectedDate) {
       let filtered: MeetingWithAttendees[] = [];
-      if (isOnMeetingsPage) {
-        filtered = meetings
-          .map((meeting) => ({
-            ...meeting,
-            dateString: dayjs(meeting.start).format("YYYY-MM-DD"),
-          }))
-          .filter((meeting) => dayjs(meeting.start).isSame(selectedDate.toDate(), "day")); // Convert here
-      } else if (isOnStudentsPage) {
-        const datedMeetingsWithAttendees = meetings.map((meeting): MeetingWithAttendees => {
-          const attendees = (meeting.MeetingAttendees ?? [])
-            .map((attendee) => {
-              const student = students?.find((s) => s.id === attendee.student_id);
-              if (!student) return null;
-              return {
-                ...attendee,
-                id: attendee.student_id,
-                name: `${student.first_name ?? ""} ${student.last_name ?? ""}`,
-              };
-            })
-            .filter((a): a is { id: number; meeting_id: number; student_id: number; meeting_status: string; created_at: Dayjs; name: string; } => Boolean(a));
-          return { ...meeting, attendees };
+      if (isOnMeetingsPage || isOnStudentsPage) {
+        // Get the start and end of the selected date in the user's local time
+        const startOfDay = selectedDate.startOf('day');
+
+        filtered = meetings.filter((meeting) => {
+          // Interpret the meeting start time as being in DB_TIMEZONE
+          const dbMeetingStart = dayjs.tz(meeting.start, DB_TIMEZONE);
+          // Convert to the user's local timezone
+          const localMeetingStart = dbMeetingStart.tz(dayjs.tz.guess());
+          // Check if the local meeting time falls within the selected day
+          return localMeetingStart.isSame(startOfDay, 'day');
         });
-  
-        filtered = datedMeetingsWithAttendees
-          .map((meeting) => ({
+
+        if (isOnMeetingsPage) {
+          filtered = filtered.map((meeting) => ({
             ...meeting,
             dateString: dayjs(meeting.start).format("YYYY-MM-DD"),
-          }))
-          .filter((meeting) => dayjs(meeting.start).isSame(selectedDate.toDate(), "day")); // Convert here
+          }));
+        } else if (isOnStudentsPage) {
+          const datedMeetingsWithAttendees = filtered.map((meeting): MeetingWithAttendees => {
+            const attendees = (meeting.MeetingAttendees ?? [])
+              .map((attendee) => {
+                const student = students?.find((s) => s.id === attendee.student_id);
+                if (!student) return null;
+                return {
+                  ...attendee,
+                  id: attendee.student_id,
+                  name: `${student.first_name ?? ""} ${student.last_name ?? ""}`,
+                };
+              })
+              .filter((a): a is { id: number; meeting_id: number; student_id: number; meeting_status: string; created_at: Dayjs; name: string; } => Boolean(a));
+            return { ...meeting, attendees };
+          });
+          filtered = datedMeetingsWithAttendees.map((meeting) => ({
+            ...meeting,
+            dateString: dayjs(meeting.start).format("YYYY-MM-DD"),
+          }));
+        }
       }
       setFilteredMeetings(filtered);
     }
