@@ -1,28 +1,47 @@
-# Create T3 App
+# School Management System
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+This project is a comprehensive school management system designed to streamline administrative tasks and enhance communication within educational institutions.
 
-## What's next? How do I make an app with this?
+## Features
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+- User authentication and authorization
+- Student information management
+- Course and class scheduling
+- Attendance tracking
+- Grade management
+- Reporting and analytics
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+## Technology Stack
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+This application leverages the following technologies:
 
-## Learn More
+- Next.js for the frontend and API routes
+- NextAuth.js for authentication
+- Prisma for database management
+- Tailwind CSS for styling
+- React Query for data fetching and caching
+- Zod for schema validation
+- TypeScript for type safety
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+## Getting Started
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+1. Clone the repository
+2. Install dependencies with `npm install`
+3. Set up your environment variables
+4. Run the development server with `npm run dev`
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+## Customization
 
-## How do I deploy this?
+This system is designed to be flexible and customizable. You can easily modify it to fit the specific needs of your educational institution.
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+## Deployment
+
+For deployment, consider using a platform that supports Next.js applications. Ensure your environment variables are properly set up in your production environment.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Support
+
+If you need assistance or have any questions, please open an issue in this repository.

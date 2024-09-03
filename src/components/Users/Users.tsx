@@ -138,7 +138,6 @@ const Users: React.FC = () => {
       data.first_name &&
       data.last_name &&
       data.email &&
-      data.phone &&
       data.role &&
       (Array.isArray(data.role) ? data.role.length > 0 : data.role !== "") &&
       data.view
@@ -515,9 +514,7 @@ const Users: React.FC = () => {
         placeholder="Phone"
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           options.editorCallback?.(e.target.value);
-          updateFormValidity({ ...options.rowData, phone: e.target.value } as User);
         }}
-        className={value ? "" : "p-invalid"}
       />
     );
   };
