@@ -21,7 +21,6 @@ const MeetingCalendar: React.FC<Props> = ({
   uniqueKey,
   viewDate,
 }) => {
-  // const { data: getAllMeetings } = api.meetings.getAllMeetings.useQuery();
 
   const meetingDates: string[] = useMemo(() => {
     if (allMeetings) {

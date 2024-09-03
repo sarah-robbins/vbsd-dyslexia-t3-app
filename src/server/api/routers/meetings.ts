@@ -154,17 +154,11 @@ export const meetingsRouter = createTRPCRouter({
     }),
 
   getMeetingsByTutorId: publicProcedure
-    .input(z.object({ tutorId: z.number() }))
+    .input(z.object({ tutor_id: z.number() }))
     .query(async ({ ctx, input }) => {
       return await ctx.prisma.meetings.findMany({
         where: {
-          MeetingAttendees: {
-            some: {
-              Students: {
-                tutor_id: input.tutorId,
-              },
-            },
-          },
+          tutor_id: input.tutor_id,
         },
         include: {
           MeetingAttendees: true,

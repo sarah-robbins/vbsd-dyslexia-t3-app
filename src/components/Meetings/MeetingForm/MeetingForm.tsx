@@ -136,6 +136,20 @@ const MeetingForm: React.FC<Props> = ({
   const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [selectedProgram, setSelectedProgram] = useState<string>("");
 
+  // Add this state for program options
+  const [programOptions, setProgramOptions] = useState<string[]>([]);
+
+  // Create a query to fetch program options
+  const { data: fetchedProgramOptions } = api.appSettings.getProgramOptions.useQuery() as { data: string[] | undefined };
+
+
+  // Use an effect to update the programOptions state when data is fetched
+  useEffect(() => {
+    if (fetchedProgramOptions) {
+      setProgramOptions(fetchedProgramOptions);
+    }
+  }, [fetchedProgramOptions]);
+
   const checkFormValidity = () => {
     const isNameValid = selectedNames.length > 0;
     const isDateValid = !!formDate;
@@ -480,8 +494,6 @@ const MeetingForm: React.FC<Props> = ({
   /* -------------------------------------------------------------------------- */
   /*                               Program Options                               */
   /* -------------------------------------------------------------------------- */
-
-  const programOptions: string[] = ["Barton", "Connections", "Foundations"];
 
   const programs = [...programOptions];
 
@@ -1122,7 +1134,7 @@ const MeetingForm: React.FC<Props> = ({
                     .some((role) => ["Admin", "Tutor"].includes(role)),
                 }}
               >
-                {programs.sort().map((option) => (
+                {programOptions.sort().map((option) => (
                   <MenuItem key={option} value={option}>
                     {option}
                   </MenuItem>

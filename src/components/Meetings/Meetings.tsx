@@ -10,13 +10,16 @@ import {
   type MeetingWithAttendees,
 } from "@/types";
 import Students from "../Students/Students";
+import { useSession } from "next-auth/react";
 // import { useSession } from "next-auth/react";
 
 // Initialization
 const Meetings = () => {
-  // const { data: session } = useSession();
-  // const sessionData = session?.user;
-
+  const { data: session } = useSession();
+  const sessionData = session?.user;
+  const tutorId = sessionData?.userId || 0;
+  console.log('tutorId: ', tutorId);
+  console.log('sessionData: ', sessionData);
   // State Management
   const [meetings, setMeetings] = useState<MeetingWithAttendees[]>([]);
   const [allMeetings, setAllMeetings] = useState<MeetingWithAttendees[]>([]);
@@ -40,7 +43,11 @@ const Meetings = () => {
   const dateToQuery = selectedDate && dayjs.isDayjs(selectedDate) ? selectedDate : dayjs();
 
   // API Calls
-  const { data: getAllMeetings } = api.meetings.getAllMeetings.useQuery();
+  const { data: getAllMeetings } = api.meetings.getMeetingsByTutorId.useQuery({
+    tutor_id: tutorId
+  });
+
+  console.log('tutor meetings: ', getAllMeetings);
 
   const getMeetingsByDate = api.meetings.getMeetingsByRoleAndDate.useQuery(dateToQuery.toDate()) as {
     data: MeetingWithAttendees[];
