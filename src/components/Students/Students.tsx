@@ -772,30 +772,55 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   };
 
   const rowExpansionTemplate = (data: Student) => {
-    const calculateTotalMeetings =
-      data.MeetingAttendees?.filter(
-        (attendee) => attendee.meeting_status === "Met"
+    const calculateMeetingsInDateRange = (
+      attendees: MeetingAttendees[],
+      status: string,
+      startDate: Dayjs,
+      endDate: Dayjs
+    ) => {
+      return attendees?.filter(
+        (attendee) => 
+          attendee.meeting_status === status &&
+          attendee.Meetings &&
+          dayjs(attendee.Meetings.start).isAfter(startDate) &&
+          dayjs(attendee.Meetings.start).isBefore(endDate)
       ).length ?? 0;
+    };
 
-    const calculateStudentAbsences =
-      data.MeetingAttendees?.filter(
-        (attendee) => attendee.meeting_status === "Student Absent"
-      ).length ?? 0;
+    const calculateTotalMeetings = calculateMeetingsInDateRange(
+      data.MeetingAttendees || [],
+      "Met",
+      beginningSearchDate,
+      endingSearchDate
+    );
 
-    const calculateTutorAbsences =
-      data.MeetingAttendees?.filter(
-        (attendee) => attendee.meeting_status === "Tutor Absent"
-      ).length ?? 0;
+    const calculateStudentAbsences = calculateMeetingsInDateRange(
+      data.MeetingAttendees || [],
+      "Student Absent",
+      beginningSearchDate,
+      endingSearchDate
+    );
 
-    const calculateStudentUnavailable =
-      data.MeetingAttendees?.filter(
-        (attendee) => attendee.meeting_status === "Student Unavailable"
-      ).length ?? 0;
+    const calculateTutorAbsences = calculateMeetingsInDateRange(
+      data.MeetingAttendees || [],
+      "Tutor Absent",
+      beginningSearchDate,
+      endingSearchDate
+    );
 
-    const calculateTutorUnavailable =
-      data.MeetingAttendees?.filter(
-        (attendee) => attendee.meeting_status === "Tutor Unavailable"
-      ).length ?? 0;
+    const calculateStudentUnavailable = calculateMeetingsInDateRange(
+      data.MeetingAttendees || [],
+      "Student Unavailable",
+      beginningSearchDate,
+      endingSearchDate
+    );
+
+    const calculateTutorUnavailable = calculateMeetingsInDateRange(
+      data.MeetingAttendees || [],
+      "Tutor Unavailable",
+      beginningSearchDate,
+      endingSearchDate
+    );
 
     const handleSwitchChange = (field: keyof Student, value: boolean) => {
       setStudents((currentStudents) =>
