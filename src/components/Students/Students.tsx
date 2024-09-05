@@ -523,20 +523,27 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   
     const handleTutorChange = (e: DropdownChangeEvent) => {
       const newTutorId = e.value as number;
-      // Prevent the default behavior which might be causing the row to exit edit mode
-      if (e.originalEvent) {
-        e.originalEvent.preventDefault();
-        e.originalEvent.stopPropagation();
-      }
-      
-      // Update only the local state for the dropdown
-      setSelectedTutorIds((prevSelectedTutorIds) => ({
-        ...prevSelectedTutorIds,
+      const newTutor = newTutorId === 0 ? null : users.find(user => user.id === newTutorId);
+      const newTutorLabel = newTutor ? `${newTutor.first_name || ''} ${newTutor.last_name || ''}` : "Unassigned";
+
+      setSelectedTutorIds(prev => ({
+        ...prev,
         [studentId]: newTutorId,
       }));
-  
-      // Update the editorCallback with the new value
-      options.editorCallback?.(newTutorId);
+
+      const updatedRowData = {
+        ...rowData,
+        tutorId: newTutorId,
+        tutor_id: newTutorId === 0 ? null : newTutorId,
+        tutorFullName: newTutorLabel,
+        Users: newTutor ? {
+          id: newTutor.id,
+          first_name: newTutor.first_name,
+          last_name: newTutor.last_name,
+        } : null,
+      };
+
+      options.editorCallback?.(updatedRowData);
     };
   
     const dropdownOptions = [
@@ -556,8 +563,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         optionLabel="label"
         filter
         resetFilterOnHide
-        // Prevent click from bubbling up to the row
-        onClick={(e) => e.stopPropagation()}
       />
     );
   };  

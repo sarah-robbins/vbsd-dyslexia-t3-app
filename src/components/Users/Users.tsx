@@ -3,6 +3,7 @@ import {
   DataTable,
   type DataTableRowEditCompleteEvent,
   type DataTableFilterMeta,
+  type DataTableRowEditEvent,
 } from "primereact/datatable";
 import { FilterMatchMode } from "primereact/api";
 import {
@@ -581,26 +582,63 @@ const Users: React.FC = () => {
       });
 
       setUsers(sortedUsers);
+
+      // Initialize isFormValid state for all users
+      const initialFormValidity = sortedUsers.reduce((acc, user) => {
+        if (user.id !== undefined) {
+          acc[user.id] = validateRow(user);
+        }
+        return acc;
+      }, {} as { [key: number]: boolean });
+
+      setIsFormValid(initialFormValidity);
     }
   }, [myUsers]);
 
+  const onRowEditInit = (event: DataTableRowEditEvent) => {
+    const { data } = event;
+    if (data.id !== undefined) {
+      setEditingRows((prev) => ({ ...prev, [data.id as number]: true }));
+      setIsFormValid((prev) => ({ ...prev, [data.id as number]: validateRow(data) }));
+    }
+  };
+
+  const onRowEditCancel = (event: DataTableRowEditEvent) => {
+    const { data } = event;
+    if (data.id !== undefined) {
+      setEditingRows((prev) => ({ ...prev, [data.id as number]: false }));
+      setIsFormValid((prev) => ({ ...prev, [data.id as number]: validateRow(data) }));
+    }
+  };
+
   const roleEditor = (options: ColumnEditorOptions) => {
     const value = options.value as string | string[] | undefined;
-
+  
     const currentValue = processRole(value) as string[] | undefined;
-
+  
     const handleRoleChange = (e: MultiSelectChangeEvent) => {
       // Explicitly cast e.value to string[]
       let selectedRoles: string[] = e.value as string[];
-
+  
       if (selectedRoles.includes("None") && selectedRoles.length > 1) {
         selectedRoles = ["None"];
       } else if (!selectedRoles.includes("None")) {
         selectedRoles = selectedRoles.filter((role) => role !== "None");
       }
-
+  
       options.editorCallback?.(selectedRoles);
-      updateFormValidity({ ...options.rowData, role: selectedRoles } as User);
+      
+      // Update form validity immediately after changing the roles
+      if (options.rowData && typeof options.rowData === 'object') {
+        const rowData = options.rowData as Partial<User>;
+        if (typeof rowData.id === 'number') {
+          const updatedRowData = { ...rowData, role: selectedRoles.join(', ') };
+          setIsFormValid((prev) => ({
+            ...prev,
+            [rowData.id as number]: validateRow(updatedRowData as User),
+          }));
+        }
+      }
     };
 
     return (
@@ -695,6 +733,8 @@ const Users: React.FC = () => {
           paginator
           rows={10}
           rowsPerPageOptions={[5, 10, 25, 50]}
+          onRowEditInit={onRowEditInit}
+          onRowEditCancel={onRowEditCancel}
         >
           <Column
             field="first_name"
