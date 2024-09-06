@@ -570,7 +570,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   const updateStudentRowMutation = api.students.updateStudentRow.useMutation();
 
   const onRowEditComplete = (e: DataTableRowEditCompleteEvent) => {
-    const { newData, index } = e as { newData: Student; index: number };
+    const { newData } = e as { newData: Student; index: number };
   
     if (!checkFormValidity(newData)) {
       toast.current?.show({
@@ -634,8 +634,8 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         onSuccess: (response) => {
           if (response) {
             setStudents((prevStudents) =>
-              prevStudents.map((student, i) =>
-                i === index
+              prevStudents.map((student) =>
+                student.id === newData.id
                   ? {
                       ...student,
                       ...response,
