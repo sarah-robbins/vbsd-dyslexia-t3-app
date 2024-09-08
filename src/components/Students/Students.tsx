@@ -654,11 +654,13 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
                   : student
               );
           });
-            toast.current?.show({
-              severity: "success",
-              summary: "Success",
-              detail: "Student updated",
-            });
+          toast.current?.show({
+            severity: "success",
+            summary: "Success",
+            detail: isOnMeetingsPage && tutorId !== sessionData?.userId
+              ? "Student removed from your list"
+              : "Student updated",
+          });
           }
         },
         onError: (error) => {
