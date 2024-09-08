@@ -200,9 +200,16 @@ export const studentsRouter = createTRPCRouter({
             select: {
               id: true,
               meeting_status: true,
+              Meetings: {
+                select: {
+                    id: true, 
+                    start: true,
+                    level_lesson: true
+                }
+              }
             },
           },
-        },
+      },
       });
     }),
 
@@ -230,7 +237,6 @@ export const studentsRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      console.log('input from trpc', input);
       return ctx.prisma.students.create({
         data: {
           school: input.school,

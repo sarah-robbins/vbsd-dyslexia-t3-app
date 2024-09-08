@@ -147,11 +147,9 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
 
   React.useEffect(() => {
     const storedView = localStorage.getItem("currentRoute");
-    console.log("storedView", storedView);
     if (storedView && setRoute) {
       setRoute(storedView);
     }
-    console.log("local storeage", localStorage.getItem("currentRoute"));
   }, [setRoute]);
 
   const setNewRoute = (link: Link) => {

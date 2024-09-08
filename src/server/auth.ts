@@ -73,7 +73,6 @@ export const authOptions: NextAuthOptions = {
         };
       } else {
         // Handle the case where userFromDb is undefined, possibly returning a session with default values or an error.
-        console.log('userFromDb is undefined');
         return session;
       }
     },

@@ -165,8 +165,10 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   useEffect(() => {
     if (isOnMeetingsPage) {
       setMyStudents(getStudentsForTutor);
+      console.log("getStudentsForTutor", getStudentsForTutor);
     } else {
       setMyStudents(getStudentsForRole);
+      console.log("getStudentsForRole", getStudentsForRole);
     }
   }, [
     getStudentsForRole,
@@ -311,7 +313,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
 
       setStudents(sortedStudents);
       setSelectedTutorIds(initialTutorIds);
-      console.log("processed students/state updated sorted", sortedStudents);
     }
   }, [myStudents]);
     
@@ -633,8 +634,15 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       {
         onSuccess: (response) => {
           if (response) {
-            setStudents((prevStudents) =>
-              prevStudents.map((student) =>
+            setStudents((prevStudents) => {
+              if (isOnMeetingsPage) {
+                // If on Meetings page, remove the student if the tutor has changed
+                if (tutorId !== sessionData?.userId) {
+                  return prevStudents.filter(student => student.id !== newData.id);
+                }
+              }
+              
+              return prevStudents.map((student) =>
                 student.id === newData.id
                   ? {
                       ...student,
@@ -644,8 +652,8 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
                       tutorFullName: tutorId === 0 ? "Unassigned" : formattedTutors.find(t => t.value === tutorId)?.label || "Unknown",
                     }
                   : student
-              )
-            );
+              );
+          });
             toast.current?.show({
               severity: "success",
               summary: "Success",
@@ -1138,9 +1146,10 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
             setDatedMeetingsWithAttendees={setDatedMeetingsWithAttendees}
             selectedMeetingAttendees={selectedMeetingAttendees}
             isOnStudentsPage={isOnStudentsPage}
-            isOnMeetingsPage={false} setAllMeetings={function (meetings: MeetingWithAttendees[] | ((prevMeetings: MeetingWithAttendees[]) => MeetingWithAttendees[])): void {
+            isOnMeetingsPage={false} setAllMeetings={function (): void {
               throw new Error("Function not implemented.");
-            } }          />
+            } }
+          />
           <MeetingList
             meetings={meetings}
             students={students}

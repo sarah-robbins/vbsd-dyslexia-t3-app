@@ -40,7 +40,6 @@ const Users: React.FC = () => {
 
   // Show a success toast when the runSuccessToast state is true
   useEffect(() => {
-    console.log("run success toast: ", runSuccessToast);
     if (runSuccessToast === true) {
       toast.current?.show({
         severity: "success",
@@ -231,7 +230,6 @@ const Users: React.FC = () => {
       updatedUsers = users.map((user) =>
         user.id === e.data.id ? ({ ...e.data } as User) : user
       );
-      console.log("updatedUsers", updatedUsers);
 
       const dataForSave = {
         ...newData,

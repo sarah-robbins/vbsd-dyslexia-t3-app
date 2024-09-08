@@ -18,8 +18,6 @@ const Meetings = () => {
   const { data: session } = useSession();
   const sessionData = session?.user;
   const tutorId = sessionData?.userId || 0;
-  console.log('tutorId: ', tutorId);
-  console.log('sessionData: ', sessionData);
   // State Management
   const [meetings, setMeetings] = useState<MeetingWithAttendees[]>([]);
   const [allMeetings, setAllMeetings] = useState<MeetingWithAttendees[]>([]);
@@ -46,8 +44,6 @@ const Meetings = () => {
   const { data: getAllMeetings } = api.meetings.getMeetingsByTutorId.useQuery({
     tutor_id: tutorId
   });
-
-  console.log('tutor meetings: ', getAllMeetings);
 
   const getMeetingsByDate = api.meetings.getMeetingsByRoleAndDate.useQuery(dateToQuery.toDate()) as {
     data: MeetingWithAttendees[];
@@ -79,7 +75,6 @@ const Meetings = () => {
       }));
       setAllMeetings(formattedMeetings);
     }
-    console.log(allMeetings);
   }, [getAllMeetings]);
 
   // Render Components
