@@ -436,7 +436,7 @@
   box-shadow: 0 0 0 0.2rem var(--primary-color-light);
 }
 .p-datepicker table td.p-datepicker-today > span {
-  background: #ced4da;
+  /* background: #ced4da; */
   color: #495057;
   border-color: transparent;
 }

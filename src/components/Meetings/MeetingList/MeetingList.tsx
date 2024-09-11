@@ -165,6 +165,7 @@ const MeetingList: React.FC<Props> = ({
     }
   }, [setSelectedDate]);
 
+
   useEffect(() => {
     if (selectAllCheckboxRef.current) {
       selectAllCheckboxRef.current.indeterminate =
@@ -172,6 +173,25 @@ const MeetingList: React.FC<Props> = ({
         selectedMeetings.length < filteredMeetings.length;
     }
   }, [selectedMeetings, filteredMeetings]);
+
+  const calculateMeetingTotal = useCallback((start: string): number => {
+    const startDate = dayjs(start);
+    const startDay = startDate.date();
+    const startMonth = startDate.month();
+    const startYear = startDate.year();
+
+    return meetings.reduce((total, meeting) => {
+      const meetingDate = dayjs(meeting.start);
+      if (
+        meetingDate.date() === startDay &&
+        meetingDate.month() === startMonth &&
+        meetingDate.year() === startYear
+      ) {
+        return total + 1;
+      }
+      return total;
+    }, 0);
+  }, [meetings]);
 
   const headerTemplate = useCallback((data: Meeting) => {
     const originalDate = dayjs(data.start);
@@ -215,7 +235,7 @@ const MeetingList: React.FC<Props> = ({
         </div>
       </div>
     );
-  }, []);
+  }, [calculateMeetingTotal]);
 
   const footerTemplate = useCallback(() => <td colSpan={5} className="h-auto" />, []);
 
@@ -231,25 +251,6 @@ const MeetingList: React.FC<Props> = ({
       </React.Fragment>
     ));
   }, []);
-
-  const calculateMeetingTotal = useCallback((start: string): number => {
-    const startDate = dayjs(start);
-    const startDay = startDate.date();
-    const startMonth = startDate.month();
-    const startYear = startDate.year();
-
-    return meetings.reduce((total, meeting) => {
-      const meetingDate = dayjs(meeting.start);
-      if (
-        meetingDate.date() === startDay &&
-        meetingDate.month() === startMonth &&
-        meetingDate.year() === startYear
-      ) {
-        return total + 1;
-      }
-      return total;
-    }, 0);
-  }, [meetings]);
 
   const getName = useCallback((rowData: MeetingWithAttendees) => {
     if (!datedMeetingsWithAttendees || !rowData) {

@@ -361,10 +361,11 @@ button.mobile-menu-toggle {
   outline: 0.15rem solid hsl(122.42, 39%, 80%) !important;
 }
 
-.p-datepicker-today span {
-  background-color: transparent !important;
-  border: 2px solid var(--primary-color) !important;
+.p-datepicker-today span, .p-datepicker table td.p-datepicker-today > span {
+  /* background-color: transparent !important; */
+  border: 1px solid var(--primary-color) !important;
   color: var(--primary-color) !important;
+  font-weight: bold;
 }
 
 .p-datepicker-today .p-highlight span {

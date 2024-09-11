@@ -165,10 +165,8 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   useEffect(() => {
     if (isOnMeetingsPage) {
       setMyStudents(getStudentsForTutor);
-      console.log("getStudentsForTutor", getStudentsForTutor);
     } else {
       setMyStudents(getStudentsForRole);
-      console.log("getStudentsForRole", getStudentsForRole);
     }
   }, [
     getStudentsForRole,
@@ -466,9 +464,15 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       <Dropdown
         value={value}
         options={appSettings.program_options}
-        onChange={(e: DropdownChangeEvent) => options.editorCallback?.(e.value)}
+        onChange={(e: DropdownChangeEvent) => {
+          console.log('Program changed to:', e.value);
+          options.editorCallback?.(e.value);
+        }}
         placeholder="Program"
-        editable
+        // editable
+        itemTemplate={(option) => {
+          return <span>{option}</span>;
+        }}
       />
     );
   };
@@ -543,7 +547,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
           last_name: newTutor.last_name,
         } : null,
       };
-
+      console.log('*** updatedRowData', updatedRowData)
       options.editorCallback?.(updatedRowData);
     };
   
@@ -572,7 +576,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
 
   const onRowEditComplete = (e: DataTableRowEditCompleteEvent) => {
     const { newData } = e as { newData: Student; index: number };
-  
+    console.log('*** Row edit completed. newData: ', newData)
     if (!checkFormValidity(newData)) {
       toast.current?.show({
         severity: "error",
@@ -600,6 +604,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       grade: newData.grade ?? "",
       home_room_teacher: newData.home_room_teacher ?? "",
       tutor_id: tutorId === 0 ? null : tutorId,
+      tutorId: tutorId,
       Users: newData.Users,
       intervention_program: newData.intervention_program ?? "",
       first_name: newData.first_name ?? "",
@@ -618,7 +623,9 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       created_at: new Date(),
     };
 
-    const { id, ...updateData } = dataForSave;
+    console.log('*** dataForSave', dataForSave)
+
+    const { id } = dataForSave;
 
     if (!id) {
       toast.current?.show({
@@ -628,11 +635,14 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       });
       return;
     }
-
     updateStudentRowMutation.mutate(
-      { id: newData.id, ...updateData },
+      { 
+        id: newData.id, 
+        ...dataForSave 
+      },
       {
         onSuccess: (response) => {
+          console.log('*** API update response:', response);
           if (response) {
             setStudents((prevStudents) => {
               if (isOnMeetingsPage) {
@@ -641,26 +651,28 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
                   return prevStudents.filter(student => student.id !== newData.id);
                 }
               }
-              
-              return prevStudents.map((student) =>
+
+              const newStudents = prevStudents.map((student) =>
                 student.id === newData.id
                   ? {
                       ...student,
                       ...response,
                       tutorId: tutorId,
                       tutor_id: tutorId === 0 ? null : tutorId,
-                      tutorFullName: tutorId === 0 ? "Unassigned" : formattedTutors.find(t => t.value === tutorId)?.label || "Unknown",
                     }
                   : student
               );
-          });
-          toast.current?.show({
-            severity: "success",
-            summary: "Success",
-            detail: isOnMeetingsPage && tutorId !== sessionData?.userId
-              ? "Student removed from your list"
-              : "Student updated",
-          });
+              console.log('*** students', students)
+              console.log('*** myStudents', myStudents)
+              return newStudents;
+            });
+            toast.current?.show({
+              severity: "success",
+              summary: "Success",
+              detail: isOnMeetingsPage && tutorId !== sessionData?.userId
+                ? "Student removed from your list"
+                : "Student updated",
+            });
           }
         },
         onError: (error) => {
@@ -767,7 +779,29 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     }
   };
 
-  const tutorBodyTemplate = (rowData: Student) => {
+  // const tutorBodyTemplate = (rowData: Student) => {
+  //   const key = `${rowData.id || 0}-${rowData.tutorId || 'unassigned'}`;
+  //   console.log('*** key', key)
+  //   if (rowData.Users && typeof rowData.Users === 'object') {
+  //     return <span key={key}>{`${rowData.Users.first_name || ''} ${rowData.Users.last_name || ''}`}</span>;
+  //   }
+  //   if (typeof rowData.tutorFullName === 'string' && rowData.tutorFullName !== "Unassigned") {
+  //     return <span key={key}>{rowData.tutorFullName}</span>;
+  //   }
+  //   if ((rowData.tutor_id === null && rowData.tutorId === undefined) || rowData.tutorFullName === "Unassigned") {
+  //     return <span key={key}>Unassigned</span>;
+  //   }
+  //   console.log('*** rowData.tutorFullName', rowData.tutorFullName)
+  //   console.log('*** rowData.tutorId', rowData.tutorId)
+  //   console.log('*** rowData.id', rowData.id)
+  //   console.log('*** rowData', rowData)
+  //   return <span key={key}>Tutor Name Not Available</span>;
+  // };
+
+  const TutorCell = React.memo(function TutorCell({ rowData }: { rowData: Student }) {
+    const key = `${rowData.id || 0}-${rowData.tutorId || 'unassigned'}`;
+    console.log('*** Rendering TutorCell for key:', key);
+    
     if (rowData.Users && typeof rowData.Users === 'object') {
       return <span>{`${rowData.Users.first_name || ''} ${rowData.Users.last_name || ''}`}</span>;
     }
@@ -777,9 +811,11 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     if ((rowData.tutor_id === null && rowData.tutorId === undefined) || rowData.tutorFullName === "Unassigned") {
       return <span>Unassigned</span>;
     }
-  
+    console.log('*** Fallback case reached for rowData:', rowData);
     return <span>Tutor Name Not Available</span>;
-  };
+  });
+  
+  const tutorBodyTemplate = (rowData: Student) => <TutorCell rowData={rowData} />;
 
   const rowExpansionTemplate = (data: Student) => {
     const calculateMeetingsInDateRange = (
@@ -852,8 +888,8 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         withdrew: data.withdrew,
         graduated: data.graduated,
         additional_comments: additionalFormValues?.additional_comments,
-        tutorFullName: data.tutorFullName || 'Unassigned',
-        tutorInfo: data.tutorInfo,
+        // tutorFullName: data.tutorFullName || 'Unassigned',
+        // tutorInfo: data.tutorInfo,
       };
       updateStudentExtraData(updateData);
     };
@@ -1150,7 +1186,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
             isOnStudentsPage={isOnStudentsPage}
             isOnMeetingsPage={false} setAllMeetings={function (): void {
               throw new Error("Function not implemented.");
-            } }
+            }}
           />
           <MeetingList
             meetings={meetings}
@@ -1499,6 +1535,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         </div>
 
         <DataTable
+          // key={students.map(s => `${s.id || 0}-${s.tutorId || 'unassigned'}`).join('-')}
           className="students-table"
           ref={dt}
           value={students}

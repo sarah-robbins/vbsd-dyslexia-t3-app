@@ -304,6 +304,7 @@ export const studentsRouter = createTRPCRouter({
           grade: input.grade,
           home_room_teacher: input.home_room_teacher,
           tutor_id: input.tutor_id,
+          intervention_program: input.intervention_program,
           services: input.services,
         },
       });

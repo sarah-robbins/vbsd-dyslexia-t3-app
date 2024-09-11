@@ -28,15 +28,14 @@ const Meetings = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [isOnMeetingsPage] = useState<boolean>(true);
   const [myDatedMeetings, setMyDatedMeetings] = useState<MeetingWithAttendees[]>([]);
+  const [viewDate, setViewDate] = useState(getFirstMonthInView());
+  const [uniqueKey, setUniqueKey] = useState<number>(1);
 
   function getFirstMonthInView() {
     const currentDate = dayjs();
     const firstDayOfMonth = currentDate.subtract(1, "month").startOf("month");
     return firstDayOfMonth;
   }
-
-  const [viewDate, setViewDate] = useState(getFirstMonthInView());
-  const [uniqueKey, setUniqueKey] = useState<number>(1);
 
   const dateToQuery = selectedDate && dayjs.isDayjs(selectedDate) ? selectedDate : dayjs();
 

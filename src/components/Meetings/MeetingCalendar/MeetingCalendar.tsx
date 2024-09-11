@@ -4,7 +4,6 @@ import { Card } from "primereact/card";
 import dayjs, { type Dayjs } from "dayjs";
 import { type FormEvent } from "primereact/ts-helpers";
 import { type Meeting } from "@/types";
-// import { api } from "@/utils/api";
 
 interface Props {
   allMeetings: Meeting[];
