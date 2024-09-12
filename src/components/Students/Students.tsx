@@ -325,30 +325,30 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   }, [myUsers]);
 
   const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.toLowerCase();
+    const value = e.target.value; // Keep the original value for display
+    const lowerCaseValue = value.toLowerCase(); // Use lowercase for filtering
     const _filters: DataTableFilterMeta = { ...filters };
-
+  
     if (_filters.global && "value" in _filters.global) {
-      _filters.global.value = value || "";
+      _filters.global.value = value; // Use the original value here
     }
     setFilters(_filters);
-    setGlobalFilterValue(value);
-
+    setGlobalFilterValue(value); // Use the original value here
+  
     const filtered = students.filter(
       (student) =>
-        student.first_name?.toLowerCase().includes(value) ||
-        student.last_name?.toLowerCase().includes(value) ||
-        student.school?.toLowerCase().includes(value) ||
-        student.grade?.toLowerCase().includes(value) ||
-        student.home_room_teacher?.toLowerCase().includes(value) ||
-        student.intervention_program?.toLowerCase().includes(value) ||
-        student.tutorFullName?.toLowerCase().includes(value) ||
-        (student.services && student.services.toLowerCase().includes(value))
+        student.first_name?.toLowerCase().includes(lowerCaseValue) ||
+        student.last_name?.toLowerCase().includes(lowerCaseValue) ||
+        student.school?.toLowerCase().includes(lowerCaseValue) ||
+        student.grade?.toLowerCase().includes(lowerCaseValue) ||
+        student.home_room_teacher?.toLowerCase().includes(lowerCaseValue) ||
+        student.intervention_program?.toLowerCase().includes(lowerCaseValue) ||
+        student.tutorFullName?.toLowerCase().includes(lowerCaseValue) ||
+        (student.services && student.services.toLowerCase().includes(lowerCaseValue))
     );
-
+  
     setFilteredStudents(filtered);
   };
-
   const studentIdEditor = (options: ColumnEditorOptions) => {
     const value = options.value as string;
     const isError = !value;
@@ -680,49 +680,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
 
   const updateStudentExtraDataMutation =
     api.students.updateStudentExtraData.useMutation();
-
-  // const updateStudentExtraData = (data: Student) => {
-  //   if (!data.id) {
-  //     console.error("No student ID provided for update");
-  //     return;
-  //   }
-
-  //   const updateData = {
-  //     level_lesson: data.level_lesson ?? null,
-  //     date_intervention_began: data.date_intervention_began
-  //       ? new Date(data.date_intervention_began.toString())
-  //       : null,
-  //     new_student: data.new_student ?? false,
-  //     moved: data.moved ?? false,
-  //     new_location: data.new_location ?? null,
-  //     withdrew: data.withdrew ?? false,
-  //     graduated: data.graduated ?? false,
-  //     additional_comments: data.additional_comments ?? null,
-  //     last_edited: new Date(),
-  //   };
-
-  //   console.log('*** updateData for extra data', updateData)
-
-  //   updateStudentExtraDataMutation.mutate(
-  //     { id: data.id, ...updateData },
-  //     {
-  //       onSuccess: () => {
-  //         toast.current?.show({
-  //           severity: "success",
-  //           summary: "Success",
-  //           detail: "Student extra data updated",
-  //         });
-  //       },
-  //       onError: (error) => {
-  //         toast.current?.show({
-  //           severity: "error",
-  //           summary: "Error",
-  //           detail: error.message,
-  //         });
-  //       },
-  //     }
-  //   );
-  // };
 
   const expandAll = () => {
     const _expandedRows: DataTableExpandedRows = {};
