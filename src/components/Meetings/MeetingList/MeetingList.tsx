@@ -10,12 +10,14 @@ import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
+import isBetween from 'dayjs/plugin/isBetween'
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
+dayjs.extend(isBetween)
 
 // Assume this is the timezone your timestamps are stored in
-const DB_TIMEZONE = 'America/New_York'; // Replace with your actual timezone
+const DB_TIMEZONE = 'America/Chicago'; // Replace with your actual timezone
 
 // Extracted constants
 const MEETING_STATUSES = {
@@ -48,16 +50,15 @@ const useFilteredMeetings = (
     if (selectedDate) {
       let filtered: MeetingWithAttendees[] = [];
       if (isOnMeetingsPage || isOnStudentsPage) {
-        // Get the start and end of the selected date in the user's local time
-        const startOfDay = selectedDate.startOf('day');
+        // Get the start and end of the selected date in the DB timezone
+        const startOfDay = selectedDate.tz(DB_TIMEZONE).startOf('day');
+        const endOfDay = selectedDate.tz(DB_TIMEZONE).endOf('day');
 
         filtered = meetings.filter((meeting) => {
           // Interpret the meeting start time as being in DB_TIMEZONE
           const dbMeetingStart = dayjs.tz(meeting.start, DB_TIMEZONE);
-          // Convert to the user's local timezone
-          const localMeetingStart = dbMeetingStart.tz(dayjs.tz.guess());
-          // Check if the local meeting time falls within the selected day
-          return localMeetingStart.isSame(startOfDay, 'day');
+          // Check if the meeting time falls within the selected day in DB timezone
+          return dbMeetingStart.isBetween(startOfDay, endOfDay, null, '[]');
         });
 
         if (isOnMeetingsPage) {
@@ -88,7 +89,9 @@ const useFilteredMeetings = (
       }
       setFilteredMeetings(filtered);
     }
-  }, [meetings, selectedDate, isOnMeetingsPage, isOnStudentsPage, students]);  return filteredMeetings;
+  }, [meetings, selectedDate, isOnMeetingsPage, isOnStudentsPage, students]);
+  
+  return filteredMeetings;
 };
 // Extracted smaller components
 const MeetingStatusChip: React.FC<{ status: string }> = React.memo(({ status }) => (
@@ -103,7 +106,7 @@ MeetingStatusChip.displayName = "MeetingStatusChip";
 
 const MeetingTime: React.FC<{ start: Date | Dayjs; end: Date | Dayjs }> = React.memo(({ start, end }) => {
   const formatTime = (time: Date | Dayjs): string => {
-    const date = dayjs(time);
+    const date = dayjs(time).tz(DB_TIMEZONE);
     const hours = date.hour();
     const minutes = date.minute();
     const isPM = hours >= 12;
