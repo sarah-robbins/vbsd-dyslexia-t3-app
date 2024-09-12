@@ -859,7 +859,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
           toast.current?.show({
             severity: "success",
             summary: "Success",
-            detail: "Student extra data updated",
+            detail: "Student additional info is updated",
           });
     
           // Update the local state with the new data
