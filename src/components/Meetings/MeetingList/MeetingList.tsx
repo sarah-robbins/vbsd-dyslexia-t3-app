@@ -100,16 +100,10 @@ const MeetingStatusChip: React.FC<{ status: string }> = React.memo(({ status }) 
 
 MeetingStatusChip.displayName = "MeetingStatusChip";
 
-const MeetingTime: React.FC<{ start: Date | Dayjs; end: Date | Dayjs }> = React.memo(({ start, end }) => {
-  const formatTime = (time: Date | Dayjs): string => {
+const MeetingTime: React.FC<{ start: Date; end: Date }> = React.memo(({ start, end }) => {
+  const formatTime = (time: Date): string => {
     const date = dayjs(time).tz(DB_TIMEZONE);
-    const hours = date.hour();
-    const minutes = date.minute();
-    const isPM = hours >= 12;
-    const formattedHours = isPM ? hours % 12 || 12 : hours;
-    const formattedMinutes = minutes.toString().padStart(2, "0");
-    const period = isPM ? "pm" : "am";
-    return `${formattedHours}:${formattedMinutes}${period}`;
+    return date.format("h:mm A");
   };
 
   const startTime = formatTime(start);
