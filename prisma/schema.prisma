@@ -89,8 +89,8 @@ model MeetingAttendees {
 
 model Meetings {
   id               Int                @id @unique @default(autoincrement())
-  start            DateTime?          @db.Timestamptz(6)
-  end              DateTime?          @db.Timestamptz(6)
+  start            DateTime?          @db.Timestamp(6)
+  end              DateTime?          @db.Timestamp(6)
   program          String?
   level_lesson     String?
   meeting_notes    String?

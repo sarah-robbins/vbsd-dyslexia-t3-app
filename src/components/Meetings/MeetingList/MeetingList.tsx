@@ -16,10 +16,8 @@ dayjs.extend(utc)
 dayjs.extend(timezone)
 dayjs.extend(isBetween)
 
-// Assume this is the timezone your timestamps are stored in
-const DB_TIMEZONE = 'America/Chicago'; // Replace with your actual timezone
+const DB_TIMEZONE = 'America/Chicago';
 
-// Extracted constants
 const MEETING_STATUSES = {
   MET: "Met",
   STUDENT_ABSENT: "Student Absent",
@@ -55,16 +53,14 @@ const useFilteredMeetings = (
         const endOfDay = selectedDate.tz(DB_TIMEZONE).endOf('day');
 
         filtered = meetings.filter((meeting) => {
-          // Interpret the meeting start time as being in DB_TIMEZONE
           const dbMeetingStart = dayjs.tz(meeting.start, DB_TIMEZONE);
-          // Check if the meeting time falls within the selected day in DB timezone
           return dbMeetingStart.isBetween(startOfDay, endOfDay, null, '[]');
         });
 
         if (isOnMeetingsPage) {
           filtered = filtered.map((meeting) => ({
             ...meeting,
-            dateString: dayjs(meeting.start).format("YYYY-MM-DD"),
+            dateString: dayjs(meeting.start, DB_TIMEZONE).format("YYYY-MM-DD"),
           }));
         } else if (isOnStudentsPage) {
           const datedMeetingsWithAttendees = filtered.map((meeting): MeetingWithAttendees => {
@@ -128,6 +124,7 @@ const MeetingTime: React.FC<{ start: Date | Dayjs; end: Date | Dayjs }> = React.
 });
 
 MeetingTime.displayName = "MeetingTime";
+
 interface Props {
   meetings: MeetingWithAttendees[];
   // setMeetings: (meetings: MeetingWithAttendees[]) => void;
