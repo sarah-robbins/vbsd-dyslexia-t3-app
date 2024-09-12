@@ -5,7 +5,7 @@ import {
   type DataTableFilterMeta,
   type DataTableExpandedRows,
   type DataTableValueArray,
-  type DataTableRowEvent,
+  // type DataTableRowEvent,
 } from "primereact/datatable";
 import { FilterMatchMode } from "primereact/api";
 import {
@@ -465,7 +465,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         value={value}
         options={appSettings.program_options}
         onChange={(e: DropdownChangeEvent) => {
-          console.log('Program changed to:', e.value);
           options.editorCallback?.(e.value);
         }}
         placeholder="Program"
@@ -547,7 +546,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
           last_name: newTutor.last_name,
         } : null,
       };
-      console.log('*** updatedRowData', updatedRowData)
       options.editorCallback?.(updatedRowData);
     };
   
@@ -570,13 +568,12 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         resetFilterOnHide
       />
     );
-  };  
+  };
 
   const updateStudentRowMutation = api.students.updateStudentRow.useMutation();
 
   const onRowEditComplete = (e: DataTableRowEditCompleteEvent) => {
     const { newData } = e as { newData: Student; index: number };
-    console.log('*** Row edit completed. newData: ', newData)
     if (!checkFormValidity(newData)) {
       toast.current?.show({
         severity: "error",
@@ -585,10 +582,9 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       });
       return;
     }
-  
+
     const tutorId = selectedTutorIds[newData.id as number] ?? 0;
   
-
     if (tutorId !== 0 && !users.some(user => user.id === tutorId)) {
       toast.current?.show({
         severity: "error",
@@ -620,10 +616,8 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       graduated: newData.graduated ?? false,
       additional_comments: newData.additional_comments ?? "",
       last_edited: new Date(),
-      created_at: new Date(),
+      // created_at: new Date(),
     };
-
-    console.log('*** dataForSave', dataForSave)
 
     const { id } = dataForSave;
 
@@ -642,7 +636,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       },
       {
         onSuccess: (response) => {
-          console.log('*** API update response:', response);
           if (response) {
             setStudents((prevStudents) => {
               if (isOnMeetingsPage) {
@@ -662,8 +655,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
                     }
                   : student
               );
-              console.log('*** students', students)
-              console.log('*** myStudents', myStudents)
               return newStudents;
             });
             toast.current?.show({
@@ -690,46 +681,48 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   const updateStudentExtraDataMutation =
     api.students.updateStudentExtraData.useMutation();
 
-  const updateStudentExtraData = (data: Student) => {
-    if (!data.id) {
-      console.error("No student ID provided for update");
-      return;
-    }
+  // const updateStudentExtraData = (data: Student) => {
+  //   if (!data.id) {
+  //     console.error("No student ID provided for update");
+  //     return;
+  //   }
 
-    const updateData = {
-      level_lesson: data.level_lesson ?? null,
-      date_intervention_began: data.date_intervention_began
-        ? new Date(data.date_intervention_began.toString())
-        : null,
-      new_student: data.new_student ?? false,
-      moved: data.moved ?? false,
-      new_location: data.new_location ?? null,
-      withdrew: data.withdrew ?? false,
-      graduated: data.graduated ?? false,
-      additional_comments: data.additional_comments ?? null,
-      last_edited: new Date(),
-    };
+  //   const updateData = {
+  //     level_lesson: data.level_lesson ?? null,
+  //     date_intervention_began: data.date_intervention_began
+  //       ? new Date(data.date_intervention_began.toString())
+  //       : null,
+  //     new_student: data.new_student ?? false,
+  //     moved: data.moved ?? false,
+  //     new_location: data.new_location ?? null,
+  //     withdrew: data.withdrew ?? false,
+  //     graduated: data.graduated ?? false,
+  //     additional_comments: data.additional_comments ?? null,
+  //     last_edited: new Date(),
+  //   };
 
-    updateStudentExtraDataMutation.mutate(
-      { id: data.id, ...updateData },
-      {
-        onSuccess: () => {
-          toast.current?.show({
-            severity: "success",
-            summary: "Success",
-            detail: "Student extra data updated",
-          });
-        },
-        onError: (error) => {
-          toast.current?.show({
-            severity: "error",
-            summary: "Error",
-            detail: error.message,
-          });
-        },
-      }
-    );
-  };
+  //   console.log('*** updateData for extra data', updateData)
+
+  //   updateStudentExtraDataMutation.mutate(
+  //     { id: data.id, ...updateData },
+  //     {
+  //       onSuccess: () => {
+  //         toast.current?.show({
+  //           severity: "success",
+  //           summary: "Success",
+  //           detail: "Student extra data updated",
+  //         });
+  //       },
+  //       onError: (error) => {
+  //         toast.current?.show({
+  //           severity: "error",
+  //           summary: "Error",
+  //           detail: error.message,
+  //         });
+  //       },
+  //     }
+  //   );
+  // };
 
   const expandAll = () => {
     const _expandedRows: DataTableExpandedRows = {};
@@ -799,8 +792,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   // };
 
   const TutorCell = React.memo(function TutorCell({ rowData }: { rowData: Student }) {
-    const key = `${rowData.id || 0}-${rowData.tutorId || 'unassigned'}`;
-    console.log('*** Rendering TutorCell for key:', key);
+    // const key = `${rowData.id || 0}-${rowData.tutorId || 'unassigned'}`;
     
     if (rowData.Users && typeof rowData.Users === 'object') {
       return <span>{`${rowData.Users.first_name || ''} ${rowData.Users.last_name || ''}`}</span>;
@@ -811,7 +803,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     if ((rowData.tutor_id === null && rowData.tutorId === undefined) || rowData.tutorFullName === "Unassigned") {
       return <span>Unassigned</span>;
     }
-    console.log('*** Fallback case reached for rowData:', rowData);
     return <span>Tutor Name Not Available</span>;
   });
   
@@ -878,20 +869,44 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
 
     const handleUpdateClick = () => {
       const updateData = {
-        ...additionalFormValues,
         id: data.id,
-        level_lesson: additionalFormValues?.level_lesson ?? null,
-        date_intervention_began: interventionDate ?? null,
-        new_student: data.new_student,
-        moved: data.moved,
-        new_location: additionalFormValues?.new_location ?? null,
-        withdrew: data.withdrew,
-        graduated: data.graduated,
-        additional_comments: additionalFormValues?.additional_comments,
-        // tutorFullName: data.tutorFullName || 'Unassigned',
-        // tutorInfo: data.tutorInfo,
+        level_lesson: additionalFormValues?.level_lesson ?? data.level_lesson,
+        date_intervention_began: interventionDate?.toDate() || null,
+        new_student: data.new_student ?? false,
+        moved: data.moved ?? false,
+        new_location: additionalFormValues?.new_location ?? data.new_location,
+        withdrew: data.withdrew ?? false,
+        graduated: data.graduated ?? false,
+        additional_comments: additionalFormValues?.additional_comments ?? data.additional_comments,
       };
-      updateStudentExtraData(updateData);
+    
+      updateStudentExtraDataMutation.mutate(updateData, {
+        onSuccess: (updatedStudent) => {
+          toast.current?.show({
+            severity: "success",
+            summary: "Success",
+            detail: "Student extra data updated",
+          });
+    
+          // Update the local state with the new data
+          setStudents((prevStudents) =>
+            prevStudents.map((student) =>
+              student.id === updatedStudent.id ? { ...student, ...updatedStudent } : student
+            )
+          );
+    
+          // Reset the additional form values
+          setAdditionalFormValues(undefined);
+          setInterventionDate(undefined);
+        },
+        onError: (error) => {
+          toast.current?.show({
+            severity: "error",
+            summary: "Error",
+            detail: error.message,
+          });
+        },
+      });
     };
 
     const studentMeetings = getDatedMeetings?.filter((meeting) =>
@@ -938,12 +953,20 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
                 required
                 error={!data?.level_lesson}
                 id="outlined-multiline-flexible"
-                value={data?.level_lesson?.toString() || ''}
-                onChange={(e) =>
+                value={additionalFormValues?.level_lesson ?? data?.level_lesson?.toString() ?? ''}
+                onChange={(e) => {
+                  const newValue = e.target.value;
                   setAdditionalFormValues({
                     ...additionalFormValues,
-                    level_lesson: e.target.value,
+                    level_lesson: newValue,
                   })
+                  setStudents(prevStudents =>
+                    prevStudents.map(student =>
+                      student.id === data.id
+                        ? { ...student, level_lesson: newValue }
+                        : student
+                    )
+                  )}
                 }
                 label="Beginning Level/Lesson"
                 className="w-12"
@@ -956,7 +979,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
               />
               <TextField
                 id="outlined-multiline-flexible"
-                value={latestLevelLesson}
+                value={latestLevelLesson || ''}
                 label="Current Level/Lesson"
                 className="w-12"
                 inputProps={{
@@ -1050,7 +1073,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
 
               <TextField
                 id="outlined-multiline-flexible"
-                value={data?.new_location}
+                value={data?.new_location || ''}
                 onChange={(e) =>
                   setAdditionalFormValues({
                     ...additionalFormValues,
@@ -1069,13 +1092,21 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
             </div>
             <TextField
               id="outlined-multiline-flexible"
-              value={data?.additional_comments}
-              onChange={(e) =>
-                setAdditionalFormValues({
-                  ...additionalFormValues,
-                  additional_comments: e.target.value,
-                })
-              }
+              value={additionalFormValues?.additional_comments ?? data?.additional_comments ?? ''}
+              onChange={(e) => {
+                const newValue = e.target.value;
+                setAdditionalFormValues(prev => ({
+                  ...prev,
+                  additional_comments: newValue,
+                }));
+                setStudents(prevStudents =>
+                  prevStudents.map(student =>
+                    student.id === data.id
+                      ? { ...student, additional_comments: newValue }
+                      : student
+                  )
+                );
+              }}
               label="Additional Comments"
               className="w-12"
               multiline
@@ -1437,9 +1468,9 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       </div>
     );
 
-  const rowSelected = (e: DataTableRowEvent) => {
-    console.log("e", e);
-  };
+  // const rowSelected = (e: DataTableRowEvent) => {
+  //   console.log("e", e);
+  // };
 
   const newRowClass = (data: Student) => {
     return {
@@ -1549,7 +1580,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
           stripedRows
           removableSort
           rowClassName={newRowClass}
-          onRowSelect={rowSelected}
+          // onRowSelect={rowSelected}
           tableStyle={{ minWidth: "60rem" }}
           filters={filters}
           globalFilterFields={[

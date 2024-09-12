@@ -155,19 +155,20 @@ const MeetingForm: React.FC<Props> = ({
     const isNameValid = selectedNames.length > 0;
     const isDateValid = !!formDate;
     const isTimeValid = !!startTime && !!endTime;
-    const isStatusValid = selectedNames.every(name => individualStatuses[name]);
+    const isStatusValid = selectedNames.every(name => {
+      return !!individualStatuses[name];
+    });
     const isProgramValid = formValues.program !== "" || !isFormEditable;
-
+  
     const isValid = isNameValid && isDateValid && isTimeValid && isStatusValid && isProgramValid;
-
-      console.log('Form validity:', isValid);
-
+  
+  
     setIsFormValid(isValid);
   };
 
-  // useEffect(() => {
-  //   checkFormValidity();
-  // }, [selectedNames, formDate, startTime, endTime, individualStatuses, formValues.program, isFormEditable]);
+  useEffect(() => {
+    checkFormValidity();
+  }, [selectedNames, formDate, startTime, endTime, individualStatuses, formValues.program, isFormEditable]);
 
   useEffect(() => {
     if (selectedDate && myDatedMeetings) {
@@ -220,7 +221,7 @@ const MeetingForm: React.FC<Props> = ({
     const { name, value } = event.target;
     setFormValues((prevFormValues) => {
       const updatedFormValues = { ...prevFormValues, [name]: value };
-      checkFormValidity();
+      // checkFormValidity();
       return updatedFormValues;
     });
   };
@@ -290,7 +291,7 @@ const MeetingForm: React.FC<Props> = ({
 
     setSelectedNames(newSelectedNames);
     setRemovedAttendees(updatedRemovedAttendees);
-    checkFormValidity();
+    // checkFormValidity();
   };
 
   /* -------------------------------------------------------------------------- */
@@ -323,7 +324,7 @@ const MeetingForm: React.FC<Props> = ({
         start: startDateTime, // Now a Date object
         end: endDateTime, // Now a Date object
       });
-      checkFormValidity();
+      // checkFormValidity();
     }
   };
 
@@ -338,7 +339,7 @@ const MeetingForm: React.FC<Props> = ({
         .set("date", dateFromForm?.date());
 
       setFormValues({ ...formValues, start: updatedStart });
-      checkFormValidity();
+      // checkFormValidity();
     }
   };
   const handleEndTime = (time: Dayjs | null) => {
@@ -352,7 +353,7 @@ const MeetingForm: React.FC<Props> = ({
         .set("date", dateFromForm?.date());
 
       setFormValues({ ...formValues, end: updatedEnd });
-      checkFormValidity();
+      // checkFormValidity();
     }
   };
 
@@ -436,7 +437,7 @@ const MeetingForm: React.FC<Props> = ({
   ) => {
     setIndividualStatuses(prev => {
       const newStatuses = { ...prev, [studentName]: status };
-      checkFormValidity();
+      // checkFormValidity();
       return newStatuses;
     });
   };
@@ -450,7 +451,7 @@ const MeetingForm: React.FC<Props> = ({
     const selectedProgram = event.target.value;
     setFormValues({ ...formValues, program: selectedProgram });
     setSelectedProgram(selectedProgram);
-    checkFormValidity();
+    // checkFormValidity();
   };
 
   /* -------------------------------------------------------------------------- */
@@ -485,36 +486,46 @@ const MeetingForm: React.FC<Props> = ({
     }
   }, [students, isOnMeetingsPage, isOnStudentsPage]);
 
-  // useEffect(() => {
-  //   const getAttendeeNames = (): string[] => {
-  //     return selectedMeetings.flatMap(
-  //       (meeting) =>
-  //         meeting?.attendees?.sort().map((attendee) => attendee.name) ?? []
-  //     );
-  //   };
-  //   const names = getAttendeeNames();
-  //   setName(names);
-  //   setSelectedNames(names);
-  // }, [selectedMeetings]);
+  useEffect(() => {
+    if (selectedMeetings.length === 0) {
+      setSelectedNames([]);
+      setName([]);
+      setIndividualStatuses({});
+      setFormValues({
+        name: [],
+        student_id: 0,
+        start: dayjs(),
+        end: dayjs(),
+        meeting_status: "",
+        program: "",
+        level_lesson: "",
+        meeting_notes: "",
+        recorded_by: "",
+        recorded_on: dayjs.utc(),
+        edited_by: "",
+        edited_on: dayjs.utc(),
+        attendees: [],
+      });
+      setStartTime(dayjs());
+      setEndTime(dayjs());
+    }
+  }, [selectedMeetings]);
 
   useEffect(() => {
     if (selectedMeetings.length > 0) {
       const selectedMeeting = selectedMeetings[0];
       if (!selectedMeeting) return;
-      console.log('selectedMeeting', selectedMeeting)
 
       const newStatuses: { [key: string]: string } = {};
       selectedMeeting.attendees?.forEach((attendee) => {
         newStatuses[attendee.name] = attendee.meeting_status || "";
       });
       setIndividualStatuses(newStatuses);
-      console.log('newStatuses', newStatuses)
 
       const metStatusPresent = Object.values(newStatuses).some(
         (status) => status === "Met"
       );
       setIsFormEditable(metStatusPresent);
-      console.log('isFormEditable', isFormEditable)
 
       const attendeeNames =
         selectedMeeting.attendees?.map((attendee) => {
@@ -525,12 +536,9 @@ const MeetingForm: React.FC<Props> = ({
           return `${firstName} ${lastName}`;
         }) || [];
 
-      console.log('attendeeNames', attendeeNames)
-
       setName((prevNames) => [...prevNames, ...attendeeNames]);
       setSelectedNames(attendeeNames);
       setNamesForSelect(attendeeNames);
-      console.log('namesForSelect', namesForSelect)
       
       setFormDate(dayjs(selectedMeeting.start));
       const start = dayjs(selectedMeeting.start);
@@ -810,7 +818,7 @@ const MeetingForm: React.FC<Props> = ({
                 : meeting
             );
           });
-          setSelectedMeetings([]);
+          // setSelectedMeetings([]);
           toast.current?.show({
             severity: "success",
             summary: "Meeting successfully updated.",
