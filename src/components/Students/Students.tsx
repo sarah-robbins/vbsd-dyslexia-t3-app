@@ -535,6 +535,10 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         [studentId]: newTutorId,
       }));
 
+      console.log('*** selectedTutorIds', selectedTutorIds)
+      console.log('*** newTutorId', newTutorId)
+      console.log('*** newTutorLabel', newTutorLabel)
+
       const updatedRowData = {
         ...rowData,
         tutorId: newTutorId,
@@ -546,6 +550,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
           last_name: newTutor.last_name,
         } : null,
       };
+      console.log('*** updatedRowData', updatedRowData)
       options.editorCallback?.(updatedRowData);
     };
   
@@ -594,6 +599,11 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       return;
     }
 
+    const selectedTutor = users.find(user => user.id === tutorId);
+    const tutorFullName = selectedTutor 
+      ? `${selectedTutor.first_name || ''} ${selectedTutor.last_name || ''}` 
+      : "Unassigned";
+
     const dataForSave = {
       ...newData,
       school: newData.school ?? "",
@@ -601,7 +611,12 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       home_room_teacher: newData.home_room_teacher ?? "",
       tutor_id: tutorId === 0 ? null : tutorId,
       tutorId: tutorId,
-      Users: newData.Users,
+      tutorFullName: tutorFullName,
+      Users: selectedTutor ? {
+        id: selectedTutor.id,
+        first_name: selectedTutor.first_name,
+        last_name: selectedTutor.last_name,
+      } : undefined,
       intervention_program: newData.intervention_program ?? "",
       first_name: newData.first_name ?? "",
       last_name: newData.last_name ?? "",
@@ -652,6 +667,8 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
                       ...response,
                       tutorId: tutorId,
                       tutor_id: tutorId === 0 ? null : tutorId,
+                      tutorFullName: tutorFullName,
+                      Users: dataForSave.Users,                      
                     }
                   : student
               );
