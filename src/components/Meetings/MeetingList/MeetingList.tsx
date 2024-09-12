@@ -17,6 +17,7 @@ dayjs.extend(timezone)
 dayjs.extend(isBetween)
 
 const DB_TIMEZONE = 'America/Chicago';
+const APP_TIMEZONE = dayjs.tz.guess();
 
 const MEETING_STATUSES = {
   MET: "Met",
@@ -36,8 +37,8 @@ const STATUS_COLORS = {
 
 // Custom hook for filtering meetings
 const useFilteredMeetings = (
-  meetings: MeetingWithAttendees[], // Ensure this is an array
-  selectedDate: Dayjs, // This is a Dayjs object
+  meetings: MeetingWithAttendees[],
+  selectedDate: Dayjs,
   isOnMeetingsPage: boolean,
   isOnStudentsPage: boolean,
   students: Student[]
@@ -48,19 +49,19 @@ const useFilteredMeetings = (
     if (selectedDate) {
       let filtered: MeetingWithAttendees[] = [];
       if (isOnMeetingsPage || isOnStudentsPage) {
-        // Get the start and end of the selected date in the DB timezone
+        // const dbSelectedDate = selectedDate.tz(DB_TIMEZONE);
         const startOfDay = selectedDate.tz(DB_TIMEZONE).startOf('day');
         const endOfDay = selectedDate.tz(DB_TIMEZONE).endOf('day');
 
         filtered = meetings.filter((meeting) => {
-          const dbMeetingStart = dayjs.tz(meeting.start, DB_TIMEZONE);
-          return dbMeetingStart.isBetween(startOfDay, endOfDay, null, '[]');
+          const meetingStart = dayjs.utc(meeting.start).tz(DB_TIMEZONE);
+          return meetingStart.isBetween(startOfDay, endOfDay, null, '[]');
         });
 
         if (isOnMeetingsPage) {
           filtered = filtered.map((meeting) => ({
             ...meeting,
-            dateString: dayjs(meeting.start, DB_TIMEZONE).format("YYYY-MM-DD"),
+            dateString: dayjs.utc(meeting.start).tz(DB_TIMEZONE).format("YYYY-MM-DD"),
           }));
         } else if (isOnStudentsPage) {
           const datedMeetingsWithAttendees = filtered.map((meeting): MeetingWithAttendees => {
@@ -102,8 +103,7 @@ MeetingStatusChip.displayName = "MeetingStatusChip";
 
 const MeetingTime: React.FC<{ start: Date; end: Date }> = React.memo(({ start, end }) => {
   const formatTime = (time: Date): string => {
-    const date = dayjs(time).tz(DB_TIMEZONE);
-    return date.format("h:mm A");
+    return dayjs.utc(time).tz(APP_TIMEZONE).format("h:mm A");
   };
 
   const startTime = formatTime(start);
