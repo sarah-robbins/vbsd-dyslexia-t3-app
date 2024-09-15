@@ -84,6 +84,7 @@ interface Props {
   setDatedMeetingsWithAttendees: (meetings: MeetingWithAttendees[]) => void;
   isOnMeetingsPage: boolean;
   isOnStudentsPage: boolean;
+  studentId: number;
 }
 
 const MeetingForm: React.FC<Props> = ({
@@ -94,11 +95,12 @@ const MeetingForm: React.FC<Props> = ({
   myDatedMeetings = [],
   setMyDatedMeetings,
   selectedMeetings = [],
-  setSelectedMeetings,
+  // setSelectedMeetings,
   selectedDate,
   setDatedMeetingsWithAttendees,
   isOnMeetingsPage,
   isOnStudentsPage,
+  studentId,
 }) => {
   const { data: session } = useSession();
   const sessionData = session?.user;
@@ -134,17 +136,12 @@ const MeetingForm: React.FC<Props> = ({
   const [startTime, setStartTime] = useState<Dayjs>(dayjs());
   const [endTime, setEndTime] = useState<Dayjs>(dayjs());
   const [individualStatuses, setIndividualStatuses] = useState<{ [key: string]: string }>({});
-  // const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [selectedProgram, setSelectedProgram] = useState<string>("");
-
-  // Add this state for program options
+  const [lastEditedInfo, setLastEditedInfo] = useState<string>('');
   const [programOptions, setProgramOptions] = useState<string[]>([]);
 
-  // Create a query to fetch program options
   const { data: getProgramOptions } = api.appSettings.getProgramOptions.useQuery() as { data: string[] | undefined };
 
-
-  // Use an effect to update the programOptions state when data is fetched
   useEffect(() => {
     if (getProgramOptions) {
       setProgramOptions(getProgramOptions);
@@ -162,7 +159,6 @@ const MeetingForm: React.FC<Props> = ({
   
     const isValid = isNameValid && isDateValid && isTimeValid && isStatusValid && isProgramValid;
   
-  
     setIsFormValid(isValid);
   };
 
@@ -172,8 +168,17 @@ const MeetingForm: React.FC<Props> = ({
 
   useEffect(() => {
     if (selectedDate && myDatedMeetings) {
-      const datedMeetingsWithAttendees: MeetingWithAttendees[] =
-        myDatedMeetings.map((meeting): MeetingWithAttendees => {
+      let filteredMeetings = myDatedMeetings;
+
+    // If on Students page, filter meetings for the specific student
+    if (isOnStudentsPage && studentId) {
+      filteredMeetings = myDatedMeetings.filter(meeting => 
+        meeting.MeetingAttendees?.some(attendee => attendee.student_id === studentId)
+      );
+    }
+
+    const datedMeetingsWithAttendees: MeetingWithAttendees[] =
+      filteredMeetings.map((meeting): MeetingWithAttendees => {
           const attendees = (meeting.MeetingAttendees ?? [])
             .map((attendee) => {
               const student = students?.find(
@@ -209,19 +214,13 @@ const MeetingForm: React.FC<Props> = ({
         });
       setDatedMeetingsWithAttendees(datedMeetingsWithAttendees);
     }
-  }, [
-    myDatedMeetings,
-    meetings,
-    students,
-    selectedDate,
-    setDatedMeetingsWithAttendees,
-  ]);
+  }, [myDatedMeetings, meetings, students, selectedDate, setDatedMeetingsWithAttendees, isOnStudentsPage, studentId]);
 
   const handleTextChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setFormValues((prevFormValues) => {
       const updatedFormValues = { ...prevFormValues, [name]: value };
-      // checkFormValidity();
+      
       return updatedFormValues;
     });
   };
@@ -291,7 +290,7 @@ const MeetingForm: React.FC<Props> = ({
 
     setSelectedNames(newSelectedNames);
     setRemovedAttendees(updatedRemovedAttendees);
-    // checkFormValidity();
+    
   };
 
   /* -------------------------------------------------------------------------- */
@@ -324,7 +323,7 @@ const MeetingForm: React.FC<Props> = ({
         start: startDateTime, // Now a Date object
         end: endDateTime, // Now a Date object
       });
-      // checkFormValidity();
+      
     }
   };
 
@@ -339,7 +338,7 @@ const MeetingForm: React.FC<Props> = ({
         .set("date", dateFromForm?.date());
 
       setFormValues({ ...formValues, start: updatedStart });
-      // checkFormValidity();
+      
     }
   };
   const handleEndTime = (time: Dayjs | null) => {
@@ -353,7 +352,7 @@ const MeetingForm: React.FC<Props> = ({
         .set("date", dateFromForm?.date());
 
       setFormValues({ ...formValues, end: updatedEnd });
-      // checkFormValidity();
+      
     }
   };
 
@@ -396,9 +395,18 @@ const MeetingForm: React.FC<Props> = ({
     setIndividualStatuses(initialStatuses);
   }, [selectedMeetings]);
 
+  
   const renderStatusSelects = () => {
+    const isAdmin = session?.user.role
+      .split(",")
+      .map((role) => role.trim())
+      .includes("Admin");
     return selectedNames.map((studentName) => {
       const status = individualStatuses[studentName] || "";
+      const student = students.find(s => s.id === studentId);
+      const isCurrentStudent = isOnStudentsPage && student && `${student.first_name ?? ''} ${student.last_name ?? ''}` === studentName;
+      const isEditable = isAdmin && (!isOnStudentsPage || (isOnStudentsPage && isCurrentStudent));
+
       return (
         <div key={studentName} className="flex flex-column gap-4">
           <div className="flex gap-4">
@@ -409,11 +417,9 @@ const MeetingForm: React.FC<Props> = ({
                 value={status}
                 onChange={(e) => handleIndividualStatusChange(studentName, e.target.value)}
                 inputProps={{
-                  readOnly: !session?.user.role
-                    .split(",")
-                    .map((role) => role.trim())
-                    .some((role) => ["Admin", "Tutor"].includes(role)),
+                  readOnly: !isEditable,
                 }}
+                disabled={!isEditable}
               >
                 {options.sort().map((option) => (
                   <MenuItem key={option} value={option}>{option}</MenuItem>
@@ -437,7 +443,7 @@ const MeetingForm: React.FC<Props> = ({
   ) => {
     setIndividualStatuses(prev => {
       const newStatuses = { ...prev, [studentName]: status };
-      // checkFormValidity();
+      
       return newStatuses;
     });
   };
@@ -451,7 +457,7 @@ const MeetingForm: React.FC<Props> = ({
     const selectedProgram = event.target.value;
     setFormValues({ ...formValues, program: selectedProgram });
     setSelectedProgram(selectedProgram);
-    // checkFormValidity();
+    
   };
 
   /* -------------------------------------------------------------------------- */
@@ -650,7 +656,7 @@ const MeetingForm: React.FC<Props> = ({
           students.find((s) => s.id === attendee.student_id)?.last_name || ""
         }`,
       }));
-  
+
     const newMeeting: NewMeetingValues = {
       start: dayjs(start).toDate(),
       end: dayjs(end).toDate(),
@@ -666,16 +672,24 @@ const MeetingForm: React.FC<Props> = ({
     createMeetingMutation.mutate(newMeeting, {
       onSuccess: (response) => {
         if (response && response.success) {
-          // const newMeeting = response.meeting;
           const newMeetingWithAttendees: MeetingWithAttendees = {
             ...response.meeting,
-            MeetingAttendees: validAttendees // Use the attendees you already have
+            MeetingAttendees: validAttendees
           };
+
+          if (!isOnStudentsPage || (isOnStudentsPage && studentId && newMeetingWithAttendees.MeetingAttendees?.some(a => a.student_id === studentId))) {
+            setMyDatedMeetings((prevMeetings: MeetingWithAttendees[]) => {
+              const updatedMeetings = [...prevMeetings, newMeetingWithAttendees];
+              return updatedMeetings;
+            });
+            setAllMeetings((prevMeetings: MeetingWithAttendees[]) => [...prevMeetings, newMeetingWithAttendees]);
+          }
 
           setMyDatedMeetings((prevMeetings: MeetingWithAttendees[]) => {
             const updatedMeetings = [...prevMeetings, newMeetingWithAttendees];
             return updatedMeetings;
           });
+
           setAllMeetings((prevMeetings: MeetingWithAttendees[]) => [...prevMeetings, newMeetingWithAttendees]);
 
           toast.current?.show({
@@ -784,6 +798,27 @@ const MeetingForm: React.FC<Props> = ({
     updateMeetingMutation.mutate(meetingData, {
       onSuccess: (response) => {
         if (response && response.success) {
+          const updateMeeting = (meetings: MeetingWithAttendees[]) => 
+            meetings.map((meeting) => 
+              meeting.id === meetingData.id 
+                ? {
+                    ...meeting,
+                    ...meetingData,
+                    MeetingAttendees: meetingData.attendees.map(att => ({
+                      student_id: att.student_id,
+                      meeting_status: att.meeting_status || "",
+                      name: `${students.find(s => s.id === att.student_id)?.first_name ?? ""} ${
+                              students.find(s => s.id === att.student_id)?.last_name ?? ""
+                            }`,
+                    }))
+                  }
+                : meeting
+            );
+
+          if (!isOnStudentsPage || (isOnStudentsPage && studentId && meetingData.attendees.some(a => a.student_id === studentId))) {
+            setMyDatedMeetings(updateMeeting);
+            setAllMeetings(updateMeeting);
+          }
           setMyDatedMeetings((prevMeetings: MeetingWithAttendees[]) => {
             return prevMeetings.map((meeting) => 
               meeting.id === meetingData.id 
@@ -818,7 +853,6 @@ const MeetingForm: React.FC<Props> = ({
                 : meeting
             );
           });
-          // setSelectedMeetings([]);
           toast.current?.show({
             severity: "success",
             summary: "Meeting successfully updated.",
@@ -835,7 +869,7 @@ const MeetingForm: React.FC<Props> = ({
         });
       },
     });
-          };
+  };
 
   /* ------------------------------ DELETEMEETING ----------------------------- */
 
@@ -1003,6 +1037,43 @@ const MeetingForm: React.FC<Props> = ({
   }
 
   /* ------------------------------------------------------------- */
+  /*                           Last Edited Info                         */
+  /* ------------------------------------------------------------- */
+
+  const { data: tutorName, refetch: refetchTutorName } = api.users.getTutorNameById.useQuery(
+    selectedMeetings[0]?.edited_by ?? '',
+    { enabled: false }
+  );
+
+  useEffect(() => {
+    const updateLastEditedInfo = async () => {
+      if (selectedMeetings.length === 0 || !selectedMeetings[0]?.edited_by) {
+        setLastEditedInfo('');
+        return;
+      }
+      if (selectedMeetings.length > 0) {
+        const selectedMeeting = selectedMeetings[0];
+        const edited_on = selectedMeeting?.edited_on;
+        
+        if (edited_on) {
+          const formattedDate = dayjs(edited_on).format('M/D/YY');
+          try {
+            await refetchTutorName();
+            setLastEditedInfo(`Edited on ${formattedDate} by ${tutorName ?? 'Unknown'}.`);
+          } catch (error) {
+            console.error('Failed to fetch tutor name:', error);
+            setLastEditedInfo(`Edited on ${formattedDate} by Unknown.`);
+          }
+        } else {
+          setLastEditedInfo('Unedited');
+        }
+      }
+    };
+
+    void updateLastEditedInfo();
+  }, [selectedMeetings, refetchTutorName, tutorName]);
+  
+  /* ------------------------------------------------------------- */
   /*                           HTML RETURN                         */
   /* ------------------------------------------------------------- */
 
@@ -1035,15 +1106,28 @@ const MeetingForm: React.FC<Props> = ({
                 readOnly: !session?.user.role
                   .split(",")
                   .map((role) => role.trim())
-                  .some((role) => ["Admin", "Tutor"].includes(role)),
+                  .some((role) => ["Admin"].includes(role)),
               }}
+              // disabled={isOnStudentsPage}
             >
-              {studentNames.sort().map((name) => (
-                <MenuItem key={name} value={name}>
-                  <Checkbox checked={selectedNames.includes(name)} />
-                  <ListItemText primary={name} />
-                </MenuItem>
-              ))}
+              {studentNames.sort().map((name) => {
+                const isCurrentStudent = isOnStudentsPage && 
+                  ((students.find(s => s.id === studentId)?.first_name || '') + ' ' + 
+                   (students.find(s => s.id === studentId)?.last_name || '')) === name;
+                return (
+                  <MenuItem 
+                    key={name} 
+                    value={name}
+                    disabled={isOnStudentsPage && !isCurrentStudent}
+                  >
+                    <Checkbox 
+                      checked={selectedNames.includes(name)} 
+                      disabled={isOnStudentsPage && !isCurrentStudent}
+                    />
+                    <ListItemText primary={name} />
+                  </MenuItem>
+                );
+              })}
             </Select>
           </FormControl>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -1052,7 +1136,13 @@ const MeetingForm: React.FC<Props> = ({
               className={`w-12 ${hiddenFieldClass}`}
               value={formDate}
               onChange={handleFormDateChange}
-            />
+              readOnly={
+                !session?.user.role
+                  .split(",")
+                  .map((role) => role.trim())
+                  .some((role) => ["Admin"].includes(role))
+              }
+          />
           </LocalizationProvider>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <div className="flex gap-4">
@@ -1065,7 +1155,7 @@ const MeetingForm: React.FC<Props> = ({
                   !session?.user.role
                     .split(",")
                     .map((role) => role.trim())
-                    .some((role) => ["Admin", "Tutor"].includes(role))
+                    .some((role) => ["Admin"].includes(role))
                 }
               />
               <TimePicker
@@ -1077,7 +1167,7 @@ const MeetingForm: React.FC<Props> = ({
                   !session?.user.role
                     .split(",")
                     .map((role) => role.trim())
-                    .some((role) => ["Admin", "Tutor"].includes(role))
+                    .some((role) => ["Admin"].includes(role))
                 }
               />
             </div>
@@ -1099,7 +1189,7 @@ const MeetingForm: React.FC<Props> = ({
                   readOnly: !session?.user.role
                     .split(",")
                     .map((role) => role.trim())
-                    .some((role) => ["Admin", "Tutor"].includes(role)),
+                    .some((role) => ["Admin"].includes(role)),
                 }}
               >
                 {programOptions.sort().map((option) => (
@@ -1123,7 +1213,7 @@ const MeetingForm: React.FC<Props> = ({
                 readOnly: !session?.user.role
                   .split(",")
                   .map((role) => role.trim())
-                  .some((role) => ["Admin", "Tutor"].includes(role)),
+                  .some((role) => ["Admin"].includes(role)),
               }}
             />
           </div>
@@ -1141,11 +1231,12 @@ const MeetingForm: React.FC<Props> = ({
               readOnly: !session?.user.role
                 .split(",")
                 .map((role) => role.trim())
-                .some((role) => ["Admin", "Tutor"].includes(role)),
+                .some((role) => ["Admin"].includes(role)),
             }}
           />
-          <Stack direction="row" spacing={2} className={hiddenButtonClass}>
-            <Button
+          <div className="flex justify-content-between gap-4">
+            <Stack direction="row" spacing={2} className={hiddenButtonClass}>
+              <Button
               variant="contained"
               color="primary"
               onClick={() => {
@@ -1160,20 +1251,28 @@ const MeetingForm: React.FC<Props> = ({
                     // Handle error here
                     console.error("Error in action:", error);
                   });
-              }}
-              disabled={!isFormValid}
-            >
-              {existingMeeting ? "Save" : "Add"}
-            </Button>
-            <Button
-              variant="contained"
-              color="error"
-              onClick={handleDelete}
-              disabled={noMeeting}
-            >
-              Delete
-            </Button>
-          </Stack>
+                }}
+                disabled={!isFormValid}
+              >
+                {existingMeeting ? "Save" : "Add"}
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={handleDelete}
+                disabled={noMeeting}
+              >
+                Delete
+              </Button>
+            </Stack>
+            <div>
+              {lastEditedInfo && (
+                <Card className="last-edited-info text-sm p-0 m-0">
+                  {lastEditedInfo}
+                </Card>
+              )}
+            </div>
+          </div>
         </Box>
       </div>
     </Card>

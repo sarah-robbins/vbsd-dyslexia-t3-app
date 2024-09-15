@@ -1,4 +1,4 @@
-import * as React from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { styled, type Theme, type CSSObject } from "@mui/material/styles";
 import MuiDrawer from "@mui/material/Drawer";
@@ -33,6 +33,7 @@ import Link from "next/link";
 import { api } from "@/utils/api";
 import { useMemo } from "react";
 import { SvgIcon } from "@mui/material";
+import { Toast } from "primereact/toast";
 
 const drawerWidth = 56; // Adjusted for 24x24 icons with some padding
 
@@ -88,6 +89,29 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
   const { data: session } = useSession();
   const { setRoute } = useRouting();
 
+  const formatPhoneForDisplay = (phoneNumber: string): string => {
+    const numbers = phoneNumber.replace(/\D/g, "").substring(0, 10);
+    const char = {0:'(',3:') ',6:'-'};
+    let formatted = '';
+    for (let i = 0; i < numbers.length; i++) {
+      if (i in char) formatted += char[i as keyof typeof char];
+      formatted += numbers[i];
+    }
+    return formatted;
+  };
+
+  const [phone, setPhone] = useState<string>("");
+
+  const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(
+    null
+  );
+  
+  useEffect(() => {
+    if (session?.user?.phone) {
+      setPhone(formatPhoneForDisplay(session.user.phone));
+    }
+  }, [session]);
+  
   // const drawerRef = React.useRef<HTMLDivElement>(null);
 
   const links: Link[] = [
@@ -128,24 +152,17 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
 
   const roles =
     session?.user?.role?.split(",").map((role) => role.trim()) || [];
+
   const filteredLinks = useMemo(() => {
-    if (session?.user.role === "Tutor") {
-      return links.filter(
-        (link) => link.text !== "Users" && link.text !== "Students"
-      );
-    }
-    if (session?.user.role === "Principal" || session?.user.role === "Admin") {
-      return links.filter(
-        (link) => link.text !== "Meetings" && link.text !== "Users"
-      );
-    }
-    if (roles.includes("Principal") && !roles.includes("Admin")) {
-      return links.filter((link) => link.text !== "Users");
-    }
-    return links;
+    return links.filter(link => {
+    if (link.text === "Meetings") return session?.user.role === "Tutor" || roles.includes("Tutor");
+    if (link.text === "Students") return session?.user.role === "Principal" || session?.user.role === "Admin" || roles.includes("Principal") || roles.includes("Admin");
+    if (link.text === "Users") return session?.user.role === "Admin" || roles.includes("Admin");
+    return true;
+  });
   }, [links, session?.user.role]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const storedView = localStorage.getItem("currentRoute");
     if (storedView && setRoute) {
       setRoute(storedView);
@@ -157,41 +174,66 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
     setRoute(newRoute);
   };
 
-  const [phone, setPhone] = React.useState<string>(session?.user.phone || "");
-
+  useEffect(() => {
+    if (toast.current) {
+      toast.current.show({
+        severity: 'info',
+        summary: 'Test',
+        detail: 'This is a test toast message',
+        life: 3000
+      });
+    }
+  }, []);
+  
   const updateUserMutation = api.users.updateUser.useMutation();
-
+  
   const handlePhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = event.target.value;
     const numbers = inputValue.replace(/\D/g, "");
-    let phone = "";
-    for (let i = 0; i < numbers.length; i++) {
-      if (i === 3 || i === 6) {
-        phone += "-";
-      }
-      phone += numbers[i];
-    }
-    phone = phone.substring(0, 12);
-    setPhone(phone);
+    setPhone(formatPhoneForDisplay(numbers));
   };
+
+  const toast = useRef<Toast>(null);
 
   const handleSavePhone = () => {
     if (session && session.user.userId) {
       const userId = Number(session.user.userId);
-      if (!isNaN(userId)) {
-        updateUserMutation.mutate({
-          id: userId,
-          phone: phone,
-        });
+      const phoneToSave = phone.replace(/\D/g, "");
+      if (!isNaN(userId) && phoneToSave.length === 10) {
+        updateUserMutation.mutate(
+          {
+            id: userId,
+            phone: phoneToSave,
+          },
+          {
+            onSuccess: () => {
+              toast.current?.show({
+                severity: 'success',
+                summary: 'Success',
+                detail: 'Phone number updated successfully',
+                life: 3000
+              });
+            },
+            onError: (error) => {
+              toast.current?.show({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Failed to update phone number: ' + error.message,
+                life: 3000
+              });
+            }
+          }
+        );
       } else {
-        console.error("Invalid user ID");
+        toast.current?.show({
+          severity: 'warn',
+          summary: 'Warning',
+          detail: 'Please enter a valid 10-digit phone number',
+          life: 3000
+        });
       }
     }
   };
-
-  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
-    null
-  );
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElUser(event.currentTarget);
@@ -246,7 +288,7 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
       <div className="tutorial-icon">
         <Tooltip title="Tutorial" placement="right">
           <Link
-            href="https://google.com"
+            href=""
             className="flex align-items-center justify-content-center"
             style={{ width: "100%" }}
           >
@@ -270,10 +312,11 @@ const LeftSideNav: React.FC<LeftSideNavProps> = ({ window }) => {
   const userProfile = (
     <div className="flex flex-column justify-content-center align-items-center gap-3">
       <TextField
-        value={session ? session.user.phone : ""}
+        value={phone}
         onChange={handlePhoneChange}
         label="Phone Number"
         className="w-12"
+        inputProps={{ maxLength: 14 }}
       />
       <TextField
         value={session ? session.user.email : ""}

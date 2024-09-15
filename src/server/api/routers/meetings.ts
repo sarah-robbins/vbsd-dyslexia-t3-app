@@ -16,16 +16,37 @@ export const meetingsRouter = createTRPCRouter({
   }),
 
   getMeetingsForRole: protectedProcedure.query(async ({ ctx }) => {
-    const userRole = ctx.session?.user?.role;
+    // const userRole = ctx.session?.user?.role;
+    const userRoles = ctx.session?.user?.role?.split(',').map(role => role.trim().toLowerCase()) || [];
     const tutorId = ctx.session?.user?.userId;
-    const userSchool = ctx.session?.user?.school;
+    const userSchools = ctx.session?.user?.school?.split(',').map(school => school.trim()) || [];
 
-    switch (userRole) {
+      // Convert roles to a ranked list (higher index = higher priority)
+      const rolesHierarchy = ['tutor', 'principal', 'admin'];
+      // const highestRole = rolesHierarchy.find(role => userRole?.toLowerCase().includes(role));
+      const highestRole = rolesHierarchy.reduce((highest, role) => 
+        userRoles.includes(role) && rolesHierarchy.indexOf(role) > rolesHierarchy.indexOf(highest) ? role : highest
+      , '');
+
+      switch (highestRole) {
       case 'tutor':
         return await ctx.prisma.meetings.findMany({
           where: {
             tutor_id: tutorId,
           },
+          include: {
+            MeetingAttendees: {
+              select: {
+                id: true,
+                meeting_status: true,
+                name: true,
+                student_id: true,
+                created_at: true,
+                tutor_id: true,
+              },
+            },
+          },
+
         });
       case 'principal':
         return await ctx.prisma.meetings.findMany({
@@ -33,21 +54,42 @@ export const meetingsRouter = createTRPCRouter({
             MeetingAttendees: {
               some: {
                 Students: {
-                  school: userSchool,
+                  school: {
+                    in: userSchools.flatMap(school => [school, ...school.split(' ')])
+                  },
                 },
               },
             },
           },
           include: {
             MeetingAttendees: {
-              include: {
-                Students: true,
+              select: {
+                id: true,
+                meeting_status: true,
+                name: true,
+                student_id: true,
+                created_at: true,
+                tutor_id: true,
               },
             },
           },
-        });
+      });
       case 'admin':
-        return await ctx.prisma.meetings.findMany();
+        return await ctx.prisma.meetings.findMany({
+          include: {
+            MeetingAttendees: {
+              select: {
+                id: true,
+                meeting_status: true,
+                name: true,
+                student_id: true,
+                created_at: true,
+                tutor_id: true,
+              },
+            },
+          },
+
+        });
       default:
         // Handle default case or throw an error
         return [];
@@ -419,8 +461,8 @@ export const meetingsRouter = createTRPCRouter({
                   tutor_id: true,
                 },
               },
-          },
-              });
+            },
+          });
         case 'principal':
           return await ctx.prisma.meetings.findMany({
             where: {

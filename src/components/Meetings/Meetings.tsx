@@ -44,10 +44,9 @@ const Meetings = () => {
     tutor_id: tutorId
   });
 
-  const getMeetingsByDate = api.meetings.getMeetingsByRoleAndDate.useQuery(dateToQuery.toDate()) as {
+  const {data: getDatedMeetings} = api.meetings.getMeetingsByRoleAndDate.useQuery(dateToQuery.toDate()) as {
     data: MeetingWithAttendees[];
   };
-  const getDatedMeetings = getMeetingsByDate.data;
 
   const { data: myStudents } = api.students.getStudentsForRole.useQuery() as {
     data: Student[];
@@ -111,6 +110,7 @@ const Meetings = () => {
           setDatedMeetingsWithAttendees={setDatedMeetingsWithAttendees}
           isOnMeetingsPage={isOnMeetingsPage}
           isOnStudentsPage={false}
+          studentId={0}
         />
         <MeetingList
           meetings={meetings}
@@ -124,6 +124,7 @@ const Meetings = () => {
           datedMeetingsWithAttendees={datedMeetingsWithAttendees}
           isOnMeetingsPage={isOnMeetingsPage}
           isOnStudentsPage={false}
+          studentId={0}
           />
         </div>
       <Students isOnMeetingsPage={isOnMeetingsPage} />

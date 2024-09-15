@@ -30,9 +30,9 @@ export const studentsRouter = createTRPCRouter({
     const userRole = ctx.session?.user?.role;
     const tutorId = ctx.session?.user?.userId;
     const userSchool = ctx.session?.user?.school;
-
+  
     let highestPriorityRole = '';
-
+  
     if (userRole.toLowerCase().includes('admin')) {
       highestPriorityRole = 'admin';
     } else if (userRole.toLowerCase().includes('principal')) {
@@ -40,97 +40,66 @@ export const studentsRouter = createTRPCRouter({
     } else if (userRole.toLowerCase().includes('tutor')) {
       highestPriorityRole = 'tutor';
     }
+  
+    const includeOptions = {
+      Users: {
+        select: {
+          id: true,
+          first_name: true,
+          last_name: true,
+        },
+      },
+      MeetingAttendees: {
+        select: {
+          id: true,
+          meeting_status: true,
+          Meetings: {
+            select: {
+              id: true, 
+              start: true,
+              level_lesson: true,
+              MeetingAttendees: {
+                where: {
+                  student_id: {
+                    not: undefined,
+                  },
+                },
+                select: {
+                  student_id: true,
+                },
+              },
+            }
+          }
+        },
+      },
+    };
+  
     switch (highestPriorityRole) {
       case 'tutor':
         return await ctx.prisma.students.findMany({
           where: {
             tutor_id: tutorId,
           },
-          include: {
-            Users: {
-              select: {
-                id: true,
-                first_name: true,
-                last_name: true,
-              },
-            },
-            MeetingAttendees: {
-              select: {
-                id: true,
-                meeting_status: true,
-                Meetings: {
-                  select: {
-                      id: true, 
-                      start: true,
-                      level_lesson: true
-                  }
-                }
-              },
-            },
-          },
+          include: includeOptions,
         });
       case 'principal':
         const sessionUserSchools = userSchool.split(',').map(s => s.trim());
-
         return await ctx.prisma.students.findMany({
           where: {
             school: {
               in: sessionUserSchools,
             },
           },
-          include: {
-            Users: {
-              select: {
-                id: true,
-                first_name: true,
-                last_name: true,
-              },
-            },
-            MeetingAttendees: {
-              select: {
-                id: true,
-                meeting_status: true,
-                Meetings: {
-                  select: {
-                    id: true,
-                    start: true,
-                    level_lesson: true
-                  }
-                }
-              },
-            },
-          },
+          include: includeOptions,
         });
       case 'admin':
-        return await ctx.prisma.students.findMany({
-          include: {
-            Users: {
-              select: {
-                id: true,
-                first_name: true,
-                last_name: true,
-              },
-            },
-            MeetingAttendees: {
-              select: {
-                id: true,
-                meeting_status: true,
-                Meetings: {
-                  select: {
-                    id: true,
-                    start: true,
-                    level_lesson: true
-                  }
-                }
-              },
-            },
-          },
-        });
       default:
-        return [];
+        return await ctx.prisma.students.findMany({
+          include: includeOptions,
+        });
     }
   }),
-
+  
   getStudentsBySchool: publicProcedure
     .input(z.string())
     .query(async ({ ctx, input }) => {

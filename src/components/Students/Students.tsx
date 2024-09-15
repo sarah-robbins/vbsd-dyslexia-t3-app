@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   DataTable,
   type DataTableRowEditCompleteEvent,
@@ -129,7 +129,9 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   const [globalFilterValue, setGlobalFilterValue] = useState<string>("");
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [meetings, setMeetings] = useState<MeetingWithAttendees[]>([]);
+  const [allMeetings, setAllMeetings] = useState<MeetingWithAttendees[]>([]);
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
+  const [studentDates, setStudentDates]  = useState<{ [studentId: number]: Dayjs }>({});
   const [selectedMeetings, setSelectedMeetings] = useState<
   MeetingWithAttendees[]
   >([]);
@@ -157,37 +159,57 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   const { data: getStudentsForRole } =
     api.students.getStudentsForRole.useQuery() as {
       data: Student[];
-    };
-    const { data: myUsers } = api.users.getUsersForRole.useQuery() as {
+    };  
+  const { data: myUsers } = api.users.getUsersForRole.useQuery() as {
       data: User[];
+    };  
+  const dateToQuery =
+    selectedDate && dayjs.isDayjs(selectedDate) ? selectedDate : dayjs();
+  const { data: getDatedMeetings } =
+    api.meetings.getMeetingsByRoleAndDate.useQuery(dateToQuery.toDate()) as {
+      data: MeetingWithAttendees[];
     };
+  const { data: roleBasedMeetings } =
+    api.meetings.getMeetingsForRole.useQuery();
+
 
   useEffect(() => {
     if (isOnMeetingsPage) {
       setMyStudents(getStudentsForTutor);
     } else {
       setMyStudents(getStudentsForRole);
-    }
+    }  
   }, [
     getStudentsForRole,
     getStudentsForTutor,
     isOnMeetingsPage,
     sessionData?.userId,
-  ]);
+  ]);  
 
   useEffect(() => {
     if (myUsers) {
       setUsers(myUsers);
+    }  
+  }, [myUsers]);  
+
+  useEffect(() => {
+    if (getDatedMeetings) {
+      setDatedMeetingsWithAttendees(getDatedMeetings);
+    }  
+  }, [getDatedMeetings]);  
+
+  useEffect(() => {
+    if (roleBasedMeetings) {
+      const meetingsWithAttendees = roleBasedMeetings.map(meeting => ({
+        ...meeting,
+        MeetingAttendees: meeting.MeetingAttendees.map(attendee => ({
+          ...attendee,
+          name: attendee.name || '',
+        })),
+      }));
+      setAllMeetings(meetingsWithAttendees);
     }
-  }, [myUsers]);
-
-  const dateToQuery =
-    selectedDate && dayjs.isDayjs(selectedDate) ? selectedDate : dayjs();
-
-  const { data: getDatedMeetings } =
-    api.meetings.getMeetingsByRoleAndDate.useQuery(dateToQuery.toDate()) as {
-      data: MeetingWithAttendees[];
-    };
+  }, [roleBasedMeetings]);
 
   const checkFormValidity = (student: Student) => {
     const isStudentValid = !!(
@@ -240,13 +262,16 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     });
   };
 
-  const { data: roleBasedMeetings } =
-    api.meetings.getMeetingsForRole.useQuery();
-
   useEffect(() => {
     if (roleBasedMeetings) {
-      const convertedMeetings = convertMeetings(roleBasedMeetings);
-      setMeetings(convertedMeetings);
+      const mappedMeetings = roleBasedMeetings.map(meeting => ({
+        ...meeting,
+        MeetingAttendees: meeting.MeetingAttendees.map(attendee => ({
+          ...attendee,
+          name: attendee.name || undefined,
+        })),
+      }));
+      setMeetings(mappedMeetings);
     }
   }, [roleBasedMeetings]);
 
@@ -535,10 +560,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         [studentId]: newTutorId,
       }));
 
-      console.log('*** selectedTutorIds', selectedTutorIds)
-      console.log('*** newTutorId', newTutorId)
-      console.log('*** newTutorLabel', newTutorLabel)
-
       const updatedRowData = {
         ...rowData,
         tutorId: newTutorId,
@@ -550,7 +571,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
           last_name: newTutor.last_name,
         } : null,
       };
-      console.log('*** updatedRowData', updatedRowData)
       options.editorCallback?.(updatedRowData);
     };
   
@@ -746,27 +766,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
     }
   };
 
-  // const tutorBodyTemplate = (rowData: Student) => {
-  //   const key = `${rowData.id || 0}-${rowData.tutorId || 'unassigned'}`;
-  //   console.log('*** key', key)
-  //   if (rowData.Users && typeof rowData.Users === 'object') {
-  //     return <span key={key}>{`${rowData.Users.first_name || ''} ${rowData.Users.last_name || ''}`}</span>;
-  //   }
-  //   if (typeof rowData.tutorFullName === 'string' && rowData.tutorFullName !== "Unassigned") {
-  //     return <span key={key}>{rowData.tutorFullName}</span>;
-  //   }
-  //   if ((rowData.tutor_id === null && rowData.tutorId === undefined) || rowData.tutorFullName === "Unassigned") {
-  //     return <span key={key}>Unassigned</span>;
-  //   }
-  //   console.log('*** rowData.tutorFullName', rowData.tutorFullName)
-  //   console.log('*** rowData.tutorId', rowData.tutorId)
-  //   console.log('*** rowData.id', rowData.id)
-  //   console.log('*** rowData', rowData)
-  //   return <span key={key}>Tutor Name Not Available</span>;
-  // };
-
   const TutorCell = React.memo(function TutorCell({ rowData }: { rowData: Student }) {
-    // const key = `${rowData.id || 0}-${rowData.tutorId || 'unassigned'}`;
     
     if (rowData.Users && typeof rowData.Users === 'object') {
       return <span>{`${rowData.Users.first_name || ''} ${rowData.Users.last_name || ''}`}</span>;
@@ -782,6 +782,24 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
   
   const tutorBodyTemplate = (rowData: Student) => <TutorCell rowData={rowData} />;
 
+  useEffect(() => {
+    // Initialize dates for all students
+    const initialDates: { [studentId: number]: Dayjs } = {};
+    students.forEach(student => {
+      if (student.id !== undefined) {
+        initialDates[student.id] = studentDates[student.id] || selectedDate;
+      }
+    });
+    setStudentDates(initialDates);
+  }, [students, selectedDate]);
+
+  const handleStudentDateChange = useCallback((date: Dayjs, studentId: number) => {
+    setStudentDates((prevDates: { [key: number]: Dayjs }) => ({
+      ...prevDates,
+      [studentId]: date
+    }));
+  }, []);
+  
   const rowExpansionTemplate = (data: Student) => {
     const calculateMeetingsInDateRange = (
       attendees: MeetingAttendees[],
@@ -883,7 +901,7 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
       });
     };
 
-    const studentMeetings = getDatedMeetings?.filter((meeting) =>
+    const studentMeetings = allMeetings?.filter((meeting) =>
       meeting.MeetingAttendees?.some(
         (attendee) => attendee.student_id === data.id
       )
@@ -1177,27 +1195,28 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
           className={`flex-column lg:flex-row gap-3 mt-3 ${hiddenOnMeetingsPage}`}
         >
           <MeetingForm
-            meetings={meetings}
+            meetings={studentMeetings}
             setMeetings={setMeetings}
-            students={students}
+            students={myStudents}
+            studentId={data.id ?? 0}
             myDatedMeetings={studentMeetings}
             setMyDatedMeetings={() => studentMeetings}
             selectedMeetings={selectedMeetings}
             setSelectedMeetings={setSelectedMeetings}
-            selectedDate={selectedDate}
+            selectedDate={studentDates[data.id ?? 0] || selectedDate}
             datedMeetingsWithAttendees={datedMeetingsWithAttendees}
             setDatedMeetingsWithAttendees={setDatedMeetingsWithAttendees}
             selectedMeetingAttendees={selectedMeetingAttendees}
             isOnStudentsPage={isOnStudentsPage}
-            isOnMeetingsPage={false} setAllMeetings={function (): void {
-              throw new Error("Function not implemented.");
-            }}
+            isOnMeetingsPage={false}
+            setAllMeetings={setAllMeetings}
           />
           <MeetingList
-            meetings={meetings}
-            students={students}
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
+            meetings={studentMeetings}
+            students={myStudents}
+            studentId={data.id ?? 0}
+            selectedDate={studentDates[data.id ?? 0] || selectedDate}
+            setSelectedDate={(date) => handleStudentDateChange(date, data.id ?? 0)}
             selectedMeetings={selectedMeetings}
             setSelectedMeetings={setSelectedMeetings}
             datedMeetingsWithAttendees={datedMeetingsWithAttendees}
@@ -1441,10 +1460,6 @@ const Students: React.FC<Props> = ({ isOnMeetingsPage }) => {
         />
       </div>
     );
-
-  // const rowSelected = (e: DataTableRowEvent) => {
-  //   console.log("e", e);
-  // };
 
   const newRowClass = (data: Student) => {
     return {

@@ -6,11 +6,13 @@ import Chip from "@mui/material/Chip";
 import Checkbox from "@mui/material/Checkbox";
 import dayjs, { type Dayjs } from "dayjs";
 import { type Meeting, type Student, type MeetingWithAttendees } from "@/types";
-import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
+import { LocalizationProvider, DatePicker, PickersDayProps, PickersDay } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
 import isBetween from 'dayjs/plugin/isBetween'
+import Badge from "@mui/material/Badge";
+import { styled } from "@mui/material/styles";
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
@@ -41,7 +43,8 @@ const useFilteredMeetings = (
   selectedDate: Dayjs,
   isOnMeetingsPage: boolean,
   isOnStudentsPage: boolean,
-  students: Student[]
+  students: Student[],
+  studentId?: number  // Add this parameter
 ) => {
   const [filteredMeetings, setFilteredMeetings] = useState<MeetingWithAttendees[]>([]);
 
@@ -49,7 +52,6 @@ const useFilteredMeetings = (
     if (selectedDate) {
       let filtered: MeetingWithAttendees[] = [];
       if (isOnMeetingsPage || isOnStudentsPage) {
-        // const dbSelectedDate = selectedDate.tz(DB_TIMEZONE);
         const startOfDay = selectedDate.tz(DB_TIMEZONE).startOf('day');
         const endOfDay = selectedDate.tz(DB_TIMEZONE).endOf('day');
 
@@ -63,7 +65,8 @@ const useFilteredMeetings = (
             ...meeting,
             dateString: dayjs.utc(meeting.start).tz(DB_TIMEZONE).format("YYYY-MM-DD"),
           }));
-        } else if (isOnStudentsPage) {
+        }
+        if (isOnStudentsPage) {
           const datedMeetingsWithAttendees = filtered.map((meeting): MeetingWithAttendees => {
             const attendees = (meeting.MeetingAttendees ?? [])
               .map((attendee) => {
@@ -82,14 +85,21 @@ const useFilteredMeetings = (
             ...meeting,
             dateString: dayjs(meeting.start).format("YYYY-MM-DD"),
           }));
+
+          // Add this block here
+          if (studentId) {
+            filtered = filtered.filter(meeting => 
+              meeting.attendees?.some(attendee => attendee.student_id === studentId)
+            );
+          }
         }
       }
       setFilteredMeetings(filtered);
     }
-  }, [meetings, selectedDate, isOnMeetingsPage, isOnStudentsPage, students]);
-  
+  }, [meetings, selectedDate, isOnMeetingsPage, isOnStudentsPage, students, studentId]);
   return filteredMeetings;
 };
+
 // Extracted smaller components
 const MeetingStatusChip: React.FC<{ status: string }> = React.memo(({ status }) => (
   <Chip
@@ -119,10 +129,15 @@ const MeetingTime: React.FC<{ start: Date; end: Date }> = React.memo(({ start, e
 
 MeetingTime.displayName = "MeetingTime";
 
+interface CustomPickersDayProps extends PickersDayProps<Dayjs> {
+  hasMeeting?: boolean;
+}
+
 interface Props {
   meetings: MeetingWithAttendees[];
   // setMeetings: (meetings: MeetingWithAttendees[]) => void;
   students: Student[];
+  studentId: number;
   selectedDate: Dayjs;
   // meetings: MeetingWithAttendees[];
   selectedMeetings: MeetingWithAttendees[];
@@ -140,6 +155,7 @@ const MeetingList: React.FC<Props> = ({
   setSelectedDate,
   selectedMeetings = [],
   students = [],
+  studentId,
   setSelectedMeetings,
   datedMeetingsWithAttendees = [],
   isOnMeetingsPage,
@@ -150,14 +166,19 @@ const MeetingList: React.FC<Props> = ({
   const selectAllCheckboxRef = useRef<HTMLInputElement>(null);
   const [formDate, setFormDate] = useState(selectedDate);
 
-  const filteredMeetings = useFilteredMeetings(datedMeetingsWithAttendees, selectedDate, isOnMeetingsPage, isOnStudentsPage, students);
+  const filteredMeetings = useFilteredMeetings(datedMeetingsWithAttendees, selectedDate, isOnMeetingsPage, isOnStudentsPage, students, studentId);
 
   const handleFormDateChange = useCallback((date: Dayjs | null) => {
     if (date) {
       setFormDate(date);
-      setSelectedDate(date);
+      if (isOnMeetingsPage){
+        setSelectedDate(date);
+      }
+      if (isOnStudentsPage){
+        setSelectedDate(date);
+      }
     }
-  }, [setSelectedDate]);
+  }, [isOnMeetingsPage, isOnStudentsPage, setSelectedDate]);
 
 
   useEffect(() => {
@@ -250,7 +271,11 @@ const MeetingList: React.FC<Props> = ({
     if (!datedMeetingsWithAttendees || !rowData) {
       return <div>Loading...</div>;
     }
-    return rowData?.attendees?.map((attendee) => (
+    if (!rowData.attendees || rowData.attendees.length === 0) {
+      return <div>No Attendees</div>;
+    }
+    
+    return rowData.attendees?.map((attendee) => (
       <div className="meeting-attendee-name" key={attendee.id}>
         {attendee.name}
       </div>
@@ -280,20 +305,77 @@ const MeetingList: React.FC<Props> = ({
     setSelectedMeetings([]);
   }, [selectedDate, setSelectedMeetings]);
 
-  const datePicker = useMemo(() => (
-    <div className={`selectDate ${hiddenOnMeetingPage} ${showOnStudentsPage}`}>
-      <span>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DatePicker
-            label="Date"
-            className="w-12"
-            value={formDate}
-            onChange={handleFormDateChange}
-          />
-        </LocalizationProvider>
-      </span>
-    </div>
-  ), [formDate, handleFormDateChange, hiddenOnMeetingPage, showOnStudentsPage]);
+    // Add indicator to the datePicker calendar that shows meetings on that day
+    const hasMeetingOnDate = useCallback((date: Dayjs) => {
+      return datedMeetingsWithAttendees.some(meeting => 
+        dayjs(meeting.start).isSame(date, 'day') &&
+        meeting.attendees?.some(attendee => attendee.student_id === studentId)
+      );
+    }, [datedMeetingsWithAttendees, studentId]);
+  
+    const CustomPickersDay = styled(({ hasMeeting, ...otherProps }: CustomPickersDayProps) => (
+      <PickersDay {...otherProps} />
+    ))(({ theme, hasMeeting }) => ({
+      ...(hasMeeting && {
+        borderRadius: '50%',
+        backgroundColor: theme.palette.grey[200],
+        color: theme.palette.text.primary,
+        '&:hover, &:focus': {
+          backgroundColor: theme.palette.grey[300],
+        },
+      }),
+    }));
+  
+    const ServerDay = useCallback((props: PickersDayProps<Dayjs>) => {
+      const { day, outsideCurrentMonth, ...other } = props;
+      const hasMeeting = hasMeetingOnDate(day);
+  
+      return (
+        <CustomPickersDay
+          {...other}
+          outsideCurrentMonth={outsideCurrentMonth}
+          day={day}
+          hasMeeting={hasMeeting}
+        />
+      );
+    }, [hasMeetingOnDate]);
+  
+    const datePicker = useMemo(() => (
+      <div className={`selectDate ${hiddenOnMeetingPage} ${showOnStudentsPage}`}>
+        <span>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="Date"
+              className="w-12"
+              value={formDate}
+              onChange={handleFormDateChange}
+              slots={{
+                day: ServerDay
+              }}
+            />
+          </LocalizationProvider>
+        </span>
+      </div>
+    ), [formDate, handleFormDateChange, hiddenOnMeetingPage, showOnStudentsPage, ServerDay]);
+  
+  
+  // const datePicker = useMemo(() => (
+  //   <div className={`selectDate ${hiddenOnMeetingPage} ${showOnStudentsPage}`}>
+  //     <span>
+  //       <LocalizationProvider dateAdapter={AdapterDayjs}>
+  //         <DatePicker
+  //           label="Date"
+  //           className="w-12"
+  //           value={formDate}
+  //           onChange={handleFormDateChange}
+  //           slots={{
+  //             day: ServerDay
+  //           }}
+  //         />
+  //       </LocalizationProvider>
+  //     </span>
+  //   </div>
+  // ), [formDate, handleFormDateChange, hiddenOnMeetingPage, showOnStudentsPage]);
 
   return (
     <Card className="lg:w-7 flex-order-1 lg:flex-order-2 elevate-item">

@@ -245,6 +245,15 @@ button, .p-button {
   padding: 0 !important;
 }
 
+.last-edited-info {
+  box-shadow: none !important;
+}
+
+.last-edited-info > div.p-card-body {
+  padding: 6px 16px;
+  margin: 0;
+}
+
 /* .elevate-item {
   box-shadow: 0 2px 1px -1px rgba(0, 0, 0, 0.2), 0 1px 1px 0 rgba(0, 0, 0, 0.14), 0 1px 3px 0 rgba(0, 0, 0, 0.12);
 } */
