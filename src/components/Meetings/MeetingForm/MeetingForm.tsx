@@ -395,12 +395,12 @@ const MeetingForm: React.FC<Props> = ({
     setIndividualStatuses(initialStatuses);
   }, [selectedMeetings]);
 
+  const isAdmin = session?.user.role
+    .split(",")
+    .map((role) => role.trim())
+    .includes("Admin");
   
   const renderStatusSelects = () => {
-    const isAdmin = session?.user.role
-      .split(",")
-      .map((role) => role.trim())
-      .includes("Admin");
     return selectedNames.map((studentName) => {
       const status = individualStatuses[studentName] || "";
       const student = students.find(s => s.id === studentId);
@@ -493,29 +493,63 @@ const MeetingForm: React.FC<Props> = ({
   }, [students, isOnMeetingsPage, isOnStudentsPage]);
 
   useEffect(() => {
-    if (selectedMeetings.length === 0) {
-      setSelectedNames([]);
-      setName([]);
-      setIndividualStatuses({});
-      setFormValues({
-        name: [],
-        student_id: 0,
-        start: dayjs(),
-        end: dayjs(),
-        meeting_status: "",
-        program: "",
-        level_lesson: "",
-        meeting_notes: "",
-        recorded_by: "",
-        recorded_on: dayjs.utc(),
-        edited_by: "",
-        edited_on: dayjs.utc(),
-        attendees: [],
-      });
-      setStartTime(dayjs());
-      setEndTime(dayjs());
+    checkFormValidity();
+  }, [selectedNames, formDate, startTime, endTime, individualStatuses, formValues.program, isFormEditable]);
+
+  const { data: tutorName, refetch: refetchTutorName } = api.users.getTutorNameById.useQuery(
+    selectedMeetings[0]?.edited_by ?? '',
+    { enabled: false }
+  );
+
+  useEffect(() => {
+    if (selectedDate && myDatedMeetings) {
+      let filteredMeetings = myDatedMeetings;
+
+      // If on Students page, filter meetings for the specific student
+      if (isOnStudentsPage && studentId) {
+        filteredMeetings = myDatedMeetings.filter(meeting => 
+          meeting.MeetingAttendees?.some(attendee => attendee.student_id === studentId)
+        );
+      }
+
+      const datedMeetingsWithAttendees: MeetingWithAttendees[] =
+        filteredMeetings.map((meeting): MeetingWithAttendees => {
+            const attendees = (meeting.MeetingAttendees ?? [])
+              .map((attendee) => {
+                const student = students?.find(
+                  (s) => s.id === attendee.student_id
+                );
+                if (!student) return;
+                return {
+                  ...attendee,
+                  id: attendee.student_id,
+                  name: `${student.first_name ?? ""} ${student.last_name ?? ""}`,
+                };
+              })
+              .filter(
+                (
+                  a
+                ): a is {
+                  id: number;
+                  meeting_id: number;
+                  student_id: number;
+                  meeting_status: string;
+                  created_at: Dayjs;
+                  name: string;
+                } => Boolean(a)
+              ) as {
+              id: number;
+              meeting_id: number;
+              student_id: number;
+              meeting_status: string;
+              created_at: Dayjs;
+              name: string;
+            }[];
+            return { ...meeting, attendees };
+          });
+        setDatedMeetingsWithAttendees(datedMeetingsWithAttendees);
     }
-  }, [selectedMeetings]);
+  }, [myDatedMeetings, meetings, students, selectedDate, setDatedMeetingsWithAttendees, isOnStudentsPage, studentId]);
 
   useEffect(() => {
     if (selectedMeetings.length > 0) {
@@ -554,7 +588,6 @@ const MeetingForm: React.FC<Props> = ({
       const meeting_status =
         selectedMeeting.attendees?.[0]?.meeting_status ?? "";
       setIndividualStatuses(newStatuses);
-      // setSelectedStatus(meeting_status);
       setFormValues({
         name: attendeeNames,
         student_id: 0,
@@ -570,11 +603,10 @@ const MeetingForm: React.FC<Props> = ({
         edited_on: dayjs.utc(),
         attendees: selectedMeeting.attendees ?? [],
       });
-    }
-  }, [selectedMeetings]);
-
-  useEffect(() => {
-    if (selectedMeetings.length <= 0) {
+    } else {
+      setSelectedNames([]);
+      setName([]);
+      setIndividualStatuses({});
       setFormValues({
         name: [],
         student_id: 0,
@@ -590,13 +622,40 @@ const MeetingForm: React.FC<Props> = ({
         edited_on: dayjs.utc(),
         attendees: [],
       });
-      setName([]);
-      setIndividualStatuses({});
-      // setSelectedStatus("");
       setStartTime(dayjs());
       setEndTime(dayjs());
     }
-  }, [selectedMeetings]);
+  }, [selectedMeetings, students]);
+
+  useEffect(() => {
+    updateAttendees();
+
+    const updateLastEditedInfo = async () => {
+      if (selectedMeetings.length === 0 || !selectedMeetings[0]?.edited_by) {
+        setLastEditedInfo('');
+        return;
+      }
+      if (selectedMeetings.length > 0) {
+        const selectedMeeting = selectedMeetings[0];
+        const edited_on = selectedMeeting?.edited_on;
+        
+        if (edited_on) {
+          const formattedDate = dayjs(edited_on).format('M/D/YY');
+          try {
+            await refetchTutorName();
+            setLastEditedInfo(`Edited on ${formattedDate} by ${tutorName ?? 'Unknown'}.`);
+          } catch (error) {
+            console.error('Failed to fetch tutor name:', error);
+            setLastEditedInfo(`Edited on ${formattedDate} by Unknown.`);
+          }
+        } else {
+          setLastEditedInfo('Unedited');
+        }
+      }
+    };
+
+    void updateLastEditedInfo();
+  }, [selectedNames, individualStatuses, students, selectedMeetings, refetchTutorName, tutorName]);
 
   /* -------------------------------------------------------------------------- */
   /*                                Form Controls                               */
@@ -1040,11 +1099,6 @@ const MeetingForm: React.FC<Props> = ({
   /*                           Last Edited Info                         */
   /* ------------------------------------------------------------- */
 
-  const { data: tutorName, refetch: refetchTutorName } = api.users.getTutorNameById.useQuery(
-    selectedMeetings[0]?.edited_by ?? '',
-    { enabled: false }
-  );
-
   useEffect(() => {
     const updateLastEditedInfo = async () => {
       if (selectedMeetings.length === 0 || !selectedMeetings[0]?.edited_by) {
@@ -1252,15 +1306,16 @@ const MeetingForm: React.FC<Props> = ({
                     console.error("Error in action:", error);
                   });
                 }}
-                disabled={!isFormValid}
+                disabled={isOnStudentsPage ? (!isAdmin || selectedMeetings.length === 0 || !isFormValid) : !isFormValid}
+                className={isOnStudentsPage && !isAdmin ? "hidden" : hiddenButtonClass}
               >
-                {existingMeeting ? "Save" : "Add"}
+                {isOnStudentsPage && selectedMeetings.length > 0 ? "Save" : (selectedMeetings.length > 0 ? "Save" : "Add")}
               </Button>
               <Button
                 variant="contained"
                 color="error"
                 onClick={handleDelete}
-                disabled={noMeeting}
+                disabled={noMeeting || isOnStudentsPage}
               >
                 Delete
               </Button>
