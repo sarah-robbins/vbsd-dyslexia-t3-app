@@ -304,16 +304,22 @@ const MeetingList: React.FC<Props> = ({
     setSelectedMeetings([]);
   }, [selectedDate, setSelectedMeetings]);
 
-    // Add indicator to the datePicker calendar that shows meetings on that day
-    const hasMeetingOnDate = useCallback((date: Dayjs) => {
-      return datedMeetingsWithAttendees.some(meeting => 
-        dayjs(meeting.start).isSame(date, 'day') &&
-        meeting.attendees?.some(attendee => attendee.student_id === studentId)
-      );
-    }, [datedMeetingsWithAttendees, studentId]);
+  const meetingDates = useMemo(() => {
+    return datedMeetingsWithAttendees.reduce((acc, meeting) => {
+      const date = dayjs(meeting.start).format('YYYY-MM-DD');
+      if (meeting.attendees?.some(attendee => attendee.student_id === studentId)) {
+        acc.add(date);
+      }
+      return acc;
+    }, new Set<string>());
+  }, [datedMeetingsWithAttendees, studentId]);
   
-    const CustomPickersDay = styled(({ hasMeeting: _hasMeeting, ...otherProps }: CustomPickersDayProps) => (
-      <PickersDay {...otherProps} />
+  const hasMeetingOnDate = useCallback((date: Dayjs) => {
+    return meetingDates.has(date.format('YYYY-MM-DD'));
+  }, [meetingDates]);
+  
+  const CustomPickersDay = styled(({ hasMeeting: _hasMeeting, onClick, ...otherProps }: CustomPickersDayProps & { onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void }) => (
+    <PickersDay onClick={onClick} {...otherProps} />
     ))(({ theme, hasMeeting }) => ({
       ...(hasMeeting && {
         borderRadius: '50%',
@@ -324,17 +330,21 @@ const MeetingList: React.FC<Props> = ({
         },
       }),
     }));
-  
+    
     const ServerDay = useCallback((props: PickersDayProps<Dayjs>) => {
-      const { day, outsideCurrentMonth, ...other } = props;
+      const { day, outsideCurrentMonth, onClick, ...other } = props;
       const hasMeeting = hasMeetingOnDate(day);
-  
+    
       return (
         <CustomPickersDay
           {...other}
           outsideCurrentMonth={outsideCurrentMonth}
           day={day}
           hasMeeting={hasMeeting}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClick?.(e);
+          }}
         />
       );
     }, [CustomPickersDay, hasMeetingOnDate]);
