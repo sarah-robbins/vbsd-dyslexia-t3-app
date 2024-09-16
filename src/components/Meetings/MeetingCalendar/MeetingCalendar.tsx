@@ -11,6 +11,7 @@ interface Props {
   setSelectedDate: (date: Dayjs) => void;
   uniqueKey: number;
   viewDate: Dayjs;
+  setViewDate: (date: Dayjs) => void;
 }
 
 const MeetingCalendar: React.FC<Props> = ({
@@ -19,6 +20,7 @@ const MeetingCalendar: React.FC<Props> = ({
   setSelectedDate,
   uniqueKey,
   viewDate,
+  setViewDate,
 }) => {
 
   const meetingDates: string[] = useMemo(() => {
@@ -43,6 +45,7 @@ const MeetingCalendar: React.FC<Props> = ({
     }
 
     setSelectedDate(selected);
+    setViewDate(selected);
     return dayjs(selectedDate).toDate();
   };
 
@@ -74,6 +77,7 @@ const MeetingCalendar: React.FC<Props> = ({
           className="w-full"
           dateTemplate={dateTemplate}
           viewDate={viewDate.toDate()}
+          onViewDateChange={(e) => setViewDate(dayjs(e.value))}
         />
       </Card>
     </div>

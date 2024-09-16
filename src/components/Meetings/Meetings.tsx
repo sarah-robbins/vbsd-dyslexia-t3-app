@@ -82,6 +82,7 @@ const Meetings = () => {
       <MeetingsTitleBar
         setDate={setDate}
         setViewDate={setViewDate}
+        setSelectedDate={setSelectedDate}
         setUniqueKey={setUniqueKey}
       />
       </div>
@@ -92,6 +93,7 @@ const Meetings = () => {
         setSelectedDate={setSelectedDate}
         uniqueKey={uniqueKey}
         viewDate={viewDate}
+        setViewDate={setViewDate}
       />
       </div>
       <div className="flex flex-column lg:flex-row gap-4">

@@ -7,14 +7,14 @@ import dayjs, { type Dayjs } from 'dayjs';
 type SetUniqueKey = React.Dispatch<React.SetStateAction<number>>;
 
 interface Props {
-  // setSelectedDate: (date: Dayjs) => void | null;
+  setSelectedDate: (date: Dayjs) => void | null;
   setDate: (date: Dayjs) => void | null;
   setViewDate: (date: Dayjs) => void | null;
   setUniqueKey: SetUniqueKey;
 }
 
 const MeetingsTitleBar: React.FC<Props> = ({
-  // setSelectedDate,
+  setSelectedDate,
   setDate,
   setViewDate,
   setUniqueKey,
@@ -29,6 +29,7 @@ const MeetingsTitleBar: React.FC<Props> = ({
   const handleTodayClick = () => {
     const today = dayjs();
     setDate(today);
+    setSelectedDate(today);
 
     const dateAsDate = today.subtract(1, 'month').startOf('month');
     setViewDate(dateAsDate);
