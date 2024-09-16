@@ -477,7 +477,7 @@ const MeetingForm: React.FC<Props> = ({
         const firstName = student?.first_name ?? "";
         const lastName = student?.last_name ?? "";
 
-        return `${firstName} ${lastName}`;
+        return `${firstName} ${lastName}`.trim();
       });
       setStudentNames(allStudentNames);
     }
@@ -490,6 +490,7 @@ const MeetingForm: React.FC<Props> = ({
       });
       setStudentNames(allStudentNames);
     }
+
   }, [students, isOnMeetingsPage, isOnStudentsPage]);
 
   useEffect(() => {
@@ -747,7 +748,6 @@ const MeetingForm: React.FC<Props> = ({
           if (isOnMeetingsPage) {
             setMyDatedMeetings((prevMeetings: MeetingWithAttendees[]) => {
               const updatedMeetings = [...prevMeetings, newMeetingWithAttendees];
-              console.log("updatedMeetings", updatedMeetings);
               return updatedMeetings;
             });
             
@@ -1159,7 +1159,7 @@ const MeetingForm: React.FC<Props> = ({
                 readOnly: !session?.user.role
                   .split(",")
                   .map((role) => role.trim())
-                  .some((role) => ["Admin"].includes(role)),
+                  .some((role) => ["Admin", "Tutor"].includes(role)),
               }}
               disabled={selectedMeetings.length === 0 && isOnStudentsPage}
             >
