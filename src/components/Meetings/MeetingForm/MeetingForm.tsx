@@ -1161,7 +1161,7 @@ const MeetingForm: React.FC<Props> = ({
                   .map((role) => role.trim())
                   .some((role) => ["Admin"].includes(role)),
               }}
-              // disabled={isOnStudentsPage}
+              disabled={selectedMeetings.length === 0 && isOnStudentsPage}
             >
               {studentNames.sort().map((name) => {
                 const isCurrentStudent = isOnStudentsPage && 
@@ -1195,7 +1195,8 @@ const MeetingForm: React.FC<Props> = ({
                   .map((role) => role.trim())
                   .some((role) => ["Admin"].includes(role))
               }
-          />
+              disabled={selectedMeetings.length === 0 && isOnStudentsPage}
+            />
           </LocalizationProvider>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <div className="flex gap-4">
@@ -1210,6 +1211,7 @@ const MeetingForm: React.FC<Props> = ({
                     .map((role) => role.trim())
                     .some((role) => ["Admin"].includes(role))
                 }
+                disabled={selectedMeetings.length === 0 && isOnStudentsPage}
               />
               <TimePicker
                 label="End Time"
@@ -1222,6 +1224,7 @@ const MeetingForm: React.FC<Props> = ({
                     .map((role) => role.trim())
                     .some((role) => ["Admin"].includes(role))
                 }
+                disabled={selectedMeetings.length === 0 && isOnStudentsPage}
               />
             </div>
           </LocalizationProvider>
@@ -1236,7 +1239,7 @@ const MeetingForm: React.FC<Props> = ({
                 id="demo-simple-select"
                 value={formValues.program ? formValues.program : ""}
                 label="Program"
-                disabled={!isFormEditable}
+                disabled={!isFormEditable || (selectedMeetings.length === 0 && isOnStudentsPage)}
                 onChange={handleProgramChange}
                 inputProps={{
                   readOnly: !session?.user.role
@@ -1258,7 +1261,7 @@ const MeetingForm: React.FC<Props> = ({
               name="level_lesson"
               id="outlined-multiline-flexible"
               value={formValues.level_lesson}
-              disabled={!isFormEditable}
+              disabled={!isFormEditable || (selectedMeetings.length === 0 && isOnStudentsPage)}
               onChange={handleTextChange}
               label="Level/Lesson"
               className="w-6"
@@ -1286,6 +1289,7 @@ const MeetingForm: React.FC<Props> = ({
                 .map((role) => role.trim())
                 .some((role) => ["Admin"].includes(role)),
             }}
+            disabled={selectedMeetings.length === 0 && isOnStudentsPage}
           />
           <div className="flex justify-content-between gap-4">
             <Stack direction="row" spacing={2} className={hiddenButtonClass}>
