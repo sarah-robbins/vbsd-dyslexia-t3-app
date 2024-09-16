@@ -45,7 +45,10 @@ const MeetingCalendar: React.FC<Props> = ({
     }
 
     setSelectedDate(selected);
-    setViewDate(selected);
+
+    const dateAsDate = selected.subtract(1, 'month').startOf('month');
+
+    setViewDate(dateAsDate);
     return dayjs(selectedDate).toDate();
   };
 
