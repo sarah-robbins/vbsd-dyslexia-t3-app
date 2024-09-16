@@ -736,7 +736,7 @@ const MeetingForm: React.FC<Props> = ({
             MeetingAttendees: validAttendees
           };
 
-          if (!isOnStudentsPage || (isOnStudentsPage && studentId && newMeetingWithAttendees.MeetingAttendees?.some(a => a.student_id === studentId))) {
+          if (isOnStudentsPage && studentId && newMeetingWithAttendees.MeetingAttendees?.some(a => a.student_id === studentId)) {
             setMyDatedMeetings((prevMeetings: MeetingWithAttendees[]) => {
               const updatedMeetings = [...prevMeetings, newMeetingWithAttendees];
               return updatedMeetings;
@@ -744,12 +744,15 @@ const MeetingForm: React.FC<Props> = ({
             setAllMeetings((prevMeetings: MeetingWithAttendees[]) => [...prevMeetings, newMeetingWithAttendees]);
           }
 
-          setMyDatedMeetings((prevMeetings: MeetingWithAttendees[]) => {
-            const updatedMeetings = [...prevMeetings, newMeetingWithAttendees];
-            return updatedMeetings;
-          });
-
-          setAllMeetings((prevMeetings: MeetingWithAttendees[]) => [...prevMeetings, newMeetingWithAttendees]);
+          if (isOnMeetingsPage) {
+            setMyDatedMeetings((prevMeetings: MeetingWithAttendees[]) => {
+              const updatedMeetings = [...prevMeetings, newMeetingWithAttendees];
+              console.log("updatedMeetings", updatedMeetings);
+              return updatedMeetings;
+            });
+            
+            setAllMeetings((prevMeetings: MeetingWithAttendees[]) => [...prevMeetings, newMeetingWithAttendees]);
+          }
 
           toast.current?.show({
             severity: "success",
@@ -776,7 +779,6 @@ const MeetingForm: React.FC<Props> = ({
           setName([]);
           setSelectedNames([]);
           setIndividualStatuses({});
-          // setSelectedStatus("");
           setStartTime(dayjs());
           setEndTime(dayjs());
         } else {
@@ -837,16 +839,13 @@ const MeetingForm: React.FC<Props> = ({
         };
       }),
     };
-    // Use removedAttendees as is, since it's already an array of numbers
     const attendeeIdsToRemove = {
       attendeeIds: removedAttendees,
     };
-    // Make an API call to delete the removed attendees
     if (removedAttendees.length > 0) {
       removeAttendees.mutate(attendeeIdsToRemove, {
         onSuccess: () => {
           console.log("Attendees deleted successfully");
-          // Update your state/UI as necessary
         },
         onError: (error) => {
           console.error("Error deleting attendees:", error);

@@ -6,12 +6,11 @@ import Chip from "@mui/material/Chip";
 import Checkbox from "@mui/material/Checkbox";
 import dayjs, { type Dayjs } from "dayjs";
 import { type Meeting, type Student, type MeetingWithAttendees } from "@/types";
-import { LocalizationProvider, DatePicker, PickersDayProps, PickersDay } from "@mui/x-date-pickers";
+import { LocalizationProvider, DatePicker, type PickersDayProps, PickersDay } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
 import isBetween from 'dayjs/plugin/isBetween'
-import Badge from "@mui/material/Badge";
 import { styled } from "@mui/material/styles";
 
 dayjs.extend(utc)
@@ -313,7 +312,7 @@ const MeetingList: React.FC<Props> = ({
       );
     }, [datedMeetingsWithAttendees, studentId]);
   
-    const CustomPickersDay = styled(({ hasMeeting, ...otherProps }: CustomPickersDayProps) => (
+    const CustomPickersDay = styled(({ hasMeeting: _hasMeeting, ...otherProps }: CustomPickersDayProps) => (
       <PickersDay {...otherProps} />
     ))(({ theme, hasMeeting }) => ({
       ...(hasMeeting && {
@@ -338,7 +337,7 @@ const MeetingList: React.FC<Props> = ({
           hasMeeting={hasMeeting}
         />
       );
-    }, [hasMeetingOnDate]);
+    }, [CustomPickersDay, hasMeetingOnDate]);
   
     const datePicker = useMemo(() => (
       <div className={`selectDate ${hiddenOnMeetingPage} ${showOnStudentsPage}`}>
