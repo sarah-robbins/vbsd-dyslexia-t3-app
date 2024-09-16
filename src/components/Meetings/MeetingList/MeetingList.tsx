@@ -317,56 +317,53 @@ const MeetingList: React.FC<Props> = ({
   const hasMeetingOnDate = useCallback((date: Dayjs) => {
     return meetingDates.has(date.format('YYYY-MM-DD'));
   }, [meetingDates]);
-  
-  const CustomPickersDay = styled(({ hasMeeting: _hasMeeting, onClick, ...otherProps }: CustomPickersDayProps & { onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void }) => (
-    <PickersDay onClick={onClick} {...otherProps} />
-    ))(({ theme, hasMeeting }) => ({
-      ...(hasMeeting && {
-        borderRadius: '50%',
-        backgroundColor: theme.palette.grey[200],
-        color: theme.palette.text.primary,
-        '&:hover, &:focus': {
-          backgroundColor: theme.palette.grey[300],
-        },
-      }),
-    }));
-    
-    const ServerDay = useCallback((props: PickersDayProps<Dayjs>) => {
-      const { day, outsideCurrentMonth, onClick, ...other } = props;
-      const hasMeeting = hasMeetingOnDate(day);
-    
-      return (
-        <CustomPickersDay
-          {...other}
-          outsideCurrentMonth={outsideCurrentMonth}
-          day={day}
-          hasMeeting={hasMeeting}
-          onClick={(e) => {
-            e.stopPropagation();
-            onClick?.(e);
-          }}
-        />
-      );
-    }, [CustomPickersDay, hasMeetingOnDate]);
-  
-    const datePicker = useMemo(() => (
-      <div className={`selectDate ${hiddenOnMeetingPage} ${showOnStudentsPage}`}>
-        <span>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DatePicker
-              label="Date"
-              className="w-12"
-              value={formDate}
-              onChange={handleFormDateChange}
-              slots={{
-                day: ServerDay
-              }}
-            />
-          </LocalizationProvider>
-        </span>
-      </div>
-    ), [formDate, handleFormDateChange, hiddenOnMeetingPage, showOnStudentsPage, ServerDay]);
-  
+
+  const CustomPickersDay = useMemo(() => styled(
+    ({ hasMeeting: _hasMeeting, ...otherProps }: CustomPickersDayProps) => (
+      <PickersDay {...otherProps} />
+    )
+  )(({ theme, hasMeeting }) => ({
+    ...(hasMeeting && {
+      borderRadius: '50%',
+      backgroundColor: theme.palette.grey[200],
+      color: theme.palette.text.primary,
+      '&:hover, &:focus': {
+        backgroundColor: theme.palette.grey[300],
+      },
+    }),
+  })), []);
+
+  const ServerDay = useCallback((props: PickersDayProps<Dayjs>) => {
+    const { day, outsideCurrentMonth, ...other } = props;
+    const hasMeeting = hasMeetingOnDate(day);
+
+    return (
+      <CustomPickersDay
+        {...other}
+        outsideCurrentMonth={outsideCurrentMonth}
+        day={day}
+        hasMeeting={hasMeeting}
+      />
+    );
+  }, [CustomPickersDay, hasMeetingOnDate]);
+
+  const datePicker = useMemo(() => (
+    <div className={`selectDate ${hiddenOnMeetingPage} ${showOnStudentsPage}`}>
+      <span>
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DatePicker
+            label="Date"
+            className="w-12"
+            value={formDate}
+            onChange={handleFormDateChange}
+            slots={{
+              day: ServerDay
+            }}
+          />
+        </LocalizationProvider>
+      </span>
+    </div>
+  ), [formDate, handleFormDateChange, hiddenOnMeetingPage, showOnStudentsPage, ServerDay]);  
   
   // const datePicker = useMemo(() => (
   //   <div className={`selectDate ${hiddenOnMeetingPage} ${showOnStudentsPage}`}>
