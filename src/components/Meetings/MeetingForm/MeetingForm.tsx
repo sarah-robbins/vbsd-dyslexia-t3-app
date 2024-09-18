@@ -399,13 +399,23 @@ const MeetingForm: React.FC<Props> = ({
     .split(",")
     .map((role) => role.trim())
     .includes("Admin");
-  
+
+  const isPrincipal = session?.user.role
+    .split(",")
+    .map((role) => role.trim())
+    .includes("Principal");
+
+  const isTutor = session?.user.role
+    .split(",")
+    .map((role) => role.trim())
+    .includes("Tutor");
+
   const renderStatusSelects = () => {
     return selectedNames.map((studentName) => {
       const status = individualStatuses[studentName] || "";
       const student = students.find(s => s.id === studentId);
       const isCurrentStudent = isOnStudentsPage && student && `${student.first_name ?? ''} ${student.last_name ?? ''}` === studentName;
-      const isEditable = isAdmin && (!isOnStudentsPage || (isOnStudentsPage && isCurrentStudent));
+      const isEditable = (!isOnStudentsPage || (isAdmin && isOnStudentsPage && isCurrentStudent));
 
       return (
         <div key={studentName} className="flex flex-column gap-4">
@@ -414,7 +424,10 @@ const MeetingForm: React.FC<Props> = ({
             <FormControl className="w-12">
               <InputLabel id="demo-simple-select-label">Meeting Status</InputLabel>
               <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
                 value={status}
+                label="Meeting Status"
                 onChange={(e) => handleIndividualStatusChange(studentName, e.target.value)}
                 inputProps={{
                   readOnly: !isEditable,
@@ -1146,20 +1159,17 @@ const MeetingForm: React.FC<Props> = ({
           className="flex justify-content-center gap-4 flex-column"
         >
           <FormControl className="w-12">
-            <InputLabel id="demo-simple-select-label">Name</InputLabel>
+            <InputLabel id="demo-multiple-checkbox-label">Name</InputLabel>
             <Select
               labelId="demo-multiple-checkbox-label"
               id="demo-multiple-checkbox"
               multiple
               value={selectedNames}
               onChange={handleNameChange}
-              input={<OutlinedInput label="Tag" />}
+              input={<OutlinedInput label="Name" />}
               renderValue={(selected) => selected.join(", ")}
               inputProps={{
-                readOnly: !session?.user.role
-                  .split(",")
-                  .map((role) => role.trim())
-                  .some((role) => ["Admin", "Tutor"].includes(role)),
+                readOnly: (isOnStudentsPage && !isAdmin) || (isOnMeetingsPage && !isTutor),
               }}
               disabled={selectedMeetings.length === 0 && isOnStudentsPage}
             >
@@ -1190,10 +1200,7 @@ const MeetingForm: React.FC<Props> = ({
               value={formDate}
               onChange={handleFormDateChange}
               readOnly={
-                !session?.user.role
-                  .split(",")
-                  .map((role) => role.trim())
-                  .some((role) => ["Admin"].includes(role))
+                (isOnStudentsPage && !isAdmin) || (isOnMeetingsPage && !isTutor)
               }
               disabled={selectedMeetings.length === 0 && isOnStudentsPage}
             />
@@ -1206,10 +1213,7 @@ const MeetingForm: React.FC<Props> = ({
                 onChange={handleStartTime}
                 className="w-6"
                 readOnly={
-                  !session?.user.role
-                    .split(",")
-                    .map((role) => role.trim())
-                    .some((role) => ["Admin"].includes(role))
+                  (isOnStudentsPage && !isAdmin) || (isOnMeetingsPage && !isTutor)
                 }
                 disabled={selectedMeetings.length === 0 && isOnStudentsPage}
               />
@@ -1219,10 +1223,7 @@ const MeetingForm: React.FC<Props> = ({
                 onChange={handleEndTime}
                 className="w-6"
                 readOnly={
-                  !session?.user.role
-                    .split(",")
-                    .map((role) => role.trim())
-                    .some((role) => ["Admin"].includes(role))
+                  (isOnStudentsPage && !isAdmin) || (isOnMeetingsPage && !isTutor)
                 }
                 disabled={selectedMeetings.length === 0 && isOnStudentsPage}
               />
@@ -1232,6 +1233,8 @@ const MeetingForm: React.FC<Props> = ({
           {renderStatusSelects()}
 
           <div className="flex gap-4">
+
+
             <FormControl className="w-6">
               <InputLabel id="demo-simple-select-label">Program</InputLabel>
               <Select
@@ -1242,10 +1245,7 @@ const MeetingForm: React.FC<Props> = ({
                 disabled={!isFormEditable || (selectedMeetings.length === 0 && isOnStudentsPage)}
                 onChange={handleProgramChange}
                 inputProps={{
-                  readOnly: !session?.user.role
-                    .split(",")
-                    .map((role) => role.trim())
-                    .some((role) => ["Admin"].includes(role)),
+                  readOnly: (isOnStudentsPage && !isAdmin) || (isOnMeetingsPage && !isTutor),
                 }}
               >
                 {programOptions.sort().map((option) => (
@@ -1255,9 +1255,8 @@ const MeetingForm: React.FC<Props> = ({
                 ))}
               </Select>
             </FormControl>
+
             <TextField
-              // required
-              // error={!formValues.level_lesson}
               name="level_lesson"
               id="outlined-multiline-flexible"
               value={formValues.level_lesson}
@@ -1266,10 +1265,7 @@ const MeetingForm: React.FC<Props> = ({
               label="Level/Lesson"
               className="w-6"
               inputProps={{
-                readOnly: !session?.user.role
-                  .split(",")
-                  .map((role) => role.trim())
-                  .some((role) => ["Admin"].includes(role)),
+                readOnly: (isOnStudentsPage && !isAdmin) || (isOnMeetingsPage && !isTutor),
               }}
             />
           </div>
@@ -1282,14 +1278,10 @@ const MeetingForm: React.FC<Props> = ({
             label="Meeting Notes"
             multiline
             rows={4}
-            // Technically correct, but does it take into account multiple possible roles?
             inputProps={{
-              readOnly: !session?.user.role
-                .split(",")
-                .map((role) => role.trim())
-                .some((role) => ["Admin"].includes(role)),
+              readOnly: (isOnStudentsPage && !isAdmin) || (isOnMeetingsPage && !isTutor),
             }}
-            disabled={selectedMeetings.length === 0 && isOnStudentsPage}
+            disabled={(selectedMeetings.length || isPrincipal) === 0 && isOnStudentsPage}
           />
           <div className="flex justify-content-between gap-4">
             <Stack direction="row" spacing={2} className={hiddenButtonClass}>
